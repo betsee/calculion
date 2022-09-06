@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                           )--------------------
+# Bash shell script wrapping this project's pytest-based test suite, passing
+# sane default options suitable for interactive terminal testing and otherwise
+# passing all passed arguments as is to the "pytest" command.
+#
+# This script is defined as a Bash rather than Bourne script purely for the
+# canonical ${BASH_SOURCE} string global, reliably providing the absolute
+# pathnames of this script and hence this script's directory.
+#
+# --------------------( COMMANDS                           )--------------------
+# Pytest is non-trivial -- and doubly so when integrated with Kivy's non-trivial
+# "kivy.tests" API, the non-trivial "pytest-asyncio" plugin, and non-trivial
+# third-party pytest decorators and asynchronous behaviours. The following
+# commands assist in debugging non-trivial pytest issues, especially with
+# respect to test collection failures (e.g., disappearing tests that pytest
+# previously ran but no longer even collects or presents as runnable):
+#
+#    # Print the test suite "plan" (i.e., a verbose list of all collected tests,
+#    # the absolute filenames of the test suite submodules defining those tests,
+#    # and all setup, teardown, and fixtures required by those tests).
+#    $ python3.10 -m pytest --setup-plan
+#    tests/test_file.py
+#        SETUP    [...]
+#        tests/test_file.py::test__my_awesome_code_does_the_awesome_thing (fixtures used: [...])
+#        TEARDOWN [...]
+#
+#    # Print all collected tests.
+#    $ python3.10 -m pytest --collect-only
+#    <Module test_file.py>
+#      <Function test__my_awesome_code_does_the_awesome_thing>
+
+# ....................{ PREAMBLE                           }....................
+# Enable strictness for sanity.
+set -e
+
+# ....................{ ARRAYS                             }....................
+# Array of all arguments with which to invoke Python. Dismantled, this is:
+# * "-X dev", enabling the Python Development Mode (PDM). See also commentary
+#   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
+# PYTHON_ARGS=( command python3 -X dev )
+# PYTHON_ARGS=( command python3.6 -X dev )
+# PYTHON_ARGS=( command python3.8 -X dev )
+# PYTHON_ARGS=( command python3.9 -X dev )
+PYTHON_ARGS=( command python3.10 -X dev )
+# PYTHON_ARGS=( command pypy3.7 -X dev )
+
+# Array of all arguments to be passed to "python3" below. Dismantled, this is:
+#
+# * "--color=yes", unconditionally enable colour output to guarantee color
+#   under piped pagers (e.g., "less").
+# * "--forked", unconditionally isolating *ALL* tests to uniquely forked Python
+#   subprocesses via the third-party "pytest-forked" plugin. See the
+#   "calculion.meta" submodule for further details.
+# * "--maxfail=1", halt testing on the first failure for interactive tests.
+#   Permitting multiple failures complicates failure output, especially when
+#   every failure after the first is a result of the same underlying issue.
+#   When testing non-interactively, testing is typically *NOT* halted on the
+#   first failure. Hence, this option is confined to this script rather than
+#   added to our general-purpose "pytest.ini" configuration.
+# * ".", notifying pytest of the relative dirname of the root directory for
+#   this project. On startup, pytest internally:
+#   * Sets its "rootdir" property to this dirname in absolute form.
+#   * Sets its "inifile" property to the concatenation of this dirname
+#     with the basename "pytest.ini" if that top-level configuration file
+#     exists.
+#   * Prints the initial values of these properties to stdout.
+#   *THIS IS ESSENTIAL.* If *NOT* explicitly passed this dirname as an
+#   argument, pytest may fail to set these properties to the expected
+#   pathnames. For unknown reasons (presumably unresolved pytest issues),
+#   pytest instead sets "rootdir" to the absolute dirname of the current user's
+#   home directory and "inifile" to "None". Since no user's home directory
+#   contains a "pytest.ini" file, pytest then prints errors resembling:
+#      $ ./test -k test_sim_export --export-sim-conf-dir ~/tmp/yolo
+#      running test
+#      Running py.test with arguments: ['--capture=no', '--maxfail=1', '-k', 'test_sim_export', '--export-sim-conf-dir', '/home/leycec/tmp/yolo']
+#      usage: setup.py [options] [file_or_dir] [file_or_dir] [...]
+#      setup.py: error: unrecognized arguments: --export-sim-conf-dir
+#        inifile: None
+#        rootdir: /home/leycec
+#   See the following official documentation for further details, entitled
+#   "Initialization: determining rootdir and inifile":
+#       https://docs.pytest.org/en/latest/customize.html
+PYTEST_ARGS=(
+    pytest
+    '--color=yes'
+    '--forked'
+    '--maxfail=1'
+    "${@}"
+)
+# echo "pytest args: ${PYTEST_ARGS[*]}"
+
+# ....................{ FUNCTIONS                          }....................
+# is_package(module_name: str) -> bool
+#
+# Report success only if a package or module with the passed fully-qualified
+# name is importable and thus installed under the active Python interpreter.
+# This tester is strongly inspired by this StackOverflow post:
+#     https://askubuntu.com/a/588392/415719
+function is_package() {
+    # Validate and localize all passed arguments.
+    (( $# == 1 )) || {
+        echo 'Expected exactly one argument.' 1>&2
+        return 1
+    }
+    local package_name="${1}"
+
+    # Report success only if this package or module exists.
+    "${PYTHON_ARGS[@]}" -c "import ${package_name}" 2>/dev/null
+}
+
+
+# str canonicalize_path(str pathname)
+#
+# Canonicalize the passed pathname.
+function canonicalize_path() {
+    # Validate and localize all passed arguments.
+    (( $# == 1 )) || {
+        echo 'Expected exactly one argument.' 1>&2
+        return 1
+    }
+    local pathname="${1}"
+
+    # The "readlink" command's GNU-specific "-f" option would be preferable but
+    # is unsupported by macOS's NetBSD-specific version of "readlink". Instead,
+    # just defer to Python for portability.
+    command python3 -c "
+import os, sys
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
+}
+
+# ....................{ PACKAGES                           }....................
+# If the third-party "pytest_asyncio" package providing the "pytest-asyncio"
+# plugin is installed under the desired Python interpreter, prevent this plugin
+# from emitting senseless deprecation warnings on "pytest" startup resembling:
+#     INTERNALERROR> Traceback (most recent call last):
+#          ...
+#     INTERNALERROR>   File "/usr/lib/python3.8/site-packages/pytest_asyncio/plugin.py", line 186, in pytest_configure
+#     INTERNALERROR>     config.issue_config_time_warning(LEGACY_MODE, stacklevel=2)
+#     INTERNALERROR>   File "/usr/lib/python3.8/site-packages/_pytest/config/__init__.py", line 1321, in issue_config_time_warning
+#     INTERNALERROR>     warnings.warn(warning, stacklevel=stacklevel)
+#     INTERNALERROR> DeprecationWarning: The 'asyncio_mode' default value will change to 'strict' in future, please explicitly use 'asyncio_mode=strict' or 'asyncio_mode=auto' in pytest configuration file.
+#
+# This is *ABSOLUTELY* senseless, because this project intentionally does *NOT*
+# require, reference, or otherwise leverage "pytest-asyncio" anywhere. However,
+# many other third-party packages you may have installed do. Thanks to them,
+# *ALL* "pytest" invocations must now pass this vapid setting to avoid spewing
+# trash across *ALL* "pytest"-driven test sessions. *double facepalm*
+is_package pytest_asyncio &&
+    PYTEST_ARGS=( "${PYTEST_ARGS[@]}" '--asyncio-mode=strict' )
+
+# ....................{ PATHS                              }....................
+# Absolute or relative filename of this script.
+script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
+
+# Absolute or relative dirname of the directory directly containing this
+# script, equivalent to the top-level directory for this project.
+script_dirname="$(dirname "${script_filename}")"
+
+# ....................{ MAIN                               }....................
+# Temporarily change the current working directory to that of this project.
+pushd "${script_dirname}" >/dev/null
+# set -x
+
+# If the third-party "coverage" package is installed under the desired Python
+# interpreter *AND* the "-k" option was *NOT* passed, then measure coverage
+# while running tests.
+#
+# If the "-k" option was passed, we avoid measuring coverage. Why? Because that
+# option restricts testing to a subset of tests, guaranteeing that coverage
+# measurements will be misleading at best and trigger test failure at worst
+# (e.g., if the "fail_under" option is enabled in ".coveragerc").
+if is_package coverage && [[ ! " ${PYTEST_ARGS[*]} " =~ " -k " ]]; then
+    # If run this project's pytest-based test suite with all passed arguments
+    # (while measuring coverage) succeeds, generate a terminal coverage report.
+    "${PYTHON_ARGS[@]}" -m \
+        coverage run -m "${PYTEST_ARGS[@]}" . &&
+    "${PYTHON_ARGS[@]}" -m \
+        coverage report
+# Else, run this project's pytest-based test suite with all passed arguments
+# *WITHOUT* measuring coverage.
+else
+    "${PYTHON_ARGS[@]}" -m \
+        "${PYTEST_ARGS[@]}" .
+fi
+
+# 0-based exit code reported by the prior command.
+exit_code=$?
+
+# Revert the current working directory to the prior such directory.
+popd >/dev/null
+
+# Report the same exit code from this script.
+exit ${exit_code}

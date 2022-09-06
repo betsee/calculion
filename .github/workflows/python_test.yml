@@ -1,0 +1,333 @@
+---
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2021-2022 Ionovate.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                           )--------------------
+# GitHub-specific continuous integration (CI) configuration, enabling the usual
+# GitHub Actions workflow for pure-Python packages exercised by "pytest".
+#
+# --------------------( CAVEATS                            )--------------------
+# *HEADLESS TESTS ARE FRAGILE.* This workflow manually leverages Xvfb, a
+# popular system-level package offloading X11 rendering calls to an offscreen
+# buffer. Note that doing so is fragile and commonly fails with obscure errors
+# or even segmentation faults. Moreover, we currently manage Xvfb manually.
+# Although there exist numerous third-party resources (e.g., Python packages,
+# GitHub Actions) for automating Xvfb management, all such resources are both
+# poorly maintained *AND* suffer one or more fatal runtime flaws. Notably:
+# * "pytest-xvfb", a pytest plugin automating Xvfb rendering commonly fails
+#   with inscrutable errors if the test suite fails to properly close *ALL*
+#   open X11 windows before terminating. Critically, the lower-level "xvfb-run"
+#   command run below suffers *NO* such issues; that command gracefully
+#   terminates all zombie X11 windows without complaint, making "xvfb-run" a
+#   dramatically more robust solution. Errors resemble:
+#       XIO: fatal IO error 0 (Success) on X server ":1001"
+#   See also this unresolved issue:
+#       https://github.com/The-Compiler/pytest-xvfb/issues/11
+# * "xvfb-action", a GitHub Action automating Xvfb rendering commonly fails
+#   with inscrutable errors in common edge cases (e.g., installation 404s,
+#   "${DISPLAY}" unset). See also this spate of open issues:
+#       https://github.com/GabrielBB/xvfb-action/issues
+#
+# --------------------( SEE ALSO                           )--------------------
+# * Well-authored blog post strongly inspiring this configuration:
+#   https://hynek.me/articles/python-github-actions
+# * Official Kivy GitHub Actions-based Ubuntu Linux continuous integration (CI)
+#   workflow, exhibiting correct "apt" package installation in particular:
+#   https://github.com/kivy/kivy/blob/master/.github/workflows/test_ubuntu_python.yml
+
+# ....................{ TODO                               }....................
+#FIXME: [CACHING] Cache system-wide packages installed with "apt" below. This
+#is currently low priority, as the only sane means of doing so is to leverage
+#Docker files and containers. The core idea here is that we either define our
+#own *OR* leverage someone else's public Docker file on Docker Hub installing
+#Kivy 2.1.0 + Xvfb + anything else we require. Sadly, we can confirm that (as
+#of 2022 Q2) Docker Hub lacks sane Kivy support. There are *NO* recently
+#updated public Docker files installing Kivy 2.1.0 -- let alone Kivy 2.1.0 +
+#everything else we require. Ergo, the only path forward is for us to define
+#our public Docker file. It is what it is. See this relevant StackOveflow post
+#on the subject of Docker files as a means of effectively performing APT
+#caching within GitHub Actions workflows:
+#    https://stackoverflow.com/a/60920684/2809027
+#FIXME: [CACHING] Add support for caching "pip" downloads across runs.
+#Currently, unresolved issues in GitHub Actions prevents sane caching of "pip"
+#downloads. Naturally, horrifying hacks circumventing these issues do exist but
+#are presumably worse than these issues. See also this pertinent comment:
+#    https://github.com/actions/cache/issues/342#issuecomment-673371329
+
+# ....................{ METADATA                           }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: Changes to this name *MUST* be manually synchronized with:
+# * The "|GitHub Actions badge|" image URL in our top-level "README.rst".
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Non-human-readable (i.e., machine-readable) label associated with this
+# GitHub Actions workflow.
+name: test
+
+# ....................{ TRIGGER                            }....................
+# Confine testing to only...
+#
+# Note that "**" matches all (possibly deeply "/"-nested) branches. See also:
+# * https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
+#   GitHub-specific glob syntax for matching branches and tags below.
+on:
+  # Pushes to the main branch. Pushes to other branches are assumed to be
+  # developer-specific and thus already tested locally by that developer.
+  push:
+    branches:
+      - main
+  # Pull requests against the main branch. Pull requests against other branches
+  # should, ideally, *NEVER* occur; if and when they do, we ignore them.
+  pull_request:
+    branches:
+      - main  # '**'
+
+# ....................{ VARIABLES                          }....................
+# List of private environment variables specific to this configuration and
+# globally set for *ALL* jobs declared below. To avoid conflict with
+# third-party processes, prefix the name of each variable by "_".
+env:
+  # Whitespace-delimited list of the names of all Debian-based non-Pythonic
+  # mandatory dependencies to be installed by APT below. These include:
+  #
+  # * Python packager dependencies (e.g., "pip", "setuptools", "wheel"). Since
+  #   "pip" comes pre-installed in this environment, installing these
+  #   dependencies with "pip" is technically feasible. However, since doing so
+  #   would erroneously shadow existing system-wide Python packager
+  #   dependencies managed by APT, the latter is strongly preferred. Indeed,
+  #   attempting to install these dependencies with "pip" explicitly warns
+  #   about this exact edge case:
+  #       Attempting uninstall: pip
+  #         Found existing installation: pip 20.0.2
+  #         Not uninstalling pip at /usr/lib/python3/dist-packages, outside environment /usr
+  #         Can't uninstall 'pip'. No files were found to uninstall.
+  _APT_PACKAGE_NAMES: |
+    python3-pip
+    python3-setuptools
+    python3-wheel
+
+# ....................{ MAIN                               }....................
+jobs:
+  # ...................{ TESTS                              }...................
+  # Job iteratively exercising our test suite against all Python interpreters
+  # supported by this package (and also measuring the coverage of that suite).
+  tests:
+    # ..................{ MATRIX                             }..................
+    strategy:
+      matrix:
+        # List of all platform-specific Docker images to test against,
+        # including:
+        # * The latest Long-Term Service (LTS) release of Ubuntu Linux, still
+        #   the most popular Linux distro and thus a sane baseline.
+        # * The latest *whatever* release of Microsoft Windows. Although Linux
+        #   and macOS are both POSIX-compliant and thus crudely comparable from
+        #   the low-level CLI perspective, Windows is POSIX-noncompliant and
+        #   thus heavily divergent from both macOS and Linux.
+        # * The latest *whatever* release of Apple macOS. We don't particularly
+        #   need to exercise tests on macOS, given the platform's patent
+        #   POSIX-compliant low-level similarities to Linux, but... what the
+        #   heck. Why not? Since this is the lowest priority, we defer macOS
+        #   testing until last.
+        #
+        # To reduce unnecessary consumption of scarce continuous integration
+        # (CI) minutes, we currently only test against our principal
+        # development platform known to behave sanely: yup, it's Linux.
+
+        #FIXME: Note that enabling additional platforms is non-trivial. Why?
+        #"pip" caching performed below. "pip" only caches to the "~/.cache/pip"
+        #subdirectory under Linux. Under macOS and Windows, "pip" caches to
+        #completely different subdirectories. This can be handled via the
+        #"include:" key defined below, of course, but will require considerable
+        #care, documentation, and testing. According to official commentary
+        #(https://github.com/actions/cache/blob/main/examples.md#python---pip),
+        #the default platform-specific "pip" caches reside at:
+        #* Ubuntu: ~/.cache/pip
+        #* Windows: ~\AppData\Local\pip\Cache
+        #* macOS: ~/Library/Caches/pip
+        platform: [ubuntu-latest]
+        # platform: [ubuntu-latest, windows-latest, macos-latest]
+
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # WARNING: Changes to this section *MUST* be manually synchronized with:
+        # * The "envlist" setting of the "[tox]" subsection in "tox.ini".
+        # * The "include" setting below.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        # List of all Python versions to be tested. To reduce unnecessary
+        # consumption of scarce continuous integration (CI) minutes, we only
+        # test against a relatively recent Python version known to behave
+        # sanely *AND* be easily installable on competing Linux distributions.
+        #
+        # Note that Python version specifiers *MUST* be quoted: e.g.,
+        #     # Do this.
+        #     python-version: "3.10"
+        #     # Do *NOT* do this.
+        #     python-version: 3.10
+        #
+        # Why? Because YAML sensibly treats an unquoted literal satisfying
+        # floating-point syntax as a floating-point number and thus silently
+        # truncates *ALL* ignorable zeroes suffixing that number (e.g.,
+        # truncating 3.10 to 3.1). That then results in non-human-readable CI
+        # errors, as discussed upstream at:
+        #     https://github.com/actions/setup-python/issues/160#issuecomment-724485470
+        python-version: [ '3.10' ]
+
+    # ..................{ SETTINGS                           }..................
+    # Arbitrary human-readable description.
+    name: "[${{ matrix.platform }}] Python ${{ matrix.python-version }} CI"
+
+    # Name of the current Docker image to run tests under.
+    runs-on: "${{ matrix.platform }}"
+
+    # Time in minutes to wait on the command pipeline run below to exit
+    # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
+    # under POSIX-compliant systems).
+    timeout-minutes: 5
+
+    # ..................{ VARIABLES                          }..................
+    # External shell environment variables exposed to commands run below.
+    env:
+      # .................{ VARIABLES ~ pip                    }.................
+      # Prevent "pip" from wasting precious continuous integration (CI) minutes
+      # deciding whether it should be upgrading. We're *NOT* upgrading you,
+      # "pip". Accept this and let us test faster.
+      PIP_NO_PIP_VERSION_CHECK: 1
+
+      # Instruct "pip" to prefer binary wheels to source tarballs, reducing
+      # installation time *AND* improving installation portability.
+      PIP_PREFER_BINARY: 1
+
+      # .................{ VARIABLES ~ python                 }.................
+      # Enable the Python fault handler, emitting a detailed traceback on
+      # segmentation faults. By default, Python simply emits the fault itself.
+      # Most devs regard this as yet another Python shell variable that should
+      # have been enabled by default. We are one such dev.
+      PYTHONFAULTHANDLER: 1
+
+      # Prevent Python from buffering and hence failing to log output in the
+      # unlikely (but feasible) event of catastrophic failure from either the
+      # active Python process or OS kernel.
+      PYTHONUNBUFFERED: 1
+
+      # Force X11-based applications (e.g., Kivy) to connect to the headless
+      # Xvfb-driven X11 server assigned this display index, intentionally
+      # defined so as to avoid conflict with existing X11 server displays.
+      #
+      # Note this is strongly inspired by similar logic in Kivy's official
+      # Linux-specific GitHub Actions test workflow, currently residing at:
+      #     https://github.com/kivy/kivy/blob/master/.github/workflows/test_ubuntu_python.yml
+      # DISPLAY: ':99.0'
+
+    # ..................{ PROCESS                            }..................
+    steps:
+      - name: 'Checking out repository...'
+        uses: 'actions/checkout@v2'
+      - name: "Installing Python ${{ matrix.python-version }}..."
+        uses: 'actions/setup-python@v2'
+        with:
+          python-version: "${{ matrix.python-version }}"
+      - name: 'Displaying Python metadata...'
+        run: |
+          python -VV
+          python -m site
+      # Restore the prior Python tree from the most recent run, including both
+      # this package and *ALL* dependencies of this package previously
+      # installed to this tree. See also this well-written Medium post:
+      #     https://medium.com/ai2-blog/python-caching-in-github-actions-e9452698e98d
+      - name: 'Restoring Python tree...'
+        uses: 'actions/cache@v3'
+        with:
+          # Newline-delimited list of the absolute dirnames of all directories
+          # to be cached, including:
+          # * "${{ env.pythonLocation }}", the dirname of the directory to
+          #   which the previously run "setup-python" action installed the
+          #   requested Python version.
+          path: "${{ env.pythonLocation }}"
+          # Arbitrary string identifying the previously cached subdirectory
+          # with which this path will be pre-populated, selected so as to force
+          # cache misses on both Python version updates *AND* changes to the
+          # dependency list required by this package.
+          key: "python-${{ env.pythonLocation }}-${{ hashFiles('calculion/meta.py') }}"
+          # Note that the "restore-keys:" setting is intentionally left
+          # undefined. Why? Because defining that setting would erroneously
+          # prepopulate "${{ env.pythonLocation }}" with the contents of a
+          # previously installed Python version on Python version updates.
+      # Note that we intentionally update APT *BEFORE* all remaining system
+      # dependencies (e.g., "xvfb"), as the latter requires the package cache
+      # created by the former. If omitted, the first such attempt fails with a
+      # fatal error resembling:
+      #     $ sudo apt-get install -y graphviz
+      #     Reading package lists...
+      #     Building dependency tree...
+      #     Reading state information...
+      #     E: Unable to locate package graphviz
+      #
+      # Note that we intentionally prefer the antiquated "apt-get" command to
+      # the modern "apt" command, as the latter complains about an unstable
+      # command-line API:
+      #     WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+      - name: 'Upgrading system packager dependencies...'
+        run: |
+          sudo apt-get update --quiet --quiet --yes
+      - name: 'Installing system package dependencies...'
+        run: |
+          sudo apt-get install --quiet --quiet --yes ${_APT_PACKAGE_NAMES}
+      - name: 'Installing Python package dependencies...'
+        run: |
+          # Note that we intentionally avoid passing:
+          # * "sudo", as the "python" command in the current $PATH differs
+          #   *SUBSTANTIALLY* between the superuser and non-superuser. For
+          #   example, as of 2022 Q2, the "python" command:
+          #   * For the non-superuser is Python 3.9.10.
+          #   * For the superuser is.... Python 3.8.10. Yikes.
+          # * "--quiet", as doing so uselessly squelches both ignorable
+          #   informational messages *AND* unignorable errors and warnings.
+          # * "--upgrade-strategy eager", forcing "pip" to upgrade *ALL*
+          #   package dependencies to their newest releases regardless of
+          #   whether the Python installation provided by this Docker image
+          #   already provides older releases of the same dependencies that
+          #   technically satisfy package requirements. Although ideal, doing
+          #   so consumes excess CI minutes with little short-term benefit.
+          python -m pip install --upgrade --editable .[test]
+      # Note that this workflow intentionally tests with the lower-level
+      # "pytest" rather than the higher-level "tox" test suite runner. Why?
+      # Space and time efficiency. Whereas "pytest" tests only execution of
+      # this package, "tox" tests both installation *AND* execution of this
+      # package and is thus preferable. Sadly, "tox" also interacts poorly with
+      # the "pip" cache established above. Even were this *NOT* the case, "tox"
+      # isolates this package to a private virtual environment and thus incurs
+      # substantially higher costs than "pytest". *sigh*
+      - name: 'Testing package...'
+        run: |
+          # Dismantled, this is:
+          # * "--maxfail=1", halting testing on the first test failure.
+          #   Permitting multiple consecutive test failures:
+          #   * Complicates failure output, especially when every failure
+          #     following the first is a result of the same underlying issue.
+          #   * Consumes scarce CI minutes that we do *NOT* have to spare.
+          # * "-X dev", enabling the Python Development Mode (PDM), which:
+          #       "Introduces additional runtime checks that are too expensive
+          #       to be enabled by default. It should not be more verbose than
+          #       the default if the code is correct; new warnings are only
+          #       emitted when an issue is detected."
+          #   Specifically, the PDM enables:
+          #   * "-W default", emitting warnings ignored by default. Yes, Python
+          #     insanely ignores various categories of warnings by default --
+          #     including deprecating warnings, which *ABSOLUTELY* should be
+          #     emitted by default, but aren't. We can't resolve that for end
+          #     users but we can resolve that for ourselves.
+          #   * "PYTHONMALLOC=debug", registering memory allocators hooks
+          #     detecting unsafe call stack, memory, and GIL violations.
+          #   * "PYTHONFAULTHANDLER=1", registering fault handlers emitting
+          #     Python tracebacks on segmentation faults.
+          #   * "PYTHONASYNCIODEBUG=1", enabling asyncio debug mode logging
+          #     unawaited coroutines.
+          #   * Detections for unsafe string encoding and decoding operations.
+          #   * Logging io.IOBase.close() exceptions on object finalization.
+          #   * Enabling the "dev_mode" attribute of "sys.flags".
+          #
+          #   Note that we intentionally avoid globally enabling the PDM (e.g.,
+          #   with "PYTHONDEVMODE: 1" above), as doing so could have unintended
+          #   consequences for "pip". See also:
+          #       https://docs.python.org/3/library/devmode.html
+          python -X dev -m pytest --forked --maxfail=1
