@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2021-2022 Ionovate.
+# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
