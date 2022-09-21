@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                           )--------------------
-# Bash shell script wrapping this project's desktop- and mobile-friendly
-# Kivy-based app.
+# Bash shell script launching a new Tornado HTTP server securely isolated to the
+# local system, running a Streamlit web dashboard displaying this web app.
 #
 # This script is defined as a Bash rather than Bourne script purely for the
 # canonical ${BASH_SOURCE} string global, reliably providing the absolute
@@ -17,26 +17,43 @@ set -e
 
 # ....................{ ARRAYS                             }....................
 # Array of all arguments with which to invoke Python.
-# PYTHON_ARGS=( command python3 )
-# PYTHON_ARGS=( command python3.6 )
-# PYTHON_ARGS=( command python3.8 )
-# PYTHON_ARGS=( command python3.9 )
-PYTHON_ARGS=( command python3.10 )
-# PYTHON_ARGS=( command pypy3.7 )
+PYTHON_ARGS=(
+    # Python interpreter to be run.
+    command python3.10
 
-# Array of all arguments to be passed to "python3" below, running this
-# project's Kivy-based app with all passed arguments.
-CALCULION_ARGS=(
     #FIXME: Uncomment this as needed (e.g., to debug hidden resource warnings).
-    # Enable the Python Development Mode (PDM). See also commentary for the
-    # ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
-    -X dev
+    # # Enable the Python Development Mode (PDM). See also commentary for the
+    # # ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
+    # -X dev
 
-    # Implicitly import the "calculion.__main__" dunder submodule.
+    # Implicitly import the "calculion.__main__" dunder module, which
+    # programmatically runs "streamlit run calculion/main.py" in a portable
+    # manner aware of Python packaging and distribution standards.
+    #
+    # Note that this is *NOT* the standard way Streamlit apps are run from the
+    # command line. That's a good thing. By default, Streamlit apps run from the
+    # command line via the "streamlit run" subcommand *CANNOT* be portably
+    # distributed as standard Python packages published to standard Python
+    # package repositories (e.g., PyPI, conda-forge).
+    #
+    # See the "calculion.__main__" dunder module for further discussion.
     -m calculion
 
-    # All passed arguments as is.
-    "${@}"
+    #FIXME: Uncommand this as needed.
+    # # Implicitly import the "calculion.__main__" dunder module, which
+    # # "streamlit.__main__" dunder submodule and run the
+    # # __main__() function defined by that submodule, launching a new Tornado
+    # # HTTP server running the Streamlit web dashboard displaying this web app.
+    # -m streamlit
+    #
+    # # Streamlit subcommand to be run, ordering Streamlit to show this web app.
+    # run
+    #
+    # # Delimit Streamlit- from app-specific arguments.
+    # --
+    #
+    # # All passed arguments as app-specific arguments.
+    # "${@}"
 )
 
 # ....................{ FUNCTIONS                          }....................
@@ -71,8 +88,8 @@ script_dirname="$(dirname "${script_filename}")"
 # Temporarily change the current working directory to that of this project.
 pushd "${script_dirname}" >/dev/null
 
-# Deploy this project's Kivy-based app with all passed arguments.
-"${PYTHON_ARGS[@]}" "${CALCULION_ARGS[@]}"
+# Deploy this web app with all passed arguments.
+"${PYTHON_ARGS[@]}"
 
 # 0-based exit code reported by the prior command.
 exit_code=$?
