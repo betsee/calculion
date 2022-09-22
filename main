@@ -37,23 +37,43 @@ PYTHON_ARGS=(
     # package repositories (e.g., PyPI, conda-forge).
     #
     # See the "calculion.__main__" dunder module for further discussion.
-    -m calculion
+    # -m calculion
 
     #FIXME: Uncommand this as needed.
-    # # Implicitly import the "calculion.__main__" dunder module, which
-    # # "streamlit.__main__" dunder submodule and run the
-    # # __main__() function defined by that submodule, launching a new Tornado
-    # # HTTP server running the Streamlit web dashboard displaying this web app.
-    # -m streamlit
+    # Implicitly import the "calculion.__main__" dunder module, which
+    # "streamlit.__main__" dunder submodule and run the
+    # __main__() function defined by that submodule, launching a new Tornado
+    # HTTP server running the Streamlit web dashboard displaying this web app.
+    -m streamlit
+
+    # Streamlit subcommand to be run, ordering Streamlit to show this web app.
+    run
+
+    # Relative filename of the Python script implementing the main entry-point
+    # for this web app.
     #
-    # # Streamlit subcommand to be run, ordering Streamlit to show this web app.
-    # run
-    #
-    # # Delimit Streamlit- from app-specific arguments.
-    # --
-    #
-    # # All passed arguments as app-specific arguments.
-    # "${@}"
+    # Note that this Bash script safely guarantees this filename to be relative
+    # to the directory defining this Bash script by temporarily changing the
+    # current working directory (CWD) to this directory *BEFORE* running this
+    # command. In other words, these are not the droids you're looking for.
+    calculion/core.py
+
+    #FIXME: Uncomment to increase the debugging level.
+    # Log *ONLY* informational messages, warnings, errors, and exceptions.
+    --logger.level=info
+
+    # Unconditionally log *ALL* messages.
+    # --logger.level=debug
+
+    #FIXME: Uncomment to log to a file. Unneeded for the moment. If enabling
+    #this, also ensure this file is listed in our ".gitignore", please.
+    #log_file.log 2>&1
+
+    # Delimit Streamlit- from app-specific arguments.
+    --
+
+    # All passed arguments as app-specific arguments.
+    "${@}"
 )
 
 # ....................{ FUNCTIONS                          }....................

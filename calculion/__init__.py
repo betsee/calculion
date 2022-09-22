@@ -45,3 +45,24 @@ For :pep:`8` compliance, this specifier has the canonical name
 ``__version_info__`` rather than that of a typical global (e.g.,
 ``VERSION_PARTS``).
 '''
+
+# ....................{ TODO                               }....................
+#FIXME: [CONFIG] Define a new ".streamlit/config.toml" file resembling:
+#
+#    #FIXME: Also shift logging settings here from our "main" script, please.
+#
+#    [theme]
+#    # Set Streamlit's built-in Dark Mode as the default theme for this web app.
+#    # By default, Streamlit dynamically detects on app startup whether the
+#    # current browser prefers a light or dark theme and conditionally sets that
+#    # as the default theme for this web app. Since that yields a
+#    # non-deterministic user experience (UX) across browsers, we force
+#    # determinism through our preferred default theme: naturally, Dark.
+#    base = "dark"
+
+#FIXME: [SESSION] As time permits, implement most or all of the excellent advice
+#at this blog article. Although the author focuses on session auto-save and
+#auto-load to improve resiliency in the face of browser timeouts and refreshes
+#(which is essential functionality, really), pretty much *ALL* of the advice
+#here is awesome:
+#    https://towardsdatascience.com/10-features-your-streamlit-ml-app-cant-do-without-implemented-f6b4f0d66d36

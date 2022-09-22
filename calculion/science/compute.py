@@ -4,27 +4,31 @@
 # See "LICENSE" for further details.
 
 '''
-Classes and methods to calculate properties for the complete bioelectric system, including optimization
-methods to solve for equilibrium concentrations and target values.
+Classes and methods to calculate properties for the complete bioelectric system,
+including optimization methods to solve for equilibrium concentrations and
+target values.
 '''
 
+# ....................{ IMPORTS                            }....................
 import numpy as np
 from beartype import beartype
 from beartype.typing import Optional
+from calculion.science.flux import compute_flux_vector
+from calculion.science.params import CalculionParams
+from calculion.science.vmem import vmem_ghk_pump
 from scipy.optimize import minimize
-from calculion.core.flux import compute_flux_vector
-from calculion.core.params import CalculionParams
-from calculion.core.vmem import vmem_ghk_pump
 
+# ....................{ CLASSES                            }....................
+@beartype
 class CalculionSim(object):
     '''
-    Class performing core computations of the Calculion single cell bioelectricity simulator.
-
+    **CalculIon single cell bioelectricity simulator** (i.e., high-level object
+    performing core simulation computations).
     '''
-    def __init__(self, p: Optional[CalculionParams]=None):
-        '''
-        Initialize the CalcilionSim class.
 
+    def __init__(self, p: Optional[CalculionParams] = None):
+        '''
+        Initialize this simulator
         '''
 
         # Create an instance of CalculionParams:
@@ -34,10 +38,12 @@ class CalculionSim(object):
             self.p = p
 
         # Create a reaction matrix
-        self.M_react_sys = self.make_reaction_matrix(self.p.r_cell, self.p.r_env, self.p.d_mem, self.p.e_r)
+        self.M_react_sys = self.make_reaction_matrix(
+            self.p.r_cell, self.p.r_env, self.p.d_mem, self.p.e_r)
 
-    @beartype
-    def make_reaction_matrix(self, r_cell: float, r_env: float, d_mem: float, e_r: float):
+
+    def make_reaction_matrix(
+        self, r_cell: float, r_env: float, d_mem: float, e_r: float):
         '''
         Return a matrix for computing the changes to parameters
         for the bioelectric system.
@@ -46,7 +52,6 @@ class CalculionSim(object):
         flux_v = [f_Na, f_K, f_Cl, f_NaKpump], the time change vector,
         dparams = [dNa_i, dNa_i, dK_i, dK_o, dCl_i, dCl_o]
         is returned.
-
         '''
 
         div_i = 2 / r_cell # divergence term cell compartment
@@ -65,18 +70,20 @@ class CalculionSim(object):
         return Msys
 
 
-    @beartype
-    def calc_param_change(self,
-                          paramv: list[float],
-                          P_Na: float, P_K: float, P_Cl: float,
-                          Na_o: float, K_o: float, Cl_o: float,
-                          ATP: float, ADP: float, P: float,
-                          Keqm_NaK: float, omega_pump: float,
-                          alpha: float
-                          ):
+    def calc_param_change(
+        self,
+        paramv: list[float],
+        P_Na: float, P_K: float, P_Cl: float,
+        Na_o: float, K_o: float, Cl_o: float,
+        ATP: float, ADP: float, P: float,
+        Keqm_NaK: float, omega_pump: float,
+        alpha: float
+    ):
         '''
-        Function that is used with scipy optimization to solve for the equillibrium cell concentrations:
+        Function that is used with scipy optimization to solve for the
+        equillibrium cell concentrations.
         '''
+
         Na_i = paramv[0]
         K_i = paramv[1]
         Cl_i = paramv[2]
@@ -106,22 +113,23 @@ class CalculionSim(object):
         return loss_f
 
 
-    @beartype
-    def calc_bioe_targets(self,
-                          paramv: list[float],
-                          Vm: float,
-                          Na_i: float, K_i: float, Cl_i: float,
-                          Na_o: float, K_o: float, Cl_o: float,
-                          ATP: float, ADP: float, P: float,
-                          Keqm_NaK: float, omega_pump: float,
-                          alpha: float
-                          ):
+    def calc_bioe_targets(
+        self,
+        paramv: list[float],
+        Vm: float,
+        Na_i: float, K_i: float, Cl_i: float,
+        Na_o: float, K_o: float, Cl_o: float,
+        ATP: float, ADP: float, P: float,
+        Keqm_NaK: float, omega_pump: float,
+        alpha: float
+    ):
         '''
-        Loss function used with scipy optimization to solve for the bioelectric sys params.
-        Knowing target V_mem, ion concentrations, ATP concentrations, and temperature determine membrane
-        permeabilities to best acheive the target state.
+        Loss function used with scipy optimization to solve for the bioelectric
+        sys params. Knowing target V_mem, ion concentrations, ATP
+        concentrations, and temperature determine membrane permeabilities to
+        best acheive the target state.
+        '''
 
-        '''
         P_Na = paramv[0]
         P_K = paramv[1]
         P_Cl = paramv[2]
@@ -142,12 +150,16 @@ class CalculionSim(object):
 
         return loss_f
 
-    def find_eqm_state(self, PNa: float, PK: float, PCl: float,
-                       Nai: float, Ki: float, Cli: float,
-                       Nao: float, Ko: float, Clo: float,
-                       ATP: float, ADP: float, P: float,
-                       Keqm_NaK: float, omega_pump: float,
-                       alpha: float):
+
+    def find_eqm_state(
+        self,
+        PNa: float, PK: float, PCl: float,
+        Nai: float, Ki: float, Cli: float,
+        Nao: float, Ko: float, Clo: float,
+        ATP: float, ADP: float, P: float,
+        Keqm_NaK: float, omega_pump: float,
+        alpha: float,
+    ):
         '''
         Given a set of membrane permeabilities and extracellular ion concentrations,
         compute the steady-state intracellular ion concentrations and V_mem for the
@@ -188,19 +200,22 @@ class CalculionSim(object):
         return self.V_mem, self.Na_i, self.K_i, self.Cl_i
 
 
-    def find_target_values(self, Vm: float,
-                           PNa: float, PK: float, PCl: float,
-                           Nai: float, Ki: float, Cli: float,
-                           Nao: float, Ko: float, Clo: float,
-                           ATP: float, ADP: float, P: float,
-                           Keqm_NaK: float, omega_pump: float,
-                           alpha: float):
+    def find_target_values(
+        self,
+        Vm: float,
+        PNa: float, PK: float, PCl: float,
+        Nai: float, Ki: float, Cli: float,
+        Nao: float, Ko: float, Clo: float,
+        ATP: float, ADP: float, P: float,
+        Keqm_NaK: float, omega_pump: float,
+        alpha: float,
+    ):
         '''
-        Given a set of membrane permeabilities and extracellular ion concentrations,
-        compute the steady-state intracellular ion concentrations and V_mem for the
-        system.
+        Given a set of membrane permeabilities and extracellular ion
+        concentrations, compute the steady-state intracellular ion
+        concentrations and V_mem for the system.
+        '''
 
-        '''
         self.paramv_o = np.asarray([PNa, PK, PCl])  # Initial conditions
 
         self.sol0 = minimize(self.calc_bioe_targets,

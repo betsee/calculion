@@ -30,6 +30,10 @@ approach as well. This submodule is architected ala this StackOverflow answer:
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Unsurprisingly, we ended up *NOT* using this file. Streamlit is
+#incredibly anal-retentive about startup execution. We finally relented and now
+#simply launch this app in the standard (albeit non-ideal) Streamlit way.
+
 #FIXME: Consider submitting an answer to this StackOverflow thread:
 #    https://stackoverflow.com/a/62775219/2809027
 #
@@ -54,7 +58,7 @@ approach as well. This submodule is architected ala this StackOverflow answer:
 # validation, *NO* other modules are safely importable from.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import sys
-from calculion import main
+from calculion import core
 from streamlit.web import cli
 
 # ....................{ MAIN                               }....................
@@ -62,9 +66,9 @@ from streamlit.web import cli
 # (e.g., by being passed as the argument to the "-m" option), run this
 # Streamlit-based web app.
 if __name__ == '__main__':
-    # Absolute filename of the "calculion.main" submodule serving as the
+    # Absolute filename of the "calculion.core" submodule serving as the
     # entry-point for this web app.
-    main_filename = main.__file__
+    core_filename = core.__file__
 
     #FIXME: Non-ideal. This assumes "streamlit" is in the current ${PATH}.
     #Frankly, this entire approach is absurd. Let's inspect the
@@ -94,7 +98,7 @@ if __name__ == '__main__':
     # Dynamically monkey-patch the list of one or more command-line arguments
     # with which the active Python process was invoked with a list instead
     # invoking the Streamlit-specific "run" subcommand against this entry-point.
-    sys.argv = ['streamlit', 'run', main_filename]
+    sys.argv = ['streamlit', 'run', core_filename]
 
     # Run this web app, returning the exit code returned by that function as the
     # exit code of the active Python process.
