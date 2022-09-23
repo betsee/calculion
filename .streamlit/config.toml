@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                           )--------------------
+# App-specific Streamlit configuration file configuring this web app.
+#
+# --------------------( COMMANDS                           )--------------------
+# Relevant command-line commands include:
+#
+#     # Display the contents of Streamlit's current configuration, defined as
+#     # the default configuration overwrote by this configuration. Since doing
+#     # so also displays detailed comments, this doubles as quasi-official
+#     # documentation on Streamlit configuration. *not kidding*
+#     #
+#     # Note that this command should only be run from the top-level project
+#     # directory (containing the ".git/" subdirectory tracking this project).
+#     $ python3.10 -m streamlit config show | less
+#
+# --------------------( SEE ALSO                           )--------------------
+# * Streamlit's official documentation on configuration:
+#   https://docs.streamlit.io/library/advanced-features/configuration
+
+# ....................{ TODO                               }....................
+#FIXME: Clearly, we need one unique configuration for remote production and one
+#unique configuration for local development. Notably, remote production requires
+#disabling unsafe development-specific configuration settings -- including:
+#
+#    [client]
+#    # *DISABLE THIS UNDER PRODUCTION.* Printing full-blown exception tracebacks
+#    # to end users increases attack surface by potentially leaking sensitive
+#    # server metadata and thus poses a demonstrable security risk.
+#    showErrorDetails = true
+#
+#    [server]
+#    # Prevent Streamlit from opening a browser window on web app startup.
+#    headless = true
+#
+#    [browser]
+#    # Remote URL hosting this production web app, required for protection
+#    # against both Cross-Origin Request Sharing (CORS) and Cross-Site Request
+#    Forgery (XSRF) attacks.
+#    serverAddress = 'SET.THIS.TO/SOMETHING/MEANINGFUL'
+#
+#    # Public port at the remote URL hosting this production web app, again
+#    # required for protection against those attacks.
+#    serverPort = 8501
+#
+#    # Avoid sending usage statistics from our production web server to
+#    # Streamlit, which could conceivably violate privacy, damage security, and
+#    # incur otherwise unneeded bandwidth costs.
+#    gatherUsageStats = false
+#
+#How exactly do we do that, however? Ideally, TOML would implicitly support some
+#sort of file inclusion -- enabling us to define a core "config_base.toml" (or
+#something, something) and then downstream "config_dev.toml" and
+#"config_prod.toml" files internally including "config_base.toml". But TOML
+#almost certainly does *NOT* support that. So...
+#
+#The next-base alternative would probably be to simply:
+#* Split our existing top-level "main" script into:
+#  * A new top-level "run_dev" script (unmodified).
+#  * A new top-level "run_prod" script, modified to force the above settings by
+#    passing them as "--"-prefixed command-line options. Thankfully, Streamlit
+#    appears to transparently support passing all options specified in this file
+#    as "--"-prefixed command-line options instead.
+#* Define *ONLY* hosting environment-agnostic settings in this file.
+
+# ....................{ RUNNER                             }....................
+[runner]
+
+# *DISABLE MAGIC.* Streamlit "magic" implicitly renders lookup statements (i.e.,
+# statements which trivially reference attributes by name or define values
+# without assigning or otherwise using those attributes or values) as full-blown
+# widgets displayed by this web app. Doing so:
+# * Violates idempotency. Lookup statements are expected to efficiently reduce
+#   to noops and thus be harmlessly repeatable, removable, and ignorable.
+# * Violates static analysis. Linters and static type-checkers flag lookup
+#   statements as useless at best and erroneous at worst.
+# * Violates the PEP 8 maxim that "Explicit is better than implicit."
+# * Violates basic sanity, as *NO ONE* expects a lookup statement (which under
+#   any other use context or language trivially reduces to a noop) to
+#   non-trivially expand to a non-idempotent widget display operation.
+# * Is redundant. The core streamlit.write() function already achieves the exact
+#   same effect *WITHOUT* any of the above violations.
+magicEnabled = false
+
+# ....................{ SERVER                             }....................
+[server]
+
+# Automatically refresh this web app when the top-level Python script
+# implementing this app is locally modified on disk. For unknown reasons,
+# Streamlit currently defaults this setting to "false".
+runOnSave = true
+
+# ....................{ THEME                              }....................
+# Theme configuration. See also Streamlit's official documentation on theming:
+#    https://docs.streamlit.io/library/advanced-features/theming
+
+[theme]
+
+# Set Streamlit's built-in Dark Mode as the default theme for this web app. By
+# default, Streamlit dynamically detects on app startup whether the current
+# browser prefers a light or dark theme and conditionally sets that as the
+# default theme for this web app. Since that yields a non-deterministic user
+# experience (UX) across browsers, we force determinism through our preferred
+# default theme: naturally, Dark.
+base = "dark"

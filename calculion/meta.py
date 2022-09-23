@@ -319,10 +319,9 @@ URL of this package's release list.
 # because these versions are currently marked as stable on the source-based
 # Gentoo Linux distribution that *EVERYONE* loves! :p
 LIBS_RUNTIME_MANDATORY = (
-    #FIXME: Bump to beartype 0.11.0 once released, please.
     # QA stack. Dismantled, this is:
-    # * beartype >= 0.10.0, the first release to support class decoration.
-    'beartype >=0.10.0',
+    # * beartype >= 0.11.0, the first release to support class decoration.
+    'beartype >=0.11.0',
 
     # Science stack.
     'numpy >=1.22.0',
