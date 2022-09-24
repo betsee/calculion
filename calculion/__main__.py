@@ -31,7 +31,7 @@ approach as well. This submodule is architected ala this StackOverflow answer:
 
 # ....................{ TODO                               }....................
 #FIXME: Unsurprisingly, we ended up *NOT* using this file. Streamlit is
-#incredibly anal-retentive about startup execution. We finally relented and now
+#incredibly particular about startup execution. We finally relented and now
 #simply launch this app in the standard (albeit non-ideal) Streamlit way.
 
 #FIXME: Consider submitting an answer to this StackOverflow thread:

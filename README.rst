@@ -97,6 +97,8 @@ CalculIon is `open-source software released <calculion license_>`__ under the
    https://github.com/python/cpython
 
 .. # ------------------( LINKS ~ py : package : test         )------------------
+.. _Codecov:
+   https://about.codecov.io
 .. _pytest:
    https://docs.pytest.org
 .. _tox:

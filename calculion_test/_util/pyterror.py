@@ -4,8 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **exception hierarchy** (i.e., class hierarchy of project-specific
-exceptions emitted by the this project).
+Test-specific **exception hierarchy** (i.e., class hierarchy of test-specific
+exceptions emitted by the this test suite).
+
+This submodule defines hierarchies of :mod:`calculion_test`-specific exceptions
+and warnings emitted by unit and functional tests and fixtures.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -16,16 +19,26 @@ exceptions emitted by the this project).
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
+from calculion.error import CalculionException
 
 # ....................{ SUPERCLASS                         }....................
-class CalculionException(Exception, metaclass=_ABCMeta):
+class CalculionTestException(CalculionException, metaclass=_ABCMeta):
     '''
-    Abstract base class of all **package-specific exceptions.**
+    Abstract base class of all **calculion test exceptions.**
 
-    Instances of subclasses of this exception ABC are raised from various
-    :mod:`calculion` submodules.
+    Instances of subclasses of this exception are raised at test time from
+    :mod:`calculion_test`-specific unit and functional tests and fixtures.
     '''
 
     pass
 
-# ....................{ SUBCLASSES                         }....................
+
+class CalculionTestPathException(CalculionTestException):
+    '''
+    **Calculion test path exceptions.**
+
+    This exception is raised at test time from callables and classes defined by
+    the :mod:`calculion_test._util.path` subpackage.
+    '''
+
+    pass

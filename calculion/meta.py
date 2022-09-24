@@ -172,17 +172,13 @@ Human-readable name of the license this package is licensed under.
 '''
 
 # ....................{ METADATA ~ package                 }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize changes to this value against the "package.name" setting
-# in the root "buildozer.spec" file.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-PACKAGE_MAIN_NAME = 'calculion'
+PACKAGE_NAME = 'calculion'
 '''
 Fully-qualified name of the top-level Python package containing this submodule.
 '''
 
 
-PACKAGE_TEST_NAME = 'calculion_test'
+PACKAGE_TEST_NAME = f'{PACKAGE_NAME}_test'
 '''
 Fully-qualified name of the top-level Python package exercising this project.
 '''
