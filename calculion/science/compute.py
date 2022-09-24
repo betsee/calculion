@@ -10,6 +10,9 @@ target values.
 '''
 
 # ....................{ IMPORTS                            }....................
+# FIXME: Add in the itterative temporal simulator
+# FIXME: Add in the symbolic math
+
 import numpy as np
 from beartype import beartype
 from beartype.typing import Optional
