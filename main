@@ -19,7 +19,7 @@ set -e
 # Array of all arguments with which to invoke Python.
 PYTHON_ARGS=(
     # Python interpreter to be run.
-    command python3.10
+    command python3.9
 
     #FIXME: Uncomment this as needed (e.g., to debug hidden resource warnings).
     # # Enable the Python Development Mode (PDM). See also commentary for the

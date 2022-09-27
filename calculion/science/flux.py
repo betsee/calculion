@@ -21,7 +21,6 @@ def f_cation_flux(P_cat: float, cat_o: float, cat_i: float, V_mem: float, alpha:
 
     return flux
 
-
 @beartype
 def f_anion_flux(P_ani: float, ani_o: float, ani_i: float, V_mem: float, alpha: float, z_ani: float = -1.0):
     '''
@@ -85,7 +84,7 @@ def compute_flux_vector(P_Na: float, Na_o: float, Na_i: float,
                         P_K: float, K_o: float, K_i: float,
                         P_Cl: float, Cl_o: float, Cl_i: float,
                         ATP: float, ADP: float, P: float,
-                        K_eqm_NaK: float, omega_pump: float,
+                        Keqm_NaK: float, omega_NaK: float,
                         V_mem: float, alpha: float):
     '''
     Given the input variables, computed the flux vector,
@@ -103,7 +102,7 @@ def compute_flux_vector(P_Na: float, Na_o: float, Na_i: float,
                                  Na_i, Na_o,
                                  K_i, K_o,
                                  V_mem, alpha,
-                                 K_eqm_NaK, omega_pump
+                                 Keqm_NaK, omega_NaK
                                  )
 
     return np.asarray([flx_Na, flx_K, flx_Cl, flx_NaKpump])

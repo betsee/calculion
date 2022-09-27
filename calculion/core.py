@@ -50,7 +50,8 @@ def main() -> None:
     title('Calculion')
 
     # ..................{ LOCALS                             }..................
-    sim = CalculionSim()
+    #FIXME: Enable after we fix CalculionSim(), please.
+    # sim = CalculionSim()
 
     # ..................{ PLACEHOLDER                        }..................
     #FIXME: Remove this facsimile content after actually implementing something.

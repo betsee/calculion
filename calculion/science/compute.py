@@ -46,29 +46,41 @@ class CalculionSim(object):
 
 
     def make_reaction_matrix(
-        self, r_cell: float, r_env: float, d_mem: float, e_r: float):
+        self, r_cell: float, r_env: float, d_mem: float, e_r: float, include_vmem: bool=False):
         '''
         Return a matrix for computing the changes to parameters
         for the bioelectric system.
 
         When this reaction matrix is taken in a dot product with the flux vector,
         flux_v = [f_Na, f_K, f_Cl, f_NaKpump], the time change vector,
-        dparams = [dNa_i, dNa_i, dK_i, dK_o, dCl_i, dCl_o]
+        dparams = [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o] (for include_vmem = False) and
+        dparams = [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o, dVmem] (for include_vmem = True)
         is returned.
         '''
 
         div_i = 2 / r_cell # divergence term cell compartment
         div_o = (2 * r_cell) / (r_env**2 - r_cell**2) # divergence term env compartment
-        # cm = (po.e_o * e_r) / d_mem # membrane patch capacitance [F/m^2]
+        cm = (self.p.e_o * e_r) / d_mem # membrane patch capacitance [F/m^2]
 
-        Msys = np.asarray([[div_i, 0, 0, -3*div_i],
-                           [-div_o, 0, 0, 3*div_o],
-                           [0, div_i, 0, 2*div_i],
-                           [0, -div_o, 0, -2*div_o],
-                           [0, 0, div_i, 0],
-                           [0, 0, -div_o, 0],
-                           # [po.F/cm, po.F/cm, -po.F/cm, -po.F/cm]
-                           ])
+        if include_vmem is False:
+            Msys = np.asarray([[div_i, 0, 0, -3*div_i],
+                               [-div_o, 0, 0, 3*div_o],
+                               [0, div_i, 0, 2*div_i],
+                               [0, -div_o, 0, -2*div_o],
+                               [0, 0, div_i, 0],
+                               [0, 0, -div_o, 0],
+                               # [po.F/cm, po.F/cm, -po.F/cm, -po.F/cm]
+                               ])
+
+        else:
+            Msys = np.asarray([[div_i, 0, 0, -3*div_i],
+                               [-div_o, 0, 0, 3*div_o],
+                               [0, div_i, 0, 2*div_i],
+                               [0, -div_o, 0, -2*div_o],
+                               [0, 0, div_i, 0],
+                               [0, 0, -div_o, 0],
+                               [self.p.F/cm, self.p.F/cm, -self.p.F/cm, -self.p.F/cm]
+                               ])
 
         return Msys
 
