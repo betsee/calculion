@@ -37,7 +37,7 @@ def vmem_ghk(P_Na: float, Na_o: float, Na_i: float,
 def vmem_ghk_pump(P_Na: float, Na_o: float, Na_i: float,
                   P_K: float, K_o: float, K_i: float,
                   P_Cl: float, Cl_o: float, Cl_i: float,
-                  K_eqm_NaK: float, omega_pump: float,
+                  Keqm_NaK: float, omega_pump: float,
                   ATP: float, ADP: float, P: float,
                   alpha: float):
     '''
@@ -48,10 +48,13 @@ def vmem_ghk_pump(P_Na: float, Na_o: float, Na_i: float,
     pump.
     '''
 
-    term_num = (ADP*K_eqm_NaK*(K_i**2)*(Na_o**3)*omega_pump*P +
+    term_num = (2*ADP*Keqm_NaK*(K_i**2)*(Na_o**3)*omega_pump*P -
+                3*ADP*Keqm_NaK*(K_i**2)*(Na_o**3)*omega_pump*P +
                 Cl_i*P_Cl + K_o*P_K + Na_o*P_Na)
 
-    term_den = (ATP*(K_o**2)*(Na_i**3)*omega_pump + Cl_o*P_Cl + K_i*P_K + Na_i*P_Na)
+    term_den = (2*ATP*(K_o**2)*(Na_i**3)*omega_pump -
+               3*ATP*(K_o**2)*(Na_i**3)*omega_pump +
+               Cl_o*P_Cl + K_i*P_K + Na_i*P_Na)
 
     return (1/alpha)*np.log(term_num/term_den)
 

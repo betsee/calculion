@@ -41,9 +41,9 @@ class CalculionParams(object):
     alpha = F / (R * T)  # Alpha Constant [C/J]
 
     # FIXME: later make these selectable user profiles (e.g. "mammalian neuron", "xenopus", "squid axon" etc)
-    P_Na = 1.0e-7 # Membrane permeability to sodium ions [m/s]
-    P_K = 15.0e-7 # Membrane permeability to potassium ions [m/s]
-    P_Cl = 5.0e-7 # Membrane permeability to chloride ions [m/s]
+    P_Na = 1.0e-10 # Membrane permeability to sodium ions [m/s]
+    P_K = 15.0e-10 # Membrane permeability to potassium ions [m/s]
+    P_Cl = 5.0e-10 # Membrane permeability to chloride ions [m/s]
 
     z_Na: int = 1
     z_K: int = 1
@@ -66,6 +66,9 @@ class CalculionParams(object):
     omega_NaK: float = 1.0e-12 # Rate constant for the Na-K-ATPase ion pump
     # omega_nkcc = 0.0 # Rate constant for the NKCC ion symporter
     # omega_kcc = 0.0 # Rate constant for the KCC ion symporter
+
+    delta_t: float = 1.0 # Time step in seconds
+    N_iter: int = 500 # Number of iterative time-steps to run
 
 
 

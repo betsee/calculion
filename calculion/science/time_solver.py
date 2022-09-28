@@ -9,9 +9,12 @@ Class to generate temporal updates to transmembrane potential Vmem and ion conce
 
 # ....................{ IMPORTS                            }....................
 from beartype import beartype
+from beartype.typing import Optional
 import numpy as np
 import sympy as sp
 from calculion.science.sci_enum import TimeSolverType
+from calculion.science.params import CalculionParams
+from calculion.science.vmem import vmem_ghk_pump
 
 
 class TimeSolver(object):
@@ -19,179 +22,336 @@ class TimeSolver(object):
 
     '''
 
-    def __int__(self):
-        '''
-
-        '''
-        pass
-
-
-    def _compute_update_eq(self, solver_type: TimeSolverType=TimeSolverType.implicit):
+    def __init__(self, quasi_static_vmem: bool=True, update_env: bool=True):
         '''
 
         '''
 
-        # Define symbols:
-        V_mem, z_Na, z_K, z_Cl = sp.symbols('V_mem, z_Na, z_K, z_Cl', real=True)
+        self.update_eqn_dict = self._get_update_eqns(quasi_static_vmem=quasi_static_vmem, update_env=update_env)
 
-        d_ecm, r_cell, c_mem, delta_t, F, R, T, P_Na, P_K, P_Cl = sp.symbols('d_ecm, r_cell, c_mem, delta_t, '
-                                                                             'F, R, T, '
-                                                                             'P_Na, P_K, P_Cl',
-                                                                             real=True, positive=True)
+        self._quasi_static_vmem = quasi_static_vmem
+        self._update_env = update_env
 
-        alpha = F/(R*T)
+
+    @beartype
+    def _get_update_eqns(self, quasi_static_vmem: bool=True, update_env: bool=True):
+        '''
+
+        '''
+        update_eqn_dict = {}
+
+        V_mem, alpha, d_ecm, r_cell, c_mem, F, R, T = sp.symbols('V_mem, alpha, d_ecm, r_cell, c_mem, F, R, T',
+                                                                 real=True)
+
+        r_env = r_cell + d_ecm
+
+        Na_o, Na_i, K_o, K_i, Cl_o, Cl_i, ATP, ADP, P = sp.symbols('Na_o, Na_i, K_o, K_i, Cl_o, Cl_i, ATP, ADP, P',
+                                                                   real=True, positive=True)
+
+        z_Na, z_K, z_Cl, P_Na, P_K, P_Cl = sp.symbols('z_Na, z_K, z_Cl, P_Na, P_K, P_Cl', real=True)
 
         Na_o0, Na_i0, Na_o1, Na_i1 = sp.symbols('Na_o0, Na_i0, Na_o1, Na_i1', real=True, positive=True)
         K_o0, K_i0, K_o1, K_i1 = sp.symbols('K_o0, K_i0, K_o1, K_i1', real=True, positive=True)
         Cl_o0, Cl_i0, Cl_o1, Cl_i1 = sp.symbols('Cl_o0, Cl_i0, Cl_o1, Cl_i1', real=True, positive=True)
         V_mem0, V_mem1 = sp.symbols('V_mem0, V_mem1', real=True)
 
+        # ATP concentrations, free energies of hydrolysis, rates of Na-K-ATPase and metabolism:
+        (K_eqm_NaK,
+         omega_pump,
+         omega_met) = sp.symbols('K_eqm_NaK, Omega_pump, Omega_met', real=True)
+
+        # Divergence operator and other symbols:
+        delta_t = sp.symbols('Delta_t', real=True, positive=True)
+
         # Divergence operators (assuming constant flux across the membrane):
-        div_i = (2/r_cell) # divergence from membrane flux into cell
-        div_o = ((2*r_cell)/(2*r_cell*d_ecm + d_ecm**2)) # divergence from membrane flux into extracellular space
+        div_i = (2 / r_cell)
+        div_o = -((2 * r_cell) / (r_env ** 2 - r_cell ** 2))
 
+        # Flux equations:
+        # Explicit (in terms of past values):
+        f_Na_exp = P_Na * (Na_o0 - Na_i0 * sp.exp(alpha * V_mem))
+        f_K_exp = P_K * (K_o0 - K_i0 * sp.exp(alpha * V_mem))
+        f_Cl_exp = -P_Cl * (Cl_i0 - Cl_o0 * sp.exp(alpha * V_mem))  # Cl_i <--> Cl_o  delGo_K = 0
 
-        if solver_type is TimeSolverType.explicit:
-            f_Na0 = P_Na*(Na_o0 - Na_i0 * sp.exp(alpha * V_mem0))  # Na flux in terms of past Vmem, past Na in and out
-            f_K0 = P_Na*(K_o0 - K_i0 * sp.exp(alpha * V_mem0))  # K flux in terms of past Vmem, past K in and out
-            f_Cl0 = -P_Cl*(Cl_i0 - Cl_o0 * sp.exp(alpha * V_mem0)) # Cl flux in terms of past Vmem, past Cl in and out
+        # Define symbols:
+        f_NaKpump_exp = (omega_pump * (K_eqm_NaK * ADP * P * (K_i0 ** 2) * (Na_o0 ** 3) -
+                                        ATP * (K_o0 ** 2) * (Na_i0 ** 3) * sp.exp(alpha * V_mem))
+                         )
 
-            # Conduction current:
-            J_cond0 = z_Na*F*f_Na0 + z_K*F*f_K0 + z_Cl*F*f_Cl0  # current in terms of past concs. and past Vmem
+        f_NaKpump_Na_exp = 3 * f_NaKpump_exp
+        f_NaKpump_K_exp = -2 * f_NaKpump_exp
 
-            # Concentration updates in time, inside and out of the cell:
-            eq_Nai_t0 = sp.Eq((Na_i1 - Na_i0) / delta_t, div_i * f_Na0)
-            eq_Nao_t0 = sp.Eq((Na_o1 - Na_o0) / delta_t, -div_o * f_Na0)
+        # Add pump contribution to original ion fluxes:
+        f_Na_pump_exp = f_Na_exp + f_NaKpump_Na_exp
+        f_K_pump_exp = f_K_exp + f_NaKpump_K_exp
+        f_Cl_pump_exp = f_Cl_exp
 
-            eq_Ki_t0 = sp.Eq((K_i1 - K_i0) / delta_t, div_i * f_K0)
-            eq_Ko_t0 = sp.Eq((K_o1 - K_o0) / delta_t, -div_o * f_K0)
+        J_cond_pump_exp = (z_Na * F * f_Na_pump_exp +
+                           z_K * F * f_K_pump_exp +
+                           z_Cl * F * f_Cl_pump_exp
+                           )
 
-            eq_Cli_t0 = sp.Eq((Cl_i1 - Cl_i0) / delta_t, div_i * f_Cl0)
-            eq_Clo_t0 = sp.Eq((Cl_o1 - Cl_o0) / delta_t, -div_o * f_Cl0)
+        # Concentration updates in time, inside and out of the cell:
+        eq_Nai_t_pump_exp = sp.Eq((Na_i1 - Na_i0) / delta_t, div_i * f_Na_pump_exp)
+        eq_Nao_t_pump_exp = sp.Eq((Na_o1 - Na_o0) / delta_t, div_o * f_Na_pump_exp)
 
-            # Voltage update in time:
-            eq_Vm_t0 = sp.Eq((V_mem1 - V_mem0) / delta_t, (1 / c_mem) * J_cond0)
+        eq_Ki_t_pump_exp = sp.Eq((K_i1 - K_i0) / delta_t, div_i * f_K_pump_exp)
+        eq_Ko_t_pump_exp = sp.Eq((K_o1 - K_o0) / delta_t, div_o * f_K_pump_exp)
 
-            # Fully explicit time stepping: solve concentrations in terms of past Vmem and past concentrations;
-            # solve Vmem in terms of past concentrations:
-            sol0 = sp.solve((eq_Nai_t0, eq_Nao_t0, eq_Ki_t0, eq_Ko_t0, eq_Cli_t0, eq_Clo_t0, eq_Vm_t0),
-                       (Na_i1, Na_o1, K_i1, K_o1, Cl_i1, Cl_o1, V_mem1)
-                       )
+        eq_Cli_t_pump_exp = sp.Eq((Cl_i1 - Cl_i0) / delta_t, div_i * f_Cl_exp)
+        eq_Clo_t_pump_exp = sp.Eq((Cl_o1 - Cl_o0) / delta_t, div_o * f_Cl_exp)
 
-            sol0_list = []
+        # Here we use the quasi-static condition of zero membrane current instead of updating Vmem:
+        eq_J_pump_exp = sp.Eq(J_cond_pump_exp, 0)
 
-            sol0sub = []
-            for k, v in sol0.items():
-                sol0sub.append(sol0[k].simplify())
+        # Create a list of symbolic params to use in the creation of "lambdified" functions:
+        # Indices into the parameter list
+        self.i_Nai = 0
+        self.i_Nao = 1
+        self.i_Ki = 2
+        self.i_Ko = 3
+        self.i_Cli = 4
+        self.i_Clo = 5
+        self.i_Vmem = 6
 
-            sol0_list.append(sol0sub)
+        sym_param_list = [Na_i0, Na_o0, K_i0, K_o0, Cl_i0, Cl_o0, V_mem0,
+                          ATP, ADP, P, K_eqm_NaK, omega_pump,
+                          P_Na, P_K, P_Cl, z_Na, z_K, z_Cl, alpha, F,
+                          r_cell, d_ecm, c_mem, delta_t]
 
-        elif solver_type is TimeSolverType.implicit:
-            # Flux equations:
-            f_Na01 = P_Na*(Na_o0 - Na_i0*sp.exp(alpha*V_mem1))  # Na flux in terms of future Vmem, past Na in and out
-            f_K01 = P_Na*(K_o0 - K_i0 * sp.exp(alpha*V_mem1))  # K flux in terms of future Vmem, past K in and out
-            f_Cl01 = -P_Cl*(Cl_i0 - Cl_o0 * sp.exp(alpha*V_mem1))  # Cl flux in terms of future Vmem, past Cl in and out
+        if quasi_static_vmem:
 
-            # Conduction current:
-            J_cond01 = z_Na*F*f_Na01 + z_K*F*f_K01 + z_Cl*F*f_Cl01  # current in terms of past concs. and future Vmem
+            if update_env:
 
-            # Concentration updates in time, inside and out of the cell:
-            eq_Nai_t01 = sp.Eq((Na_i1 - Na_i0) / delta_t, div_i * f_Na01)
-            eq_Nao_t01 = sp.Eq((Na_o1 - Na_o0) / delta_t, -div_o * f_Na01)
+                # Solve the system of equations explicitly using the J=0 approximation:
+                sol_pump_exp = sp.solve((eq_Nai_t_pump_exp,
+                                         eq_Nao_t_pump_exp,
+                                         eq_Ki_t_pump_exp,
+                                         eq_Ko_t_pump_exp,
+                                         eq_Cli_t_pump_exp,
+                                         eq_Clo_t_pump_exp,
+                                         eq_J_pump_exp),
+                                        (Na_i1, Na_o1, K_i1, K_o1, Cl_i1, Cl_o1, V_mem)
+                                        )
 
-            eq_Ki_t01 = sp.Eq((K_i1 - K_i0) / delta_t, div_i * f_K01)
-            eq_Ko_t01 = sp.Eq((K_o1 - K_o0) / delta_t, -div_o * f_K01)
+                # Lambdify all the resulting expressions:
+                Nai_pump_funk = sp.lambdify((sym_param_list),
+                                            sol_pump_exp[0][0])
 
-            eq_Cli_t01 = sp.Eq((Cl_i1 - Cl_i0) / delta_t, div_i * f_Cl01)
-            eq_Clo_t01 = sp.Eq((Cl_o1 - Cl_o0) / delta_t, -div_o * f_Cl01)
+                Nao_pump_funk = sp.lambdify((sym_param_list),
+                                            sol_pump_exp[0][1])
 
-            # Voltage update in time:
-            eq_Vm_t01 = sp.Eq((V_mem1 - V_mem0) / delta_t, (1 / c_mem) * J_cond01)
+                Ki_pump_funk = sp.lambdify((sym_param_list),
+                                           sol_pump_exp[0][2])
 
-            # Partial implicit: solve concentrations in terms of past concentration and future Vmem;
-            # solve Vmem in terms of past concentrations and future Vmem:
-            sol0_list = sp.solve((eq_Nai_t01, eq_Nao_t01, eq_Ki_t01, eq_Ko_t01, eq_Cli_t01, eq_Clo_t01, eq_Vm_t01),
-                       (Na_i1, Na_o1, K_i1, K_o1, Cl_i1, Cl_o1, V_mem1)
-                       )
+                Ko_pump_funk = sp.lambdify((sym_param_list),
+                                           sol_pump_exp[0][3])
+
+                Cli_pump_funk = sp.lambdify((sym_param_list),
+                                            sol_pump_exp[0][4])
+
+                Clo_pump_funk = sp.lambdify((sym_param_list),
+                                            sol_pump_exp[0][5])
+
+                Vmem_pump_funk = sp.lambdify((sym_param_list),
+                                             sol_pump_exp[0][6])
+
+                update_eqn_dict['Nao'] = Nao_pump_funk
+                update_eqn_dict['Ko'] = Ko_pump_funk
+                update_eqn_dict['Clo'] = Clo_pump_funk
+
+            else:
+                # Solve the system of equations explicitly using the J=0 approximation but ignoring env updates:
+                sol_pump_exp = sp.solve((eq_Nai_t_pump_exp,
+                                         eq_Ki_t_pump_exp,
+                                         eq_Cli_t_pump_exp,
+                                         eq_J_pump_exp),
+                                        (Na_i1, K_i1, Cl_i1, V_mem)
+                                        )
+
+                Nai_pump_funk = sp.lambdify((sym_param_list),
+                                            sol_pump_exp[0][0])
+
+                Ki_pump_funk = sp.lambdify((sym_param_list),
+                                           sol_pump_exp[0][1])
+
+                Cli_pump_funk = sp.lambdify((sym_param_list),
+                                            sol_pump_exp[0][2])
+
+                Vmem_pump_funk = sp.lambdify((sym_param_list),
+                                             sol_pump_exp[0][3])
 
         else:
-            raise Exception("Only implicit and explicit time solver types are supported.")
+
+            # Fully explicit: solve concentrations in terms of past Vmem and past concentrations; solve Vmem
+            # in terms of past concentrations; This does not use J=0 approximatino at mem:
+            f_Na_exp2 = P_Na * (Na_o0 - Na_i0 * sp.exp(alpha * V_mem0))
+            f_K_exp2 = P_K * (K_o0 - K_i0 * sp.exp(alpha * V_mem0))
+            f_Cl_exp2 = -P_Cl * (Cl_i0 - Cl_o0 * sp.exp(alpha * V_mem0))  # Cl_i <--> Cl_o  delGo_K = 0
+
+            f_NaKpump_exp2 = (omega_pump * (K_eqm_NaK * ADP * P * (K_i0 ** 2) * (Na_o0 ** 3) -
+                                             ATP * (K_o0 ** 2) * (Na_i0 ** 3) * sp.exp(alpha * V_mem0))
+                              )
+
+            f_NaKpump_Na_exp2 = 3 * f_NaKpump_exp2
+            f_NaKpump_K_exp2 = -2 * f_NaKpump_exp2
+
+            f_Na_pump_exp2 = f_Na_exp2 + f_NaKpump_Na_exp2
+            f_K_pump_exp2 = f_K_exp2 + f_NaKpump_K_exp2
+            f_Cl_pump_exp2 = f_Cl_exp2  # Cl_i <--> Cl_o  delGo_K = 0
+
+            eq_Nai_t_pump_exp2 = sp.Eq((Na_i1 - Na_i0) / delta_t, div_i * f_Na_pump_exp2)
+            eq_Nao_t_pump_exp2 = sp.Eq((Na_o1 - Na_o0) / delta_t, div_o * f_Na_pump_exp2)
+
+            eq_Ki_t_pump_exp2 = sp.Eq((K_i1 - K_i0) / delta_t, div_i * f_K_pump_exp2)
+            eq_Ko_t_pump_exp2 = sp.Eq((K_o1 - K_o0) / delta_t, div_o * f_K_pump_exp2)
+
+            eq_Cli_t_pump_exp2 = sp.Eq((Cl_i1 - Cl_i0) / delta_t, div_i * f_Cl_pump_exp2)
+            eq_Clo_t_pump_exp2 = sp.Eq((Cl_o1 - Cl_o0) / delta_t, div_o * f_Cl_pump_exp2)
+
+            J_cond_pump_exp2 = (z_Na * F * f_Na_pump_exp2 +
+                                z_K * F * f_K_pump_exp2 +
+                                z_Cl * F * f_Cl_pump_exp2
+                                - F * f_NaKpump_exp2)
+
+            eq_Vm_t_pump_exp2 = sp.Eq((V_mem1 - V_mem0) / delta_t, (1 / c_mem) * J_cond_pump_exp2)
+
+            if update_env:
+                sol_exp2 = sp.solve((eq_Nai_t_pump_exp2,
+                                     eq_Nao_t_pump_exp2,
+                                     eq_Ki_t_pump_exp2,
+                                     eq_Ko_t_pump_exp2,
+                                     eq_Cli_t_pump_exp2,
+                                     eq_Clo_t_pump_exp2,
+                                     eq_Vm_t_pump_exp2),
+                                    (Na_i1, Na_o1, K_i1, K_o1, Cl_i1, Cl_o1, V_mem1)
+                                    )
+                Nao_pump_funk = sp.lambdify((sym_param_list),
+                                            sol_exp2[Na_o1])
+
+                Ko_pump_funk = sp.lambdify((sym_param_list),
+                                           sol_exp2[K_o1])
+
+                Clo_pump_funk = sp.lambdify((sym_param_list),
+                                            sol_exp2[Cl_o1])
+
+                update_eqn_dict['Nao'] = Nao_pump_funk
+                update_eqn_dict['Ko'] = Ko_pump_funk
+                update_eqn_dict['Clo'] = Clo_pump_funk
 
 
-        # Create Lambdified functions for numerical computations:
-        # Future Na+ inside cell:
-        Na_i1_funk = sp.lambdify(((F, R, T, d_ecm, r_cell, c_mem, z_Na, z_K, z_Cl, delta_t),
-                                  (P_Na, P_K, P_Cl), (Na_o0, Na_i0, K_o0, K_i0, Cl_o0, Cl_i0, V_mem0)),
-                                 sol0_list[0][0].simplify())
-        # Future Na+ outside cell:
-        Na_o1_funk = sp.lambdify(((F, R, T, d_ecm, r_cell, c_mem, z_Na, z_K, z_Cl, delta_t),
-                                  (P_Na, P_K, P_Cl), (Na_o0, Na_i0, K_o0, K_i0, Cl_o0, Cl_i0, V_mem0)),
-                                 sol0_list[0][1].simplify())
-        # Future K+ inside cell:
-        K_i1_funk = sp.lambdify(((F, R, T, d_ecm, r_cell, c_mem, z_Na, z_K, z_Cl, delta_t),
-                                  (P_Na, P_K, P_Cl), (Na_o0, Na_i0, K_o0, K_i0, Cl_o0, Cl_i0, V_mem0)),
-                                 sol0_list[0][2].simplify())
-        # Future K+ outside cell:
-        K_o1_funk = sp.lambdify(((F, R, T, d_ecm, r_cell, c_mem, z_Na, z_K, z_Cl, delta_t),
-                                  (P_Na, P_K, P_Cl), (Na_o0, Na_i0, K_o0, K_i0, Cl_o0, Cl_i0, V_mem0)),
-                                 sol0_list[0][3].simplify())
-        # Future Cl- inside cell:
-        Cl_i1_funk = sp.lambdify(((F, R, T, d_ecm, r_cell, c_mem, z_Na, z_K, z_Cl, delta_t),
-                                  (P_Na, P_K, P_Cl), (Na_o0, Na_i0, K_o0, K_i0, Cl_o0, Cl_i0, V_mem0)),
-                                 sol0_list[0][4].simplify())
-        # Future Cl- outside cell:
-        Cl_o1_funk = sp.lambdify(((F, R, T, d_ecm, r_cell, c_mem, z_Na, z_K, z_Cl, delta_t),
-                                  (P_Na, P_K, P_Cl), (Na_o0, Na_i0, K_o0, K_i0, Cl_o0, Cl_i0, V_mem0)),
-                                 sol0_list[0][5].simplify())
-        # Future Vmem:
-        Vmem_funk = sp.lambdify(((F, R, T, d_ecm, r_cell, c_mem, z_Na, z_K, z_Cl, delta_t),
-                                  (P_Na, P_K, P_Cl), (Na_o0, Na_i0, K_o0, K_i0, Cl_o0, Cl_i0, V_mem0)),
-                                 sol0_list[0][6].simplify())
+            else:
+                sol_exp2 = sp.solve((eq_Nai_t_pump_exp2,
+                                     eq_Ki_t_pump_exp2,
+                                     eq_Cli_t_pump_exp2,
+                                     eq_Vm_t_pump_exp2),
+                                    (Na_i1, K_i1, Cl_i1, V_mem1)
+                                    )
 
-        param_update_funk_list = [Na_i1_funk, Na_o1_funk,
-                                  K_i1_funk, K_o1_funk,
-                                  Cl_i1_funk, Cl_o1_funk,
-                                  Vmem_funk]
+            Nai_pump_funk = sp.lambdify((sym_param_list),
+                                          sol_exp2[Na_i1])
 
-        return param_update_funk_list
+            Ki_pump_funk = sp.lambdify((sym_param_list),
+                                          sol_exp2[K_i1])
+
+            Cli_pump_funk = sp.lambdify((sym_param_list),
+                                          sol_exp2[Cl_i1])
+
+            Vmem_pump_funk = sp.lambdify((sym_param_list),
+                                          sol_exp2[V_mem1])
+
+        update_eqn_dict['Nai'] = Nai_pump_funk
+        update_eqn_dict['Ki'] = Ki_pump_funk
+        update_eqn_dict['Cli'] = Cli_pump_funk
+        update_eqn_dict['Vmem'] = Vmem_pump_funk
+
+        return update_eqn_dict
+
 
     @beartype
-    def time_loop(self, dt: float, N_iter: int=100):
+    def time_loop(self, p: CalculionParams):
         '''
 
         '''
 
+        Na_i_time = []
+        K_i_time = []
+        Cl_i_time = []
+        V_mem_time = []
+        time = []
 
-# Voltage, measurements, constants:
-# V_mem = psi_i - psi_o
+        param_change_time = []
 
-# Concentrations inside and out of the cell, membrane permeabilities:
-# Na_o, Na_i, z_Na, P_Na = sp.symbols('Na_o, Na_i, z_Na, P_Na')
-# K_o, K_i, z_K, P_K = sp.symbols('K_o, K_i, z_K, P_K')
-# Cl_o, Cl_i, z_Cl, P_Cl = sp.symbols('Cl_o, Cl_i, z_Cl, P_Cl')
-# # X_o, X_i, z_X, P_X = sp.symbols('X_o, X_i, z_X, P_X') # Proteins
+        Na_o_time = []
+        K_o_time = []
+        Cl_o_time = []
 
-# Na_o, Na_i, K_o, K_i, Cl_o, Cl_i, ATP, ADP, P = sp.symbols('Na_o, Na_i, K_o, K_i, Cl_o, Cl_i, ATP, ADP, P',
-#                                               real=True, positive=True)
+        tt = 0.0  # First time value
+
+        # Make the reaction (stoichiometry) matrix:
+        # Msys = sim.make_reaction_matrix(p.r_cell, r_env, p.d_mem, p.e_r, include_vmem=t_update_vmem)
+
+        # Estimate initial Vmem from parameters assuming system is at electrical steady state (J=0):
+        V_mem = vmem_ghk_pump(p.P_Na, p.Na_o, p.Na_i,
+                              p.P_K, p.K_o, p.K_i,
+                              p.P_Cl, p.Cl_o, p.Cl_i,
+                              p.Keqm_NaK, p.omega_NaK,
+                              p.ATP, p.ADP, p.P, p.alpha)
+
+        # Initialize the parameter list:
+        param_list = [p.Na_i, p.Na_o, p.K_i, p.K_o, p.Cl_i, p.Cl_o, V_mem,
+                          p.ATP, p.ADP, p.P, p.Keqm_NaK, p.omega_NaK,
+                          p.P_Na, p.P_K, p.P_Cl, p.z_Na, p.z_K, p.z_Cl, p.alpha, p.F,
+                          p.r_cell, p.d_ecm, p.c_mem, p.delta_t]
+
+        for ii in range(p.N_iter):
+
+            param_list_o = param_list*1
+
+            # Append all values to the time-storage arrays:
+            Na_i_time.append(param_list[self.i_Nai])
+            K_i_time.append(param_list[self.i_Ki])
+            Cl_i_time.append(param_list[self.i_Cli])
+            V_mem_time.append(param_list[self.i_Vmem])
+            time.append(tt)
+
+            # update values:
+            param_list[self.i_Nai] = self.update_eqn_dict['Nai'](*param_list)
+            param_list[self.i_Ki] = self.update_eqn_dict['Ki'](*param_list)
+            param_list[self.i_Cli] = self.update_eqn_dict['Cli'](*param_list)
+            param_list[self.i_Vmem] = self.update_eqn_dict['Vmem'](*param_list)
+
+            if self._update_env:
+                Na_o_time.append(param_list[self.i_Nao])
+                K_o_time.append(param_list[self.i_Ko])
+                Cl_o_time.append(param_list[self.i_Clo])
+
+                param_list[self.i_Nao] = self.update_eqn_dict['Nao'](*param_list)
+                param_list[self.i_Ko] = self.update_eqn_dict['Ko'](*param_list)
+                param_list[self.i_Clo] = self.update_eqn_dict['Clo'](*param_list)
+
+            # update the time-step:
+            tt += p.delta_t
+
+            # Calculate the change in parameters from last time step:
+            change_rate = np.asarray(param_list[0:7]) - np.asarray(param_list_o[0:7])
+            self.param_change = change_rate
+            param_change_time.append(change_rate)
+
+        # Assign storage arrays to the object:
+        self.Na_i_time = np.asarray(Na_i_time)
+        self.Na_o_time = np.asarray(Na_o_time)
+        self.K_i_time = np.asarray(K_i_time)
+        self.K_o_time = np.asarray(K_o_time)
+        self.Cl_i_time = np.asarray(Cl_i_time)
+        self.Cl_o_time = np.asarray(Cl_o_time)
+        self.V_mem_time = np.asarray(V_mem_time)
+        self.time = np.asarray(time)
+
+        self.param_list = param_list
+
+        self.param_change_time = param_change_time
 
 
 
-# X_o, X_i, z_X, P_X = sp.symbols('X_o, X_i, z_X, P_X') # Proteins
 
-# ATP concentrations, free energies of hydrolysis, rates of Na-K-ATPase and metabolism:
-# K_eqm_NaK, omega_pump, omega_met = sp.symbols('K_eqm_NaK, Omega_pump, Omega_met', real=True)
-
-# Individual ion fluxes:
-# Cation fluxes:
-# f_Na = P_Na*(Na_o - Na_i*sp.exp(alpha*V_mem)) # Na_o <--> Na_i  delGo_Na = 0
-# f_K = P_K*(K_o - K_i*sp.exp(alpha*V_mem)) # K_o <--> K_i  delGo_K = 0
-# Cl (anion) reaction is written backwards to ge the same exp(alpha*V_mem) term in the final expression
-# f_Cl = -P_Cl*(Cl_i - Cl_o*sp.exp(alpha*V_mem)) # Cl_i <--> Cl_o  delGo_K = 0
-# f_X = -P_X*(X_i - X_o*sp.exp(alpha*V_mem)) # X_i <--> X_o  delGo_K = 0
-
-# Conduction current:
-# J_cond = z_Na*F*f_Na + z_K*F*f_K + z_Cl*F*f_Cl
-# J_cond = z_Na*F*f_Na + z_K*F*f_K + z_Cl*F*f_Cl + z_X*F*f_X
-
-# # Solve for V_mem when J_cond = 0 yeilds the GHK equation:
-# eq_GHK = sp.solve(J_cond, V_mem)[0].simplify()
