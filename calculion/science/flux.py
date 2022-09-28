@@ -10,6 +10,7 @@ Methods to calculate ion flux.
 # ....................{ IMPORTS                            }....................
 import numpy as np
 from beartype import beartype
+from calculion.science.params import CalculionParams
 #-------------------------------------------------------------------------------
 
 @beartype
@@ -62,7 +63,7 @@ def f_NaKpump_flux(ATP: float, ADP: float, P: float,
     '''
     Calculate flux for the NaK-ATPase pump.
     '''
-    flux = -omega_pump * (ADP * P * K_eqm_NaK * (K_i ** 2) * Na_o ** 3 -
+    flux = omega_pump * (ADP * P * K_eqm_NaK * (K_i ** 2) * Na_o ** 3 -
                            ATP * (K_o ** 2) * (Na_i ** 3) * np.exp(V_mem * alpha))
 
     return flux
@@ -106,3 +107,54 @@ def compute_flux_vector(P_Na: float, Na_o: float, Na_i: float,
                                  )
 
     return np.asarray([flx_Na, flx_K, flx_Cl, flx_NaKpump])
+
+def make_reaction_matrix(p: CalculionParams, quasi_static_vmem: bool=True, update_env: bool=False):
+    '''
+    Return a matrix for computing the changes to parameters
+    for the bioelectric system.
+
+    When this reaction matrix is taken in a dot product with the flux vector,
+    flux_v = [f_Na, f_K, f_Cl, f_NaKpump], the time change vector,
+    dparams = [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o] (for include_vmem = False) and
+    dparams = [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o, dVmem] (for include_vmem = True)
+    is returned.
+    '''
+
+    div_i = 2 / p.r_cell # divergence term cell compartment
+    div_o = -(2 * p.r_cell) / (p.r_env**2 - p.r_cell**2) # divergence term env compartment
+    cm = p.c_mem # membrane patch capacitance [F/m^2]
+
+    if quasi_static_vmem:
+        if update_env:
+            Msys = np.asarray([[div_i, 0, 0, 3*div_i],
+                               [div_o, 0, 0, 3*div_o],
+                               [0, div_i, 0, -2*div_i],
+                               [0, div_o, 0, -2*div_o],
+                               [0, 0, div_i, 0],
+                               [0, 0, div_o, 0],
+                               ])
+
+        else:
+            Msys = np.asarray([[div_i, 0, 0, 3*div_i],
+                               [0, div_i, 0, -2*div_i],
+                               [0, 0, div_i, 0],
+                               ])
+
+    else:
+        if update_env:
+            Msys = np.asarray([[div_i, 0, 0, 3*div_i],
+                               [div_o, 0, 0, 3*div_o],
+                               [0, div_i, 0, -2*div_i],
+                               [0, div_o, 0, -2*div_o],
+                               [0, 0, div_i, 0],
+                               [0, 0, div_o, 0],
+                               [p.F/cm, p.F/cm, -p.F/cm, p.F/cm]
+                               ])
+        else:
+            Msys = np.asarray([[div_i, 0, 0, 3*div_i],
+                               [0, div_i, 0, -2*div_i],
+                               [0, 0, div_i, 0],
+                               [p.F/cm, p.F/cm, -p.F/cm, p.F/cm]
+                               ])
+
+    return Msys

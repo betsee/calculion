@@ -14,9 +14,10 @@ target values.
 # FIXME: Add in the symbolic math
 
 import numpy as np
+from numpy import ndarray
 from beartype import beartype
-from beartype.typing import Optional
-from calculion.science.flux import compute_flux_vector
+from beartype.typing import Optional, Union
+from calculion.science.flux import compute_flux_vector, make_reaction_matrix
 from calculion.science.params import CalculionParams
 from calculion.science.vmem import vmem_ghk_pump
 from scipy.optimize import minimize
@@ -41,53 +42,12 @@ class CalculionSim(object):
             self.p = p
 
         # Create a reaction matrix
-        self.M_react_sys = self.make_reaction_matrix(
-            self.p.r_cell, self.p.r_env, self.p.d_mem, self.p.e_r)
-
-
-    def make_reaction_matrix(
-        self, r_cell: float, r_env: float, d_mem: float, e_r: float, include_vmem: bool=False):
-        '''
-        Return a matrix for computing the changes to parameters
-        for the bioelectric system.
-
-        When this reaction matrix is taken in a dot product with the flux vector,
-        flux_v = [f_Na, f_K, f_Cl, f_NaKpump], the time change vector,
-        dparams = [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o] (for include_vmem = False) and
-        dparams = [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o, dVmem] (for include_vmem = True)
-        is returned.
-        '''
-
-        div_i = 2 / r_cell # divergence term cell compartment
-        div_o = (2 * r_cell) / (r_env**2 - r_cell**2) # divergence term env compartment
-        cm = (self.p.e_o * e_r) / d_mem # membrane patch capacitance [F/m^2]
-
-        if include_vmem is False:
-            Msys = np.asarray([[div_i, 0, 0, -3*div_i],
-                               [-div_o, 0, 0, 3*div_o],
-                               [0, div_i, 0, 2*div_i],
-                               [0, -div_o, 0, -2*div_o],
-                               [0, 0, div_i, 0],
-                               [0, 0, -div_o, 0],
-                               # [po.F/cm, po.F/cm, -po.F/cm, -po.F/cm]
-                               ])
-
-        else:
-            Msys = np.asarray([[div_i, 0, 0, -3*div_i],
-                               [-div_o, 0, 0, 3*div_o],
-                               [0, div_i, 0, 2*div_i],
-                               [0, -div_o, 0, -2*div_o],
-                               [0, 0, div_i, 0],
-                               [0, 0, -div_o, 0],
-                               [self.p.F/cm, self.p.F/cm, -self.p.F/cm, -self.p.F/cm]
-                               ])
-
-        return Msys
+        self.M_react_sys = make_reaction_matrix(self.p, quasi_static_vmem=True, update_env=False)
 
 
     def calc_param_change(
         self,
-        paramv: list[float],
+        paramv: Union[list, ndarray],
         P_Na: float, P_K: float, P_Cl: float,
         Na_o: float, K_o: float, Cl_o: float,
         ATP: float, ADP: float, P: float,
@@ -188,7 +148,7 @@ class CalculionSim(object):
                         args=(PNa, PK, PCl,
                               Nao, Ko, Clo,
                               ATP, ADP, P, Keqm_NaK, omega_pump,
-                              alpha, self.M_react_sys),
+                              alpha),
                         method='trust-constr',
                         jac=None,
                         hess=None,

@@ -63,7 +63,7 @@ class CalculionParams(object):
     P: float = 0.01  # ADP concentration range 0.004 to 0.1  [mol/m^3 or mmol/L]
     Keqm_NaK = np.exp(delGo_ATP / (R * T)) # Equillibrium constant for ATP hydrolysis reaction
 
-    omega_NaK: float = 1.0e-12 # Rate constant for the Na-K-ATPase ion pump
+    omega_NaK: float = 5.0e-13 # Rate constant for the Na-K-ATPase ion pump
     # omega_nkcc = 0.0 # Rate constant for the NKCC ion symporter
     # omega_kcc = 0.0 # Rate constant for the KCC ion symporter
 

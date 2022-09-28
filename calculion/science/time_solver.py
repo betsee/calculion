@@ -15,6 +15,8 @@ import sympy as sp
 from calculion.science.sci_enum import TimeSolverType
 from calculion.science.params import CalculionParams
 from calculion.science.vmem import vmem_ghk_pump
+from calculion.science.flux import make_reaction_matrix, compute_flux_vector
+from calculion.science.evolution_equations import update_all_var
 
 
 class TimeSolver(object):
@@ -27,10 +29,22 @@ class TimeSolver(object):
 
         '''
 
-        self.update_eqn_dict = self._get_update_eqns(quasi_static_vmem=quasi_static_vmem, update_env=update_env)
+
 
         self._quasi_static_vmem = quasi_static_vmem
         self._update_env = update_env
+
+        self.update_eqn_dict = None
+        self.Msys = None
+
+        # Create indices to access variables in parameter lists:
+        self.i_Nai = 0
+        self.i_Nao = 1
+        self.i_Ki = 2
+        self.i_Ko = 3
+        self.i_Cli = 4
+        self.i_Clo = 5
+        self.i_Vmem = 6
 
 
     @beartype
@@ -38,6 +52,7 @@ class TimeSolver(object):
         '''
 
         '''
+
         update_eqn_dict = {}
 
         V_mem, alpha, d_ecm, r_cell, c_mem, F, R, T = sp.symbols('V_mem, alpha, d_ecm, r_cell, c_mem, F, R, T',
@@ -103,16 +118,6 @@ class TimeSolver(object):
 
         # Here we use the quasi-static condition of zero membrane current instead of updating Vmem:
         eq_J_pump_exp = sp.Eq(J_cond_pump_exp, 0)
-
-        # Create a list of symbolic params to use in the creation of "lambdified" functions:
-        # Indices into the parameter list
-        self.i_Nai = 0
-        self.i_Nao = 1
-        self.i_Ki = 2
-        self.i_Ko = 3
-        self.i_Cli = 4
-        self.i_Clo = 5
-        self.i_Vmem = 6
 
         sym_param_list = [Na_i0, Na_o0, K_i0, K_o0, Cl_i0, Cl_o0, V_mem0,
                           ATP, ADP, P, K_eqm_NaK, omega_pump,
@@ -212,7 +217,7 @@ class TimeSolver(object):
             J_cond_pump_exp2 = (z_Na * F * f_Na_pump_exp2 +
                                 z_K * F * f_K_pump_exp2 +
                                 z_Cl * F * f_Cl_pump_exp2
-                                - F * f_NaKpump_exp2)
+                                )
 
             eq_Vm_t_pump_exp2 = sp.Eq((V_mem1 - V_mem0) / delta_t, (1 / c_mem) * J_cond_pump_exp2)
 
@@ -265,14 +270,88 @@ class TimeSolver(object):
         update_eqn_dict['Cli'] = Cli_pump_funk
         update_eqn_dict['Vmem'] = Vmem_pump_funk
 
-        return update_eqn_dict
-
+        self.update_eqn_dict = update_eqn_dict
 
     @beartype
     def time_loop(self, p: CalculionParams):
         '''
 
         '''
+
+        Na_i_time = []
+        K_i_time = []
+        Cl_i_time = []
+        V_mem_time = []
+        time = []
+
+        param_change_time = []
+
+        Na_o_time = []
+        K_o_time = []
+        Cl_o_time = []
+
+        tt = 0.0  # First time value
+
+        # Estimate initial Vmem from parameters assuming system is at electrical steady state (J=0):
+        V_mem = vmem_ghk_pump(p.P_Na, p.Na_o, p.Na_i,
+                              p.P_K, p.K_o, p.K_i,
+                              p.P_Cl, p.Cl_o, p.Cl_i,
+                              p.Keqm_NaK, p.omega_NaK,
+                              p.ATP, p.ADP, p.P, p.alpha)
+
+        # Initialize the list of variables:
+        var_list = [p.Na_i, p.Na_o, p.K_i, p.K_o, p.Cl_i, p.Cl_o, V_mem]
+
+        for ii in range(p.N_iter):
+
+            # Append all values to the time-storage arrays:
+            Na_o_time.append(var_list[self.i_Nao])
+            K_o_time.append(var_list[self.i_Ko])
+            Cl_o_time.append(var_list[self.i_Clo])
+            Na_i_time.append(var_list[self.i_Nai])
+            K_i_time.append(var_list[self.i_Ki])
+            Cl_i_time.append(var_list[self.i_Cli])
+            V_mem_time.append(var_list[self.i_Vmem])
+            time.append(tt)
+
+            # update the variables:
+            var_list, change_list = update_all_var(var_list,
+                                                       p,
+                                                       self._quasi_static_vmem,
+                                                       self._update_env)
+
+
+            # update the time-step:
+            tt += p.delta_t
+
+            # Calculate the change in parameters from last time step:
+            self.param_change = np.asarray(change_list)
+            param_change_time.append(self.param_change)
+
+        # Assign storage arrays to the object:
+        self.Na_i_time = np.asarray(Na_i_time)
+        self.Na_o_time = np.asarray(Na_o_time)
+        self.K_i_time = np.asarray(K_i_time)
+        self.K_o_time = np.asarray(K_o_time)
+        self.Cl_i_time = np.asarray(Cl_i_time)
+        self.Cl_o_time = np.asarray(Cl_o_time)
+        self.V_mem_time = np.asarray(V_mem_time)
+        self.time = np.asarray(time)
+
+        self.param_list = var_list
+
+        self.param_change_time = param_change_time
+
+
+    @beartype
+    def time_loop1(self, p: CalculionParams):
+        '''
+
+        '''
+
+        if self.update_eqn_dict is None:
+            self._get_update_eqns(quasi_static_vmem = self._quasi_static_vmem,
+                              update_env = self._update_env)
 
         Na_i_time = []
         K_i_time = []
@@ -309,6 +388,9 @@ class TimeSolver(object):
             param_list_o = param_list*1
 
             # Append all values to the time-storage arrays:
+            Na_o_time.append(param_list[self.i_Nao])
+            K_o_time.append(param_list[self.i_Ko])
+            Cl_o_time.append(param_list[self.i_Clo])
             Na_i_time.append(param_list[self.i_Nai])
             K_i_time.append(param_list[self.i_Ki])
             Cl_i_time.append(param_list[self.i_Cli])
@@ -322,10 +404,6 @@ class TimeSolver(object):
             param_list[self.i_Vmem] = self.update_eqn_dict['Vmem'](*param_list)
 
             if self._update_env:
-                Na_o_time.append(param_list[self.i_Nao])
-                K_o_time.append(param_list[self.i_Ko])
-                Cl_o_time.append(param_list[self.i_Clo])
-
                 param_list[self.i_Nao] = self.update_eqn_dict['Nao'](*param_list)
                 param_list[self.i_Ko] = self.update_eqn_dict['Ko'](*param_list)
                 param_list[self.i_Clo] = self.update_eqn_dict['Clo'](*param_list)
@@ -351,6 +429,115 @@ class TimeSolver(object):
         self.param_list = param_list
 
         self.param_change_time = param_change_time
+
+    def time_loop2(self, p: CalculionParams):
+        '''
+
+        '''
+
+        if self.Msys is None:
+            self.Msys = make_reaction_matrix(p, quasi_static_vmem=self._quasi_static_vmem)
+
+        Na_i_time = []
+        K_i_time = []
+        Cl_i_time = []
+        V_mem_time = []
+        time = []
+
+        param_change_time = []
+
+        Na_o_time = []
+        K_o_time = []
+        Cl_o_time = []
+
+        tt = 0.0  # First time value
+
+        # Initial values:
+        Na_o = p.Na_o
+        Na_i = p.Na_i
+        K_o = p.K_o
+        K_i = p.K_i
+        Cl_o = p.Cl_o
+        Cl_i = p.Cl_i
+
+
+        # Make the reaction (stoichiometry) matrix:
+        # Msys = sim.make_reaction_matrix(p.r_cell, r_env, p.d_mem, p.e_r, include_vmem=t_update_vmem)
+
+        # Estimate initial Vmem from parameters assuming system is at electrical steady state (J=0):
+        V_mem = vmem_ghk_pump(p.P_Na, p.Na_o, p.Na_i,
+                              p.P_K, p.K_o, p.K_i,
+                              p.P_Cl, p.Cl_o, p.Cl_i,
+                              p.Keqm_NaK, p.omega_NaK,
+                              p.ATP, p.ADP, p.P, p.alpha)
+
+        for ii in range(p.N_iter):
+
+            Na_o_time.append(Na_o)
+            Na_i_time.append(Na_i)
+            K_o_time.append(K_o)
+            K_i_time.append(K_i)
+            Cl_o_time.append(Cl_o)
+            Cl_i_time.append(Cl_i)
+            V_mem_time.append(V_mem)
+            time.append(tt)
+
+            V_mem_o = V_mem*1
+
+            # Compute the flux vector for the present value of parameters:
+            [f_Na, f_K, f_Cl, f_NaKpump] = compute_flux_vector(p.P_Na, Na_o, Na_i,
+                                                               p.P_K, K_o, K_i,
+                                                               p.P_Cl, Cl_o, Cl_i,
+                                                               p.ATP, p.ADP, p.P,
+                                                               p.Keqm_NaK, p.omega_NaK, V_mem, p.alpha)
+
+            if self._quasi_static_vmem is True:
+
+                [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o] = self.Msys.dot([f_Na, f_K, f_Cl, f_NaKpump])
+
+                # Estimate Vmem from parameters assuming system comes to rapid electrical steady state (Jmem=0):
+                V_mem = vmem_ghk_pump(p.P_Na, Na_o, Na_i,
+                                      p.P_K, K_o, K_i,
+                                      p.P_Cl, Cl_o, Cl_i,
+                                      p.Keqm_NaK, p.omega_NaK,
+                                      p.ATP, p.ADP, p.P, p.alpha)
+
+                dVm = V_mem - V_mem_o
+
+
+            else:
+                [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o, dVm] = self.Msys.dot([f_Na, f_K, f_Cl, f_NaKpump])
+
+                V_mem += p.delta_t * dVm
+
+
+            if self._update_env:
+                Na_o += p.delta_t * dNa_o
+                K_o += p.delta_t * dK_o
+                Cl_o += p.delta_t * dCl_o
+
+            Na_i += p.delta_t * dNa_i
+            K_i += p.delta_t * dK_i
+            Cl_i +=p.delta_t * dCl_i
+
+            tt += p.delta_t
+
+            if self._update_env:
+                self.param_change = np.asarray([dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o, dVm])
+            else:
+                self.param_change = np.asarray([dNa_i, 0.0, dK_i, 0.0, dCl_i, 0.0, dVm])
+
+            param_change_time.append(self.param_change)
+
+        self.Na_o_time = np.asarray(Na_o_time)
+        self.Na_i_time = np.asarray(Na_i_time)
+        self.K_o_time = np.asarray(K_o_time)
+        self.K_i_time = np.asarray(K_i_time)
+        self.Cl_o_time = np.asarray(Cl_o_time)
+        self.Cl_i_time = np.asarray(Cl_i_time)
+        self.V_mem_time = np.asarray(V_mem_time)
+        self.time = np.asarray(time)
+        self.param_change_time = np.asarray(param_change_time)
 
 
 
