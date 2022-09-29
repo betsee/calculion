@@ -53,6 +53,12 @@ into *all* submodules of this subpackage.
 #  test. If both pass, we can be reasonably certain that the app at least
 #  conforms to superficial expectations. See also:
 #      https://github.com/acschofield/streamlit_mock
+#FIXME: Also note that Selenium has largely been obsoleted by Cypress, but that
+#Cypress is largely unusable in Python and especially under pytest. Enter
+#"pylenium", a best-of-breed admixture that aims to expose Selenium to pytest in
+#a Cypress-like way. "pylenium" sounds and looks great, but it's *NOT* as
+#actively maintained as we'd like. Still, if we ever get into E2E (which seems
+#doubtful), then "pylenium" would probably be our first stop along the way.
 
 # ....................{ FIXTURES                           }....................
 # Provide app-specific pytest fixtures required by lower-level tests.

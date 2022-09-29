@@ -58,7 +58,7 @@ approach as well. This submodule is architected ala this StackOverflow answer:
 # validation, *NO* other modules are safely importable from.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import sys
-from calculion import core
+from calculion import main
 from streamlit.web import cli
 
 # ....................{ MAIN                               }....................
@@ -66,9 +66,9 @@ from streamlit.web import cli
 # (e.g., by being passed as the argument to the "-m" option), run this
 # Streamlit-based web app.
 if __name__ == '__main__':
-    # Absolute filename of the "calculion.core" submodule serving as the
+    # Absolute filename of the "calculion.main" submodule serving as the
     # entry-point for this web app.
-    core_filename = core.__file__
+    core_filename = main.__file__
 
     #FIXME: Non-ideal. This assumes "streamlit" is in the current ${PATH}.
     #Frankly, this entire approach is absurd. Let's inspect the

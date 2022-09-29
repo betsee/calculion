@@ -56,7 +56,7 @@ PYTHON_ARGS=(
     # to the directory defining this Bash script by temporarily changing the
     # current working directory (CWD) to this directory *BEFORE* running this
     # command. In other words, these are not the droids you're looking for.
-    calculion/core.py
+    calculion/main.py
 
     #FIXME: Uncomment to increase the debugging level.
     # Log *ONLY* informational messages, warnings, errors, and exceptions.

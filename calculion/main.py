@@ -14,13 +14,6 @@ Specifically, this submodule is imported by:
   active Python interpreter when passed the ``--m`` option on the command line
   (e.g., ``python3 -m calculion``).
 * Integration tests programmatically exercising app functionality.
-
-Caveats
-----------
-**This submodule is intentionally not named** ``calculion.main``. Why? Because
-doing so would invite ambiguity with the existing :mod:`calculion.__main__`
-dunder submodule and top-level ``main`` script residing in the root of the
-repository declaring this package.
 '''
 
 # ....................{ IMPORTS                            }....................
