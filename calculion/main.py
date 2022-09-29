@@ -34,6 +34,8 @@ def main() -> None:
 
     # ..................{ IMPORTS                            }..................
     from calculion.science.optimize import Optimizer
+    from calculion.science.params import CalculionParams
+    from calculion.science.compute import get_steady_state
     from streamlit import (
         title,
     )
@@ -45,6 +47,11 @@ def main() -> None:
     # ..................{ LOCALS                             }..................
     #FIXME: Enable after we fix CalculionSim(), please.
     #sim = CalculionSim()
+    p = CalculionParams()  # Create a parameters instance for the web app
+
+    # Populate Calculion tables and cells with default parameters from p:
+
+
 
     # ..................{ PLACEHOLDER                        }..................
     #FIXME: Remove this facsimile content after actually implementing something.

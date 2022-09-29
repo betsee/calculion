@@ -8,7 +8,9 @@ Methods to calculate transmembrane voltage V_mem.
 '''
 
 import numpy as np
+from numpy import ndarray
 from beartype import beartype
+from beartype.typing import Union
 
 @beartype
 def vmem_ghk(P_Na: float, Na_o: float, Na_i: float,
@@ -67,3 +69,33 @@ def vmem_bioe(Vm: float, J: float, c_mem: float):
     Vm += (1/c_mem)*J
 
     return Vm
+
+def vrev_na(Na_o: Union[float, ndarray],
+            Na_i: Union[float, ndarray],
+            alpha: float):
+    '''
+    Calculates the reversal potential for sodium ions.
+    '''
+    Vna = np.log(Na_o / Na_i) / alpha
+
+    return Vna
+
+def vrev_k(K_o: Union[float, ndarray],
+            K_i: Union[float, ndarray],
+            alpha: float):
+    '''
+    Calculates the reversal potential for potassium ions.
+    '''
+    Vk = np.log(K_o / K_i) / alpha
+
+    return Vk
+
+def vrev_cl(Cl_o: Union[float, ndarray],
+            Cl_i: Union[float, ndarray],
+            alpha: float):
+    '''
+    Calculates the reversal potential for chloride ions.
+    '''
+    Vcl = np.log(Cl_i / Cl_o) / alpha
+
+    return Vcl
