@@ -13,6 +13,7 @@ from beartype.typing import Union
 import numpy as np
 from numpy import ndarray
 from calculion.science.params import CalculionParams
+from calculion.science.vmem import vmem_ghk_pump
 
 @beartype
 def update_all_var(variables_list: Union[ndarray, list],
@@ -350,10 +351,124 @@ def unit_loop(var_list: list[float],
               quasi_static_vmem: bool,
               update_env: bool):
     '''
+    Unit loop based on a var_list of [Na_i, Na_o, K_i, K_o, Cl_i, Cl_o, V_mem].
+    Returns the sum of squared parameter changes to each variable in the list.
 
     '''
     # compute change to the variables:
     _, change_list = update_all_var(var_list,
+                                           p,
+                                           quasi_static_vmem=quasi_static_vmem,
+                                           update_env=update_env)
+    # Return the sum of squares:
+    return np.sum(np.asarray(change_list)**2)
+
+
+def unit_loop_inverse_all(var_list: list[float],
+              p: CalculionParams,
+              quasi_static_vmem: bool,
+              update_env: bool):
+    '''
+    Unit loop based on a var_list of var_list = [P_Na, P_K, P_Cl, omega_NaK, Keqm_NaK, ATP, ADP, P], to
+    assist in solving the inverse-optimization problem.
+    Returns the sum of squared parameter changes to system steady state.
+
+    '''
+
+    # Change values of parameters according to the input variables list:
+    p.P_Na = var_list[0]
+    p.P_K = var_list[1]
+    p.P_Cl = var_list[2]
+    p.omega_NaK = var_list[3]
+    p.Keqm_NaK = var_list[4]
+    p.ATP = var_list[5]
+    p.ADP = var_list[6]
+    p.P = var_list[7]
+
+    param_list = [p.Na_i, p.Na_o, p.K_i, p.K_o, p.Cl_i, p.Cl_o, p.target_Vmem]
+    # compute change to the variables:
+    _, change_list = update_all_var(param_list,
+                                           p,
+                                           quasi_static_vmem=quasi_static_vmem,
+                                           update_env=update_env)
+    # Return the sum of squares:
+    return np.sum(np.asarray(change_list)**2)
+
+def unit_loop_inverse_mem(var_list: list[float],
+              p: CalculionParams,
+              quasi_static_vmem: bool,
+              update_env: bool):
+    '''
+    Unit loop based on a var_list of var_list = [P_Na, P_K, P_Cl], to
+    assist in solving the inverse-optimization problem focusing on membrane permeabilities.
+    Returns the sum of squared parameter changes to system steady state.
+
+    '''
+
+    # Change values of parameters according to the input variables list:
+    p.P_Na = var_list[0]
+    p.P_K = var_list[1]
+    p.P_Cl = var_list[2]
+    # p.omega_NaK = var_list[3]
+    # p.Keqm_NaK = var_list[4]
+    # p.ATP = var_list[5]
+    # p.ADP = var_list[6]
+    # p.P = var_list[7]
+
+    param_list = [p.Na_i, p.Na_o, p.K_i, p.K_o, p.Cl_i, p.Cl_o, p.target_Vmem]
+    # compute change to the variables:
+    _, change_list = update_all_var(param_list,
+                                           p,
+                                           quasi_static_vmem=quasi_static_vmem,
+                                           update_env=update_env)
+    # Return the sum of squares:
+    return np.sum(np.asarray(change_list)**2)
+
+def unit_loop_inverse_pump(var_list: list[float],
+              p: CalculionParams,
+              quasi_static_vmem: bool,
+              update_env: bool):
+    '''
+    Unit loop based on a var_list of var_list = [omega_NaK, Keqm_NaK], to
+    assist in solving the inverse-optimization problem focusing on NaK-ATPase pump properties.
+    Returns the sum of squared parameter changes to system steady state.
+
+    '''
+
+    # Change values of parameters according to the input variables list:
+    p.omega_NaK = var_list[0]
+    p.Keqm_NaK = var_list[1]
+
+    param_list = [p.Na_i, p.Na_o, p.K_i, p.K_o, p.Cl_i, p.Cl_o, p.target_Vmem]
+    # compute change to the variables:
+    _, change_list = update_all_var(param_list,
+                                           p,
+                                           quasi_static_vmem=quasi_static_vmem,
+                                           update_env=update_env)
+    # Return the sum of squares:
+    return np.sum(np.asarray(change_list)**2)
+
+def unit_loop_inverse_met(var_list: list[float],
+              p: CalculionParams,
+              quasi_static_vmem: bool,
+              update_env: bool):
+    '''
+    Unit loop based on a var_list of var_list = [omega_NaK, Keqm_NaK, ATP, ADP, P], to
+    assist in solving the inverse-optimization problem focusing on NaK-ATPase and metabolic parameters.
+    Returns the sum of squared parameter changes to system steady state.
+
+    '''
+
+    # Change values of parameters according to the input variables list:
+    p.omega_NaK = var_list[0]
+    p.Keqm_NaK = var_list[1]
+    p.ATP = var_list[2]
+    p.ADP = var_list[3]
+    p.P = var_list[4]
+
+    param_list = [p.Na_i, p.Na_o, p.K_i, p.K_o, p.Cl_i, p.Cl_o, p.target_Vmem]
+    # compute change to the variables:
+    _, change_list = update_all_var(param_list,
                                            p,
                                            quasi_static_vmem=quasi_static_vmem,
                                            update_env=update_env)

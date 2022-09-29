@@ -43,7 +43,7 @@ class CalculionParams(object):
     # FIXME: later make these selectable user profiles (e.g. "mammalian neuron", "xenopus", "squid axon" etc)
     P_Na = 1.0e-10 # Membrane permeability to sodium ions [m/s]
     P_K = 15.0e-10 # Membrane permeability to potassium ions [m/s]
-    P_Cl = 5.0e-10 # Membrane permeability to chloride ions [m/s]
+    P_Cl = 2.0e-10 # Membrane permeability to chloride ions [m/s]
 
     z_Na: int = 1
     z_K: int = 1
@@ -63,12 +63,14 @@ class CalculionParams(object):
     P: float = 0.01  # ADP concentration range 0.004 to 0.1  [mol/m^3 or mmol/L]
     Keqm_NaK = np.exp(delGo_ATP / (R * T)) # Equillibrium constant for ATP hydrolysis reaction
 
-    omega_NaK: float = 3.0e-12 # Rate constant for the Na-K-ATPase ion pump
+    omega_NaK: float = 5.0e-13 # Rate constant for the Na-K-ATPase ion pump
     # omega_nkcc = 0.0 # Rate constant for the NKCC ion symporter
     # omega_kcc = 0.0 # Rate constant for the KCC ion symporter
 
     delta_t: float = 10.0 # Time step in seconds
     N_iter: int = 50000 # Maximum number of iterative time-steps to run
+
+    target_Vmem = -10.0e-3 # Target Vmem in V
 
 
 
