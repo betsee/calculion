@@ -4,14 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-Classes and methods to calculate properties for the complete bioelectric system,
+Classes and methods to calculate properties for the complete single-cell bioelectric system,
 including optimization methods to solve for equilibrium concentrations and
 target values.
 '''
 
 # ....................{ IMPORTS                            }....................
-# FIXME: Add in the itterative temporal simulator
-# FIXME: Add in the symbolic math
 
 import numpy as np
 from numpy import ndarray
