@@ -46,7 +46,7 @@ class CalculionParams(object):
     # FIXME: later make these selectable user profiles (e.g. "mammalian neuron", "xenopus", "squid axon" etc)
     P_Na_nm = 0.1 # Membrane permeability to sodium ions [nm/s]
     P_K_nm = 1.5 # Membrane permeability to potassium ions [nm/s]
-    P_Cl_nm = 0.2 # Membrane permeability to chloride ions [nm/s]
+    P_Cl_nm = 0.1 # Membrane permeability to chloride ions [nm/s]
 
     Na_o: float = 145.0 # Extracellular sodium ion concentration [mol/m^3 or mmol/L]
     Na_i: float = 10.0 # Intracellular sodium ion concentration [mol/m^3 or mmol/L]
