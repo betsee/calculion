@@ -338,12 +338,12 @@ def update_all_var(variables_list: Union[ndarray, list],
         delKo = Ko1 - K_o
         delClo = Clo1 - Cl_o
 
-    else:
-        delNao = 0.0
-        delKo = 0.0
-        delClo = 0.0
+        change_list = [delNai, delNao, delKi, delKo, delCli, delClo, delVm]
 
-    return [Nai1, Nao1, Ki1, Ko1, Cli1, Clo1, Vm1], [delNai, delNao, delKi, delKo, delCli, delClo, delVm]
+    else:
+        change_list = [delNai, delKi, delCli, delVm]
+
+    return [Nai1, Nao1, Ki1, Ko1, Cli1, Clo1, Vm1], change_list
 
 def unit_loop(var_list: list[float],
               p: CalculionParams,

@@ -16,6 +16,7 @@ This submodule integration tests the public API of the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from calculion_test._util.mark.pytskip import skip
 
 # ....................{ TESTS                              }....................
 #FIXME: Consider posting a new feature request on the Streamlit issue tracker
@@ -27,6 +28,56 @@ This submodule integration tests the public API of the
 #* A Streamlit mock API similar to that of the existing third-party
 #  "streamlit_mock" package but hopefully more actively maintained against
 #  upstream changes in the Streamlit API.
+
+#FIXME: Investigate why this test fails under Conda, please. It seems likely
+#that this is a ${PATH} issue, indeed. See below. *sigh*
+#FIXME: Additionally, note it seems that we should be passing
+#"standalone_mode=True" to Click, because this is the documentation for
+#Click's main() function:
+# def main(
+#         self,
+#         args: t.Optional[t.Sequence[str]] = None,
+#         prog_name: t.Optional[str] = None,
+#         complete_var: t.Optional[str] = None,
+#         standalone_mode: bool = True,
+#         windows_expand_args: bool = True,
+#         **extra: t.Any,
+# ) -> t.Any:
+#     """This is the way to invoke a script with all the bells and
+#     whistles as a command line application.  This will always terminate
+#     the application after a call.  If this is not wanted, ``SystemExit``
+#     needs to be caught.
+#
+#     This method is also available by directly calling the instance of
+#     a :class:`Command`.
+#
+#     :param args: the arguments that should be used for parsing.  If not
+#                  provided, ``sys.argv[1:]`` is used.
+#     :param prog_name: the program name that should be used.  By default
+#                       the program name is constructed by taking the file
+#                       name from ``sys.argv[0]``.
+#     :param complete_var: the environment variable that controls the
+#                          bash completion support.  The default is
+#                          ``"_<prog_name>_COMPLETE"`` with prog_name in
+#                          uppercase.
+#     :param standalone_mode: the default behavior is to invoke the script
+#                             in standalone mode.  Click will then
+#                             handle exceptions and convert them into
+#                             error messages and the function will never
+#                             return but shut down the interpreter.  If
+#                             this is set to `False` they will be
+#                             propagated to the caller and the return
+#                             value of this function is the return value
+#                             of :meth:`invoke`.
+#     :param windows_expand_args: Expand glob patterns, user dir, and
+#         env vars in command line args on Windows.
+#     :param extra: extra keyword arguments are forwarded to the context
+#                   constructor.  See :class:`Context` for more information.
+#FIXME: Likewise, given the above, it seems likely that we also do *NOT*
+#need to monkey-patch "sys.argv". Instead, just pass those arguments via the
+#"args" parameter. At least that's useful.
+
+@skip('Currently broken under Conda for unknown reasons.')
 def test_app_lifecycle(monkeypatch) -> None:
     '''
     Integration test exercising the **maximally trivial app lifecycle** (i.e.,

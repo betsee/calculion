@@ -40,7 +40,7 @@ def main() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    from calculion.science.compute import CalculionSim
+    from calculion.science.optimize import Optimizer
     from streamlit import (
         title,
     )
@@ -51,7 +51,7 @@ def main() -> None:
 
     # ..................{ LOCALS                             }..................
     #FIXME: Enable after we fix CalculionSim(), please.
-    # sim = CalculionSim()
+    #sim = CalculionSim()
 
     # ..................{ PLACEHOLDER                        }..................
     #FIXME: Remove this facsimile content after actually implementing something.

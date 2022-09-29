@@ -9,10 +9,8 @@ Class to generate temporal updates to transmembrane potential Vmem and ion conce
 
 # ....................{ IMPORTS                            }....................
 from beartype import beartype
-from beartype.typing import Optional
 import numpy as np
 import sympy as sp
-from calculion.science.sci_enum import TimeSolverType
 from calculion.science.params import CalculionParams
 from calculion.science.vmem import vmem_ghk_pump
 from calculion.science.flux import make_reaction_matrix, compute_flux_vector
@@ -24,7 +22,7 @@ class TimeSolver(object):
 
     '''
 
-    def __init__(self, quasi_static_vmem: bool=True, update_env: bool=True):
+    def __init__(self, quasi_static_vmem: bool=True, update_env: bool=True, verbose=False):
         '''
 
         '''
@@ -36,6 +34,8 @@ class TimeSolver(object):
 
         self.update_eqn_dict = None
         self.Msys = None
+
+        self._verbose = verbose
 
         # Create indices to access variables in parameter lists:
         self.i_Nai = 0
@@ -273,7 +273,7 @@ class TimeSolver(object):
         self.update_eqn_dict = update_eqn_dict
 
     @beartype
-    def time_loop(self, p: CalculionParams):
+    def time_loop(self, p: CalculionParams, convergence_tol: float=1.0e-7):
         '''
 
         '''
@@ -328,6 +328,11 @@ class TimeSolver(object):
             self.param_change = np.asarray(change_list)
             param_change_time.append(self.param_change)
 
+            if np.sqrt(np.mean(self.param_change**2)) < convergence_tol:
+                if self._verbose:
+                    print(f"System is at steady state after {ii} itterations.")
+                break
+
         # Assign storage arrays to the object:
         self.Na_i_time = np.asarray(Na_i_time)
         self.Na_o_time = np.asarray(Na_o_time)
@@ -342,9 +347,8 @@ class TimeSolver(object):
 
         self.param_change_time = param_change_time
 
-
     @beartype
-    def time_loop1(self, p: CalculionParams):
+    def time_loop1(self, p: CalculionParams, convergence_tol: float=1.0e-7):
         '''
 
         '''
@@ -416,6 +420,11 @@ class TimeSolver(object):
             self.param_change = change_rate
             param_change_time.append(change_rate)
 
+            if np.sqrt(np.mean(self.param_change**2)) < convergence_tol:
+                if self._verbose:
+                    print(f"System is at steady state after {ii} itterations.")
+                break
+
         # Assign storage arrays to the object:
         self.Na_i_time = np.asarray(Na_i_time)
         self.Na_o_time = np.asarray(Na_o_time)
@@ -430,13 +439,15 @@ class TimeSolver(object):
 
         self.param_change_time = param_change_time
 
-    def time_loop2(self, p: CalculionParams):
+    def time_loop2(self, p: CalculionParams, convergence_tol: float=1.0e-7):
         '''
 
         '''
 
         if self.Msys is None:
-            self.Msys = make_reaction_matrix(p, quasi_static_vmem=self._quasi_static_vmem)
+            self.Msys = make_reaction_matrix(p,
+                                             quasi_static_vmem=self._quasi_static_vmem,
+                                             update_env=self._update_env)
 
         Na_i_time = []
         K_i_time = []
@@ -493,7 +504,14 @@ class TimeSolver(object):
 
             if self._quasi_static_vmem is True:
 
-                [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o] = self.Msys.dot([f_Na, f_K, f_Cl, f_NaKpump])
+                if self._update_env:
+                    [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o] = self.Msys.dot([f_Na, f_K, f_Cl, f_NaKpump])
+
+                else:
+                    [dNa_i, dK_i, dCl_i] = self.Msys.dot([f_Na, f_K, f_Cl, f_NaKpump])
+                    dNa_o = 0.0
+                    dK_o = 0.0
+                    dCl_o = 0.0
 
                 # Estimate Vmem from parameters assuming system comes to rapid electrical steady state (Jmem=0):
                 V_mem = vmem_ghk_pump(p.P_Na, Na_o, Na_i,
@@ -506,15 +524,21 @@ class TimeSolver(object):
 
 
             else:
-                [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o, dVm] = self.Msys.dot([f_Na, f_K, f_Cl, f_NaKpump])
+                if self._update_env:
+                    [dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o, dVm] = self.Msys.dot([f_Na, f_K, f_Cl, f_NaKpump])
+
+                else:
+                    [dNa_i, dK_i, dCl_i, dVm] = self.Msys.dot([f_Na, f_K, f_Cl, f_NaKpump])
+                    dNa_o = 0.0
+                    dK_o = 0.0
+                    dCl_o = 0.0
 
                 V_mem += p.delta_t * dVm
 
 
-            if self._update_env:
-                Na_o += p.delta_t * dNa_o
-                K_o += p.delta_t * dK_o
-                Cl_o += p.delta_t * dCl_o
+            Na_o += p.delta_t * dNa_o
+            K_o += p.delta_t * dK_o
+            Cl_o += p.delta_t * dCl_o
 
             Na_i += p.delta_t * dNa_i
             K_i += p.delta_t * dK_i
@@ -525,9 +549,14 @@ class TimeSolver(object):
             if self._update_env:
                 self.param_change = np.asarray([dNa_i, dNa_o, dK_i, dK_o, dCl_i, dCl_o, dVm])
             else:
-                self.param_change = np.asarray([dNa_i, 0.0, dK_i, 0.0, dCl_i, 0.0, dVm])
+                self.param_change = np.asarray([dNa_i, dK_i, dCl_i, dVm])
 
             param_change_time.append(self.param_change)
+
+            if np.sqrt(np.mean(self.param_change**2)) < convergence_tol:
+                if self._verbose:
+                    print(f"System is at steady state after {ii} itterations.")
+                break
 
         self.Na_o_time = np.asarray(Na_o_time)
         self.Na_i_time = np.asarray(Na_i_time)

@@ -330,4 +330,4 @@ jobs:
           #   with "PYTHONDEVMODE: 1" above), as doing so could have unintended
           #   consequences for "pip". See also:
           #       https://docs.python.org/3/library/devmode.html
-          python -X dev -m pytest --forked --maxfail=1
+          python -X dev -m pytest --maxfail=1

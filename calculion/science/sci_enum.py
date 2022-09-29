@@ -9,9 +9,3 @@ Enumerated types for the Calculion Science Core.
 
 from enum import Enum
 
-class TimeSolverType(Enum):
-    '''
-    The type of temporal solver to use.
-    '''
-    explicit = 'explicit'
-    implicit = 'implicit'

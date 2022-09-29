@@ -15,7 +15,7 @@ top-level ``README.rst`` file.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_unless_package
+from calculion_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
