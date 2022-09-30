@@ -7,7 +7,8 @@
 Calculate steady-state equilibrium concentrations and Vmem for the complete bioelectric system from
 user-specified properties. This represents a top-level function in Calculion.
 '''
-from beartype import beartype
+from beartype import beartype, BeartypeConf
+from beartype.typing import Optional
 import pandas as pd
 from pandas import DataFrame
 from calculion.science.params import CalculionParams
@@ -17,12 +18,13 @@ from calculion.science.vmem import vrev_na, vrev_k, vrev_cl, vmem_ghk_pump
 # import streamlit as st
 
 # @st.cache
+#@beartype(conf=BeartypeConf(is_debug=True))
 @beartype
 def get_steady_state(p: CalculionParams,
                      iterative_sol: bool=False,
                      update_env: bool=False,
                      quasi_static_vmem: bool=True,
-                     ) -> tuple[DataFrame, DataFrame]:
+                     ) -> tuple[DataFrame, DataFrame, Optional[TimeSolver]]:
     '''
     Function to compute the steady-state values of the bioelectrical system (i.e. the equilibrium ion
     concentrations and Vmem).
@@ -86,6 +88,8 @@ def get_steady_state(p: CalculionParams,
         K_o_eq = p.K_o
         Cl_o_eq = p.Cl_o
 
+        sim_time = None
+
     else:
         sim_time = TimeSolver(quasi_static_vmem=quasi_static_vmem,
                               update_env=update_env,
@@ -109,6 +113,12 @@ def get_steady_state(p: CalculionParams,
             K_o_eq = p.K_o
             Cl_o_eq = p.Cl_o
 
+        # Calculate final reversal potentials for the ions in a time-dependent manner :
+        sim_time.V_rev_Na_time = vrev_na(sim_time.Na_o_time, sim_time.Na_i_time, p.alpha)
+        sim_time.V_rev_K_time = vrev_k(sim_time.K_o_time, sim_time.K_i_time, p.alpha)
+        sim_time.V_rev_Cl_time = vrev_cl(sim_time.Cl_o_time, sim_time.Cl_i_time, p.alpha)
+
+
     # Calculate final reversal potentials for the ions (in units of mV):
     V_rev_Na_eq = 1e3*vrev_na(Na_o_eq, Na_i_eq, p.alpha)
     V_rev_K_eq = 1e3*vrev_k(K_o_eq, K_i_eq, p.alpha)
@@ -116,29 +126,29 @@ def get_steady_state(p: CalculionParams,
 
     round_dec = p.decimals_in_rounding
 
-    steady_state_ions_dict = {'$Na^{+}_{in}$': (round(p.Na_i, round_dec), round(Na_i_eq, round_dec), '$mM$'),
-                              '$K^{+}_{in}$': (round(p.K_i, round_dec), round(K_i_eq, round_dec), '$mM$'),
-                              '$Cl^{+}_{in}$': (round(p.Cl_i, round_dec), round(Cl_i_eq, round_dec), '$mM$'),
-                              '$Na^{+}_{out}$': (round(p.Na_o, round_dec), round(Na_o_eq, round_dec), '$mM$'),
-                              '$K^{+}_{out}$': (round(p.K_o, round_dec), round(K_o_eq, round_dec), '$mM$'),
-                              '$Cl^{+}_{out}$': (round(p.Cl_o, round_dec), round(Cl_o_eq, round_dec), '$mM$')
+    # See also this Wikipedia article on Unicode superscripts and subscripts:
+    #     https://en.wikipedia.org/wiki/Unicode_subscripts_and_superscripts
+    steady_state_ions_dict = {
+                              'Na⁺ᵢₙ': (round(p.Na_i, round_dec), round(Na_i_eq, round_dec)),
+                              'K⁺ᵢₙ': (round(p.K_i, round_dec), round(K_i_eq, round_dec)),
+                              'Cl⁻ᵢₙ': (round(p.Cl_i, round_dec), round(Cl_i_eq, round_dec)),
+                              'Na⁺ₒᵤₜ': (round(p.Na_o, round_dec), round(Na_o_eq, round_dec)),
+                              'K⁺ₒᵤₜ': (round(p.K_o, round_dec), round(K_o_eq, round_dec)),
+                              'Cl⁻ₒᵤₜ': (round(p.Cl_o, round_dec), round(Cl_o_eq, round_dec))
                             }
 
     ions_dataframe = pd.DataFrame.from_dict(steady_state_ions_dict,
-                                    orient='index', columns=['Initial', 'Final', 'Units'])
+                                    orient='index', columns=['Initial [mM]', 'Final [mM]'])
     # ions_dataframe.style.set_caption('Ion Concentrations')
 
-    steady_state_elec_dict = {'$V_{mem}$': (round(V_mem_o, round_dec), round(V_mem_eq, round_dec), '$mV$'),
-                                '$V_{Na}$': (round(V_rev_Na_o, round_dec), round(V_rev_Na_eq, round_dec), '$mV$'),
-                                '$V_{K}$': (round(V_rev_K_o, round_dec), round(V_rev_K_eq, round_dec), '$mV$'),
-                                '$V_{Cl}$': (round(V_rev_Cl_o, round_dec), round(V_rev_Cl_eq, round_dec), '$mV$'),
+    steady_state_elec_dict = {'Vₘₑₘ': (round(V_mem_o, round_dec), round(V_mem_eq, round_dec)),
+                                'Vᵣₑᵥ Na⁺': (round(V_rev_Na_o, round_dec), round(V_rev_Na_eq, round_dec)),
+                                'Vᵣₑᵥ K⁺': (round(V_rev_K_o, round_dec), round(V_rev_K_eq, round_dec)),
+                                'Vᵣₑᵥ Cl⁻': (round(V_rev_Cl_o, round_dec), round(V_rev_Cl_eq, round_dec)),
                                 }
 
     elec_dataframe = pd.DataFrame.from_dict(steady_state_elec_dict,
-                                            orient='index', columns=['Initial', 'Final', 'Units'])
+                                            orient='index', columns=['Initial [mV]', 'Final [mV]'])
     # elec_dataframe.style.set_caption('Bioelectrical Properties')
 
-    return ions_dataframe, elec_dataframe
-
-
-
+    return ions_dataframe, elec_dataframe, sim_time

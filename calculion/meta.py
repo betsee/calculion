@@ -321,6 +321,7 @@ LIBS_RUNTIME_MANDATORY = (
 
     # Science stack.
     'numpy >=1.22.0',
+    'pandas >=1.5.0',
     'scipy >=1.7.0',
     'sympy >=1.9.0',
 

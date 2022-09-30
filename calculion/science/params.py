@@ -39,7 +39,7 @@ class CalculionParams(object):
     # Cell and environmental properties and options:
     T_C: float = 37.0 # Temperature [degrees C]
     r_cell_um: float = 5.0 # cell radius [um]
-    d_ecm_nm: float = 25.0 # Excellular space width [nm]
+    d_ecm_um: float = 1.0 # Excellular space width [um]
     d_mem_nm: float = 5.0 # Plasma membrane thickness [nm]
     e_r: float = 10.0 # cell membrane relative electric permittivity
 
@@ -66,7 +66,7 @@ class CalculionParams(object):
 
     # Calculated parameters (used internally in calculations):
     r_cell = r_cell_um*1e-6 # radius of the cell [m]
-    d_ecm = d_ecm_nm*1e-9 # thickness of the extracellular space [m]
+    d_ecm = d_ecm_um*1e-6 # thickness of the extracellular space [m]
     r_env = r_cell + d_ecm # radius of the surrounding environment [m]
     d_mem = d_mem_nm*1e-9 # cell membrane thickness [m]
     c_mem = (e_o*e_r)/d_mem # Cell membrane patch capacitance [F/m^2]

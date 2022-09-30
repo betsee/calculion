@@ -16,7 +16,7 @@ from calculion.science.vmem import vmem_ghk_pump
 from calculion.science.flux import make_reaction_matrix, compute_flux_vector
 from calculion.science.evolution_equations import update_all_var
 
-
+@beartype
 class TimeSolver(object):
     '''
 
@@ -47,7 +47,6 @@ class TimeSolver(object):
         self.i_Vmem = 6
 
 
-    @beartype
     def _get_update_eqns(self, quasi_static_vmem: bool=True, update_env: bool=True):
         '''
 

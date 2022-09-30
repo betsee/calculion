@@ -34,13 +34,17 @@ def main() -> None:
 
     # ..................{ IMPORTS                            }..................
     from calculion.science.params import CalculionParams
-    from numpy import exp
+    from numpy import exp, column_stack
+    from pandas import DataFrame
     from calculion.science.compute import get_steady_state
     from streamlit import (
         title,
+        # set_page_config
     )
 
     # ..................{ HEADERS                            }..................
+    # set_page_config(layout="wide") # set a wide page configuration?
+
     # Human-readable title of this web app.
     title('Calculion')
 
@@ -48,15 +52,16 @@ def main() -> None:
     p = CalculionParams()  # Create a default parameters instance
 
     # ..................{ Calculion App             }..................
-    #FIXME: Remove this facsimile content after actually implementing something.
     import streamlit as st
 
+
+
     # App subtitle, if we want it:
-    st.write('Calculating the **slow** changes of bioelectricity')
+    # st.write('Calculating the *slow* changes of bioelectricity')
 
-    def my_widget(key):
-
-        return st.button("Click me " + key)
+    # def my_widget(key):
+    #
+    #     return st.button("Click me " + key)
 
     # The sidebar will contain all widgets to collect user-data for the simulation:
     # Create and name the sidebar:
@@ -145,7 +150,7 @@ def main() -> None:
             p.Cl_o = param_widget('Cl- out [mM]',
                              min_value=ion_min_val,
                              max_value=ion_max_val,
-                             value=p.K_o,
+                             value=p.Cl_o,
                              step=ion_slider_step,
                              format='%f',
                              key='slider_Cl_o',
@@ -177,7 +182,7 @@ def main() -> None:
             p.Cl_i = param_widget('Cl- in [mM]',
                              min_value=ion_min_val,
                              max_value=ion_max_val,
-                             value=p.K_i,
+                             value=p.Cl_i,
                              step=ion_slider_step,
                              format='%f',
                              key='slider_Cl_i',
@@ -277,26 +282,47 @@ def main() -> None:
 
         with sim_settings_block:
 
-            itersol_checkbox = st.checkbox("Use iterative solver", value=False, key='checkbox_itersol')
+            # Iterative solver will be used by default
+            itersol_checkbox = st.checkbox("Use iterative solver", value=True, key='checkbox_itersol')
 
             if itersol_checkbox:
                 p.iterative_solver = True # Set the iterative solver parameter to True
+
+                # Iterative solver time step:
+                p.delta_t = param_widget('Simulation time-step [s]',
+                                          min_value=1.0e-3,
+                                          max_value=100.0,
+                                          value=p.delta_t,
+                                          step=0.01,
+                                          format='%f',
+                                          key='slider_delta_t',
+                                          label_visibility='visible')
+
+                # Iterative solver max iterations:
+                p.N_iter = param_widget('Simulation max iterations',
+                                          min_value=10,
+                                          max_value=100000,
+                                          value=p.N_iter,
+                                          step=1,
+                                          format='%d',
+                                          key='slider_Niter',
+                                          label_visibility='visible')
 
                 if st.checkbox('Update environment concentrations', value=False, key='checkbox_env_con'):
                     p.update_env = True
 
                     # Extracellular space properties
-                    p.d_ecm_nm = param_widget('Extracellular space thickness [nm]',
-                                              min_value=10.0,
-                                              max_value=100000.0,
-                                              value=p.d_ecm_nm,
-                                              step=1.0,
+                    p.d_ecm_um = param_widget('Extracellular space thickness [um]',
+                                              min_value=0.1,
+                                              max_value=1000.0,
+                                              value=p.d_ecm_um,
+                                              step=0.1,
                                               format='%f',
                                               key='slider_decm',
                                               label_visibility='visible')
 
                     # Update extracellular space width to meters for simulations:
-                    p.d_ecm = p.d_ecm_nm * 1e-9
+                    p.d_ecm = p.d_ecm_um * 1e-6
 
                 else:
                     p.update_env = False
@@ -335,18 +361,106 @@ def main() -> None:
 
 
     #-----MAIN RESULTS AREA---------------------------------------------------------------------------------------------
+    # After collecting parameter values from the user, compute the steady-state values for the bioelectrical system:
+
+    @st.cache # Cache the results of this slower function
+    def calculate_results(p):
+        ion_ss, elec_ss, time_sols = get_steady_state(p,
+                                       iterative_sol=p.iterative_solver,
+                                       update_env=p.update_env,
+                                       quasi_static_vmem=p.quasi_static_vmem)
+
+        return ion_ss, elec_ss, time_sols
+
     # In the main area present the results of the simulation:
-    st.write('Na out:', p.Na_o, 'Na in:', p.Na_i)
-    st.write('Iterative solver: ', p.iterative_solver)
-    st.write('Update env:', p.update_env)
+    ion_vals_ss, elec_vals_ss, time_sols = calculate_results(p)
 
-    # This works in the main area
-    clicked = my_widget("first")
+    # Split the main area into three tabs:
+    # Introduction tab (tab1) will display a write-up of the theory behind Calculion
+    # Simulation Results tab will display the simulation results as tables and charts
+    # Bioelectrical Network tab will show a graphical depiction of the bioelectrical network.
+    tab1, tab2, tab3 = st.tabs(["Introduction", "Simulation Results", "Bioelectrical Network"])
 
-    # And within an expander
-    my_expander = st.expander("Expand", expanded=True)
-    with my_expander:
-        clicked = my_widget("second")
+    with tab1:
+        st.write("### Why Calculion?")
+        # App subtitle, if we want it:
+        st.write('#### Calculating the *slow* changes of bioelectricity')
+        st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
+
+    with tab2:
+        st.write("### Simulation Results")
+        # st.write("*(Alter sidebar Simulation Variables to explore the possibilities...)*")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write('###### Steady-State Bioelectrical Potentials')
+            st.dataframe(elec_vals_ss)
+
+        with col2:
+            st.write('###### Steady-State Ion Concentrations')
+            st.dataframe(ion_vals_ss)
+
+        # Iterative solver results:
+        if itersol_checkbox:
+            st.write("#### Iterative Simulation Results")
+
+            # Stack the results into a data stack and display as line chart:
+            volt_dat = column_stack((time_sols.time/3600,
+                                     1e3*time_sols.V_mem_time,
+                                     1e3*time_sols.V_rev_Na_time,
+                                     1e3*time_sols.V_rev_K_time,
+                                     1e3*time_sols.V_rev_Cl_time
+                                     ))
+
+            volt_datframe =DataFrame(volt_dat, columns=['Time (hours)',
+                                                        'V_mem',
+                                                        'V_rev Na+',
+                                                        'V_rev K+',
+                                                        'V_rev Cl-'])
+
+            st.write('###### Bioelectrical Potentials')
+            st.line_chart(volt_datframe,
+                          x='Time (hours)',
+                          y=('V_mem', 'V_rev Na+', 'V_rev K+', 'V_rev Cl-'),
+                          use_container_width=True)
+
+            # Stack the results of ion concentration changes as a function of time:
+            ion_dat = column_stack((time_sols.time / 3600,
+                             time_sols.Na_i_time,
+                             time_sols.K_i_time,
+                             time_sols.Cl_i_time))
+
+            ion_datframe = DataFrame(ion_dat, columns = ['Time (hours)',
+                                                         'Na+ in',
+                                                         'K+ in',
+                                                         'Cl- in'])
+
+            st.write('###### Intracellular Ion Concentrations')
+            st.line_chart(ion_datframe,
+                          x='Time (hours)',
+                          y=('Na+ in', 'K+ in', 'Cl- in'),
+                          use_container_width=True)
+
+            if p.update_env:
+                # Create a final line chart of Extracellular ion concentrations
+                # Stack the results of ion concentration changes as a function of time:
+                ion_dat = column_stack((time_sols.time / 3600,
+                                        time_sols.Na_o_time,
+                                        time_sols.K_o_time,
+                                        time_sols.Cl_o_time))
+
+                ion_datframe = DataFrame(ion_dat, columns=['Time (hours)',
+                                                           'Na+ out',
+                                                           'K+ out',
+                                                           'Cl- out'])
+
+                st.write('###### Extracellular Ion Concentrations')
+                st.line_chart(ion_datframe,
+                              x='Time (hours)',
+                              y=('Na+ out', 'K+ out', 'Cl- out'),
+                              use_container_width=True)
+
+
 
 
 # Run our Streamlit-based web app.
