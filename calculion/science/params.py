@@ -32,6 +32,7 @@ class CalculionParams(object):
     update_env: bool = False # Update the env. concs. (True) or assume cell surrounded by large media bath (False)?
     quasi_static_vmem: bool = True # Use the quasi-static Vmem approximation?
     iterative_solver: bool = False # Use the iterative solver (True) or solve an optimization problem (False)?
+    steady_state_tol: float = 1.0e-7 # Convergence tolerance to use with iterative solver (change below taken to be ss).
     delta_t: float = 10.0 # Time step [s] for iterative solver
     N_iter: int = 50000 # Maximum number of iterative time-steps to run to seek steady-state
     target_Vmem = -10.0e-3 # Target Vmem in V

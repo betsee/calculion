@@ -16,6 +16,9 @@ from calculion.science.vmem import vmem_ghk_pump
 from calculion.science.flux import make_reaction_matrix, compute_flux_vector
 from calculion.science.evolution_equations import update_all_var
 
+# FIXME: We're still solving the whole analytic equation set every time this is declared, so are not
+# taking advantage of the hard-coded evolution equations...
+
 @beartype
 class TimeSolver(object):
     '''

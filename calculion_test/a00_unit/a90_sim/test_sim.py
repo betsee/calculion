@@ -90,8 +90,8 @@ def test_calc() -> None:
     p = CalculionParams()  # Create a set of default parameters
 
     # Run through all the different ways to calculate the steady-state parameters:
-    ionparam, voltparam = get_steady_state(p, iterative_sol=False, update_env=False, quasi_static_vmem=True)
-    ionparam, voltparam = get_steady_state(p, iterative_sol=True, update_env=False, quasi_static_vmem=True)
-    ionparam, voltparam = get_steady_state(p, iterative_sol=True, update_env=True, quasi_static_vmem=True)
-    ionparam, voltparam = get_steady_state(p, iterative_sol=True, update_env=False, quasi_static_vmem=False)
-    ionparam, voltparam = get_steady_state(p, iterative_sol=True, update_env=True, quasi_static_vmem=False)
+    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=False, update_env=False, quasi_static_vmem=True)
+    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=True, update_env=False, quasi_static_vmem=True)
+    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=True, update_env=True, quasi_static_vmem=True)
+    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=True, update_env=False, quasi_static_vmem=False)
+    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=True, update_env=True, quasi_static_vmem=False)

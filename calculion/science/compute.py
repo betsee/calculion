@@ -65,8 +65,8 @@ def get_steady_state(p: CalculionParams,
     V_rev_K_o = 1e3*vrev_k(p.K_o, p.K_i, p.alpha)
     V_rev_Cl_o = 1e3*vrev_cl(p.Cl_o, p.Cl_i, p.alpha)
 
-    if update_env or not(quasi_static_vmem):
-        p.delta_t = 0.1 # alter the time constant to handle the more sensitive computation of a small extracell space
+    # if update_env or not(quasi_static_vmem):
+    #     p.delta_t = 0.1 # alter the time constant to handle the more sensitive computation of a small extracell space
 
     if iterative_sol is False:
         sim = Optimizer(p) # Create an instance of the Calculion Optimizer
@@ -96,7 +96,7 @@ def get_steady_state(p: CalculionParams,
                               verbose=False)
 
         # Run the iterative solver until it reaches a steady-state or hits maximum number of iterations (p.N_iter):
-        sim_time.time_loop(p)
+        sim_time.time_loop(p, convergence_tol=p.steady_state_tol)
 
         V_mem_eq = 1e3*sim_time.V_mem_time[-1]
         Na_i_eq = sim_time.Na_i_time[-1]

@@ -308,8 +308,22 @@ def main() -> None:
                                           key='slider_Niter',
                                           label_visibility='visible')
 
+                # Iterative solver convergence tolerance:
+                p.steady_state_tol = param_widget('Convergence tolerance',
+                                          min_value=1e-10,
+                                          max_value=1e-5,
+                                          value=p.steady_state_tol,
+                                          step=1e-10,
+                                          format='%e',
+                                          key='slider_tol',
+                                          label_visibility='visible')
+
                 if st.checkbox('Update environment concentrations', value=False, key='checkbox_env_con'):
                     p.update_env = True
+
+                    # FIXME: if this is checked, set the slider and p-value for timestep to a smaller value:
+                    # Here only the p-value is changed, but we need to change the slider
+                    p.delta_t = 0.1
 
                     # Extracellular space properties
                     p.d_ecm_um = param_widget('Extracellular space thickness [um]',
@@ -329,6 +343,10 @@ def main() -> None:
 
                 if st.checkbox('Fully dynamic Vmem updates', value=False, key='checkbox_dyn_vmem'):
                     p.quasi_static_vmem = False
+
+                    # FIXME: if this is checked, set the slider and p-value for timestep to a smaller value:
+                    # Here only the p-val is changed, but we need to change the slider
+                    p.delta_t = 0.1
 
                     # Membrane relative electrical permittivity space properties
                     p.e_r = param_widget('Membrane relative permittivity',
