@@ -47,7 +47,7 @@ class CalculionParams(object):
     # FIXME: later make these selectable user profiles (e.g. "mammalian neuron", "xenopus", "squid axon" etc)
     P_Na_nm = 0.1 # Membrane permeability to sodium ions [nm/s]
     P_K_nm = 1.5 # Membrane permeability to potassium ions [nm/s]
-    P_Cl_nm = 0.1 # Membrane permeability to chloride ions [nm/s]
+    P_Cl_nm = 0.5 # Membrane permeability to chloride ions [nm/s]
 
     Na_o: float = 145.0 # Extracellular sodium ion concentration [mol/m^3 or mmol/L]
     Na_i: float = 10.0 # Intracellular sodium ion concentration [mol/m^3 or mmol/L]
@@ -64,6 +64,8 @@ class CalculionParams(object):
 
     # Pump and transporter parameters:
     omega_NaK: float = 5.0e-13 # Rate constant for the Na-K-ATPase ion pump
+    omega_NaKCl: float=1.0e-15 # Rate constant for the Na-K-2Cl cotransporter
+    omega_KCl: float=1.0e-15 # Rate constant for the K-Cl symporter
 
     # Calculated parameters (used internally in calculations):
     r_cell = r_cell_um*1e-6 # radius of the cell [m]
@@ -76,6 +78,8 @@ class CalculionParams(object):
     P_Na = P_Na_nm*1.0e-9 # Membrane permeability to sodium ions [m/s]
     P_K = P_K_nm*1.0e-9 # Membrane permeability to potassium ions [m/s]
     P_Cl = P_Cl_nm*1.0e-9 # Membrane permeability to chloride ions [m/s]
+    vol_cell = np.pi*r_cell**3
+    vol_env = np.pi*(r_env**3 - r_cell**3)
 
     Keqm_NaK = np.exp(delGo_ATP / (R * T)) # Equilibrium constant for ATP hydrolysis reaction
 
