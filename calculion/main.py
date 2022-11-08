@@ -36,7 +36,8 @@ def main() -> None:
     from calculion.science.params import CalculionParams
     from numpy import exp, column_stack
     from pandas import DataFrame
-    from calculion.science.compute import get_steady_state
+    # from calculion.science.compute import get_steady_state
+    from calculion.science.comp_sys import CompSys
     from streamlit import (
         title,
         # set_page_config
@@ -382,16 +383,43 @@ def main() -> None:
     # After collecting parameter values from the user, compute the steady-state values for the bioelectrical system:
 
     @st.cache # Cache the results of this slower function
-    def calculate_results(p):
-        ion_ss, elec_ss, time_sols = get_steady_state(p,
-                                       iterative_sol=p.iterative_solver,
-                                       update_env=p.update_env,
-                                       quasi_static_vmem=p.quasi_static_vmem)
+    def calculate_ss_results(p):
 
-        return ion_ss, elec_ss, time_sols
+        sim = CompSys(p) # Create an instance of the main computational simulator
+
+        params_vect_o, consts_vect = sim.collect_params(p) # Get initial values of the computational simulator
+
+        time_properties_dict = {}
+        volt_timedat = {}
+        chem_timedat = {}
+
+        if p.iterative_solver is False:
+            params_vect = sim.calc_steady_state(p)
+
+        else:
+            params_vect_time, opti_funk_time, time_vect, print_message = sim.calc_timestepped(p)
+            params_vect = params_vect_time[-1] # Get the last time-frame as the final parameters
+
+            # Save time-dependent properties to the time_properties_dict:
+            time_properties_dict['params_vect_time'] = params_vect_time
+            time_properties_dict['opti_funk_time'] = opti_funk_time
+            time_properties_dict['time_vect'] = time_vect
+
+            # Use the time-dependent parameters to compute all electrical and chem properties as a function of time:
+            volt_timedat = sim.calc_elec_param_set(params_vect_time, consts_vect, time_vect)
+            chem_timedat = sim.calc_chem_param_set(params_vect_time, consts_vect, time_vect)
+
+        # Get the concentration ss dataframe:
+        ion_ss = sim.return_chem_props_dict(params_vect, consts_vect)
+
+        # Get the electrical properties dataframe:
+        elec_ss = sim.return_elec_props_dict(params_vect, consts_vect)
+
+
+        return ion_ss, elec_ss, time_properties_dict, volt_timedat, chem_timedat
 
     # In the main area present the results of the simulation:
-    ion_vals_ss, elec_vals_ss, time_sols = calculate_results(p)
+    ion_vals_ss, elec_vals_ss, time_props, volt_timedat, chem_timedat = calculate_ss_results(p)
 
     # Split the main area into three tabs:
     # Introduction tab (tab1) will display a write-up of the theory behind Calculion
@@ -422,31 +450,19 @@ def main() -> None:
         if itersol_checkbox:
             st.write("#### Iterative Simulation Results")
 
-            # Stack the results into a data stack and display as line chart:
-            volt_dat = column_stack((time_sols.time/3600,
-                                     1e3*time_sols.V_mem_time,
-                                     1e3*time_sols.V_rev_Na_time,
-                                     1e3*time_sols.V_rev_K_time,
-                                     1e3*time_sols.V_rev_Cl_time
-                                     ))
-
-            volt_datframe =DataFrame(volt_dat, columns=['Time (hours)',
-                                                        'V_mem',
-                                                        'V_rev Na+',
-                                                        'V_rev K+',
-                                                        'V_rev Cl-'])
+            time = time_props['time_vect']
 
             st.write('###### Bioelectrical Potentials')
-            st.line_chart(volt_datframe,
+            st.line_chart(volt_timedat,
                           x='Time (hours)',
                           y=('V_mem', 'V_rev Na+', 'V_rev K+', 'V_rev Cl-'),
                           use_container_width=True)
 
             # Stack the results of ion concentration changes as a function of time:
-            ion_dat = column_stack((time_sols.time / 3600,
-                             time_sols.Na_i_time,
-                             time_sols.K_i_time,
-                             time_sols.Cl_i_time))
+            ion_dat = column_stack((time / 3600,
+                             time_props[''],
+                             time_props[''],
+                             time_props['']))
 
             ion_datframe = DataFrame(ion_dat, columns = ['Time (hours)',
                                                          'Na+ in',
@@ -458,25 +474,6 @@ def main() -> None:
                           x='Time (hours)',
                           y=('Na+ in', 'K+ in', 'Cl- in'),
                           use_container_width=True)
-
-            if p.update_env:
-                # Create a final line chart of Extracellular ion concentrations
-                # Stack the results of ion concentration changes as a function of time:
-                ion_dat = column_stack((time_sols.time / 3600,
-                                        time_sols.Na_o_time,
-                                        time_sols.K_o_time,
-                                        time_sols.Cl_o_time))
-
-                ion_datframe = DataFrame(ion_dat, columns=['Time (hours)',
-                                                           'Na+ out',
-                                                           'K+ out',
-                                                           'Cl- out'])
-
-                st.write('###### Extracellular Ion Concentrations')
-                st.line_chart(ion_datframe,
-                              x='Time (hours)',
-                              y=('Na+ out', 'K+ out', 'Cl- out'),
-                              use_container_width=True)
 
 
 

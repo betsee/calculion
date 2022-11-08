@@ -26,15 +26,11 @@ class CompSys(object):
 
     '''
 
-    def __int__(self, p: Optional[CalculionParams]=None):
+    def __int__(self, tol=1.0e-15):
         '''
         Initialize the computational system with default parameters.
         '''
-
-        if p is None:
-            self._p = CalculionParams()
-        else:
-            self._p = p
+        self._tol = tol
 
     def _analytical_sys(self):
         '''
@@ -111,11 +107,11 @@ class CompSys(object):
 
         # Common to fixed extracellular, solving for all ions in and Vmem:
 
-        zer_vect = sp.Matrix([0,0,0,0])
+        # zer_vect = sp.Matrix([0,0,0,0])
 
         params_vect = [Na_i, K_i, Cl_i]
 
-        par_names = ['Na_i', 'K_i', 'Cl_i']
+        self.param_names = ['Na_i', 'K_i', 'Cl_i']
 
         self.bounds_vect = [(0.0, 1000.0), (0.0, 1000.0), (0.0, 1000.0)]
 
@@ -144,56 +140,246 @@ class CompSys(object):
         self.hess_funk = sp.lambdify(all_params_vect, hess_Eq)
         self.vmem_funk = sp.lambdify(all_params_vect, Vmem_Eq)
 
+        # Numerical versions of reversal potentials:
+        self.Na_rev_funk = sp.lambdify(all_params_vect, Na_rev_Eq)
+        self.K_rev_funk = sp.lambdify(all_params_vect, K_rev_Eq)
+        self.Cl_rev_funk = sp.lambdify(all_params_vect, Cl_rev_Eq)
 
-    def calc_steady_state(self, p):
+    def collect_params(self, p: CalculionParams):
+        '''
+        Collect and return a parameters vector and a constants vector from a Calculion Params object.
+        '''
 
-        p_params_vect = np.asarray([p.Na_i, p.K_i, p.Cl_i])
+        params_vect = np.asarray([p.Na_i, p.K_i, p.Cl_i])
 
-        p_consts_vect = [p.Na_o, p.K_o, p.Cl_o, p.F, p.P_Na, p.P_K, p.P_Cl, p.r_cell, p.c_mem, p.alpha,
+        consts_vect = [p.Na_o, p.K_o, p.Cl_o, p.F, p.P_Na, p.P_K, p.P_Cl, p.r_cell, p.c_mem, p.alpha,
                         p.omega_NaK, p.Keqm_NaK, p.ATP, p.ADP, p.P, p.omega_NaKCl, p.omega_KCl]
 
-        vmem_o = self.vmem_funk(p_params_vect, p_consts_vect)  # initialize Vmem
+        return params_vect, consts_vect
 
-        sol0 = minimize(self.opti_funk,
+    def calc_steady_state(self, p: CalculionParams):
+        '''
+        Use Scipy's Trust-Const minimization routine to find the solution of the system at steady-state.
+
+        Parameters
+        -----------
+        '''
+
+        # Initial electrical properties of the system:
+        # self.elec_props_o = self.calc_electrical_properties(p_params_vect, p_consts_vect)
+        # Create the parameters and constants vector from the Calculion Params instance:
+        p_params_vect, p_consts_vect = self.collect_params(p)
+
+        self.sol0 = minimize(self.opti_funk,
                         p_params_vect,
                         args=(p_consts_vect),
                         method='trust-constr',
                         jac=self.jac_funk,
                         hess=self.hess_funk,
-                        tol=1.0e-30,
+                        tol=self._tol,
                         bounds=self.bounds_vect
                         )
 
+        # Final electrical properties of the system:
+        # self.elec_props = self.calc_electrical_properties(self.sol0.x, p_consts_vect)
 
+        return self.sol0.x
 
-    def calc_timestepped(self, p, N_iter, del_t, ti: float = 0.0):
+    def calc_timestepped(self,
+                         p: CalculionParams,
+                         N_iter: int=1000,
+                         del_t: float=1.0,
+                         ti: float = 0.0,
+                         tol: float=1.0e-9):
+        '''
+        Use explicit Euler method to solve the time-dependent system.
 
-        parami_vect = np.asarray([p.Na_i, p.K_i, p.Cl_i])
+        Parameters
+        -----------
+        p: CalculionParams
+            An instance of Calculion Parameters object.
+        N_iter: int
+            The maximum number of itterations to run the system.
+        del_t: float
+            The time-step over which to integrate each step of the iterative solution.
+        ti: float
+            The start-time of the simulation.
+        tol: float
+            The stopping tolerance -- when changes between each step are lower than tol the simulation is
+            assumed to be at steady-state and is stopped.
+        '''
+        print_message = ''
 
-        consti_vect = [p.Na_o, p.K_o, p.Cl_o, p.F, p.P_Na, p.P_K, p.P_Cl, p.r_cell, p.c_mem, p.alpha,
-                        p.omega_NaK, p.Keqm_NaK, p.ATP, p.ADP, p.P, p.omega_NaKCl, p.omega_KCl]
+        # Create the parameters and constants vector from the Calculion Params instance:
+        parami_vect, consti_vect = self.collect_params(p)
 
         param_time = []
         opti_funk_time = []
         time_vect = []
 
-
         paramj_vect = np.copy(parami_vect)
 
-        for ni in range(N_iter):
-            ti += del_t
+        for ii, ni in enumerate(range(N_iter)):
+            ti += del_t # Advance the time value by the time-step
 
-            paramj_dt = self.evo_funk(paramj_vect, consti_vect).flatten()
+            paramj_dt = self.evo_funk(paramj_vect, consti_vect).flatten() # Calculate the change to each parameter
 
-            paramj_vect += del_t * paramj_dt
+            paramj_vect += del_t * paramj_dt # Integrate each parameter
 
-            opti_funki = self.opti_funk(paramj_vect, consti_vect)
+            opti_funki = self.opti_funk(paramj_vect, consti_vect) # Compute the value of the optimization function
 
             param_time.append(paramj_vect * 1)
             opti_funk_time.append(opti_funki * 1)
             time_vect.append(ti)
 
+            if opti_funki < tol:
+                print_message = f"System is at steady state after {ii} itterations."
+                break
+
         param_time = np.asarray(param_time)
         opti_funk_time = np.asarray(opti_funk_time)
 
-        return param_time, opti_funk_time, time_vect
+        return param_time, opti_funk_time, time_vect, print_message
+
+    def return_elec_props_dict(self, parami_v, consti_v):
+        '''
+        Returns the electrical properties of the system as a Pandas Dataframe
+         given a parameters and constants vector.
+
+        '''
+        Vmem = self.vmem_funk(parami_v, consti_v)  # Vmem
+        Na_rev = self.Na_rev_funk(parami_v, consti_v) # Na reversal
+        K_rev = self.K_rev_funk(parami_v, consti_v) # K reversal
+        Cl_rev = self.Cl_rev_funk(parami_v, consti_v) # Cl reversal
+        Na_ed = Vmem - Na_rev # Electrochemical driving force Na
+        K_ed = Vmem - K_rev # Electrochemical driving force K
+        Cl_ed = Vmem - Cl_rev # Electrochemical driving force Cl
+
+        unit_conv = 1.0e3 # unit conversion to mv
+
+        # Electrical properties dictionary
+        elec_props = {'Vₘ': np.round(Vmem*unit_conv, 1),
+                      'Vᵣ Na⁺': np.round(Na_rev*unit_conv, 1),
+                      'Vᵣ K⁺': np.round(K_rev*unit_conv, 1),
+                      'Vᵣ Cl⁻': np.round(Cl_rev*unit_conv, 1),
+                      'Vₑ Na⁺': np.round(Na_ed*unit_conv, 1),
+                      'Vₑ K⁺': np.round(K_ed*unit_conv, 1),
+                      'Vₑ Cl⁻': np.round(Cl_ed*unit_conv, 1)
+        }
+
+        elec_dataframe = pd.DataFrame.from_dict(elec_props,
+                                                orient='index', columns=['Voltage [mV]'])
+
+        return elec_dataframe
+
+    def return_chem_props_dict(self, parami_v, consti_v, round_dec: int=2):
+        '''
+        Returns a Pandas dataframe of the ion concentrations inside and outside of the cell
+        given a parameters and constants vector.
+        '''
+
+        steady_state_ions_dict = {
+            'Na⁺ᵢₙ': round(parami_v[0], round_dec),
+            'K⁺ᵢₙ': round(parami_v[1], round_dec),
+            'Cl⁻ᵢₙ': round(parami_v[2], round_dec),
+            'Na⁺ₒᵤₜ': round(consti_v[0], round_dec),
+            'K⁺ₒᵤₜ': round(consti_v[1], round_dec),
+            'Cl⁻ₒᵤₜ': round(consti_v[2], round_dec)
+                 }
+
+        ions_dataframe = pd.DataFrame.from_dict(steady_state_ions_dict,
+                                                orient='index', columns=['Concentration [mM]'])
+
+        return ions_dataframe
+
+    def calc_elec_param_set(self, params_vect_set, consti_v, time):
+        '''
+        Calculate electrical properties from a set of parameters taken over different times or conditions.
+        '''
+        Vmem_vect = []
+        Na_rev_vect = []
+        K_rev_vect = []
+        Cl_rev_vect = []
+        Na_ed_vect = []
+        K_ed_vect = []
+        Cl_ed_vect = []
+
+        for parami_v in params_vect_set:
+
+            Vmem = self.vmem_funk(parami_v, consti_v)  # Vmem
+            Na_rev = self.Na_rev_funk(parami_v, consti_v) # Na reversal
+            K_rev = self.K_rev_funk(parami_v, consti_v) # K reversal
+            Cl_rev = self.Cl_rev_funk(parami_v, consti_v) # Cl reversal
+            Na_ed = Vmem - Na_rev # Electrochemical driving force Na
+            K_ed = Vmem - K_rev # Electrochemical driving force K
+            Cl_ed = Vmem - Cl_rev # Electrochemical driving force Cl
+
+            Vmem_vect.append(Vmem)
+            Na_rev_vect.append(Na_rev)
+            K_rev_vect.append(K_rev)
+            Cl_rev_vect.append(Cl_rev)
+            Na_ed_vect.append(Na_ed)
+            K_ed_vect.append(K_ed)
+            Cl_ed_vect.append(Cl_ed)
+
+        Vmem_vect = np.asarray(Vmem_vect)
+        Na_rev_vect = np.asarray(Na_rev_vect)
+        K_rev_vect = np.asarray(K_rev_vect)
+        Cl_rev_vect = np.asarray(Cl_rev_vect)
+        Na_ed_vect = np.asarray(Na_ed_vect)
+        K_ed_vect = np.asarray(K_ed_vect)
+        Cl_ed_vect = np.asarray(Cl_ed_vect)
+
+        # Stack the results of time-dependent properties:
+        volt_dat = np.column_stack((time / 3600,
+                                 1e3 * Vmem_vect,
+                                 1e3 * Na_rev_vect,
+                                 1e3 * K_rev_vect,
+                                 1e3 * Cl_rev_vect,
+                                 1e3 * Na_ed_vect,
+                                 1e3 * K_ed_vect,
+                                 1e3 * Cl_ed_vect,
+                                 ))
+
+        volt_timedat = DataFrame(volt_dat, columns=['Time (hours)',
+                                                    'Vₘ',
+                                                    'Vᵣ Na⁺',
+                                                    'Vᵣ K⁺',
+                                                    'Vᵣ Cl⁻',
+                                                    'Vₑ Na⁺',
+                                                    'Vₑ K⁺',
+                                                    'Vₑ Cl⁻'
+                                                    ])
+
+        return volt_timedat
+
+
+    def calc_chem_param_set(self, params_vect_set, consti_v, time):
+        '''
+        Compile ion concentrations in cells from a set of parameters taken over different times or conditions.
+        '''
+        Na_vect = []
+        K_vect = []
+        Cl_vect = []
+
+        for parami in params_vect_set:
+            Na_vect.append(parami[0])
+            K_vect.append(parami[1])
+            Cl_vect.append(parami[2])
+
+        Na_vect = np.asarray(Na_vect)
+        K_vect = np.asarray(K_vect)
+        Cl_vect = np.asarray(Cl_vect)
+
+        # Stack the results of time-dependent properties:
+        chem_dat = np.column_stack((time / 3600, Na_vect, K_vect, Cl_vect))
+
+        chem_timedat = DataFrame(chem_dat, columns=['Time (hours)',
+                                                    'Na⁺ᵢₙ (mM)',
+                                                    'K⁺ᵢₙ (mM)',
+                                                    'Cl⁻ᵢₙ (mM)'
+                                                    ])
+
+        return chem_timedat
+
+
