@@ -91,7 +91,9 @@ def main() -> None:
         default_expanded_state = False # default state of the expander is expanded?
 
         # Define another expander block collecting parameters for intracellular ion concentrations:
-        ion_in_block = st.expander("Ion Concentrations Inside Cell", expanded=default_expanded_state)
+        ion_in_block = st.expander("Ion Concentrations Inside Cell",
+                                   expanded=default_expanded_state,
+                                   )
 
         with ion_in_block:
 
@@ -102,7 +104,8 @@ def main() -> None:
                                   step=ion_slider_step,
                                   format='%f',
                                   key='slider_Na_i',
-                                  label_visibility='visible')
+                                  label_visibility='visible',
+                                  help='Set the starting value of Na⁺ in the cell.')
 
             p.K_i = param_widget('K+ in [mM]',
                                  min_value=ion_min_val,
@@ -111,7 +114,8 @@ def main() -> None:
                                  step=ion_slider_step,
                                  format='%f',
                                  key='slider_K_i',
-                                 label_visibility='visible')
+                                 label_visibility='visible',
+                                 help='Set the starting value of K⁺ in the cell.')
 
             p.Cl_i = param_widget('Cl- in [mM]',
                                   min_value=ion_min_val,
@@ -120,7 +124,8 @@ def main() -> None:
                                   step=ion_slider_step,
                                   format='%f',
                                   key='slider_Cl_i',
-                                  label_visibility='visible')
+                                  label_visibility='visible',
+                                  help='Set the starting value of Cl⁻ in the cell.')
 
         st.write('**Simulation Parameters**')
 
@@ -136,7 +141,8 @@ def main() -> None:
                              step=ion_slider_step,
                              format='%f',
                              key='slider_Na_o',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the Na⁺ concentration outside the cell.')
 
             p.K_o = param_widget('K+ out [mM]',
                              min_value=ion_min_val,
@@ -145,7 +151,8 @@ def main() -> None:
                              step=ion_slider_step,
                              format='%f',
                              key='slider_K_o',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the K⁺ concentration outside the cell.')
 
             p.Cl_o = param_widget('Cl- out [mM]',
                              min_value=ion_min_val,
@@ -154,7 +161,8 @@ def main() -> None:
                              step=ion_slider_step,
                              format='%f',
                              key='slider_Cl_o',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help = 'Set the Cl⁻ concentration outside the cell.')
 
         memperm_block = st.expander("Cell Membrane Ion Permeabilities", expanded=default_expanded_state)
 
@@ -167,7 +175,9 @@ def main() -> None:
                                step=memp_slider_step,
                                format='%f',
                                key='slider_P_Na',
-                               label_visibility='visible'
+                               label_visibility='visible',
+                               help='Set the base membrane permeability to Na⁺.\n'
+                                    '\nThis simulates cellular expression of Na⁺ leak channels.'
                                )
 
             p.P_K_nm = param_widget('K+ Permeability [nm/s]:',
@@ -177,7 +187,9 @@ def main() -> None:
                                step=memp_slider_step,
                                format='%f',
                                key='slider_P_K',
-                               label_visibility='visible'
+                               label_visibility='visible',
+                               help='Set the base membrane permeability to K⁺.\n'
+                                    '\nThis simulates cellular expression of K⁺ leak channels.'
                                )
 
             p.P_Cl_nm = param_widget('Cl- Permeability [nm/s]:',
@@ -187,14 +199,15 @@ def main() -> None:
                                step=memp_slider_step,
                                format='%f',
                                key='slider_P_Cl',
-                               label_visibility='visible'
+                               label_visibility='visible',
+                               help='Set the base membrane permeability to Cl⁻.\n'
+                                    '\nThis simulates cellular expression of Cl⁻ leak channels.'
                                )
 
             # Update the main membrane permeabilities used in the simulation to m/s units:
             p.P_Na = 1.0e-9*p.P_Na_nm
             p.P_K = 1.0e-9*p.P_K_nm
             p.P_Cl = 1.0e-9*p.P_Cl_nm
-
 
         # Define another expander block for pump and transporter settings:
         pumps_block = st.expander("Ion Pump and Transporter Settings", expanded=default_expanded_state)
@@ -207,7 +220,8 @@ def main() -> None:
                              step=0.01,
                              format='%f',
                              key='slider_omega_NaK',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the maximum rate of the Na-K-ATPase ion pump.')
 
             # update the na-k-atpase pump rate in units used in the simulation:
             p.omega_NaK = omega_NaK_o*1e-12
@@ -220,7 +234,8 @@ def main() -> None:
                              step=0.01,
                              format='%f',
                              key='slider_omega_NaKCl',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the maximum rate of the Na-K-2Cl cotransporter.')
 
             # update the na-k-2Cl cotransporter rate in units used in the simulation:
             p.omega_NaKCl = omega_NaKCl_o*1e-14
@@ -233,7 +248,9 @@ def main() -> None:
                              step=0.1,
                              format='%f',
                              key='slider_omega_KCl',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the maximum rate of the K-Cl symporter.'
+                                       )
 
             # update the K-Cl symporter rate in units used in the simulation:
             p.omega_KCl = omega_KCl_o*1e-12
@@ -250,7 +267,8 @@ def main() -> None:
                              step=0.1,
                              format='%f',
                              key='slider_delGATP',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the Gibbs standard free energy for ATP hydrolysis.')
 
             p.delGo_ATP = delGATP*1e3 # convert to units J/mol from kJ/mol
 
@@ -264,7 +282,8 @@ def main() -> None:
                              step=0.01,
                              format='%f',
                              key='slider_ATP',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the concentration of ATP in the cell.')
 
             p.ADP = param_widget('ADP Concentration [mM]',
                              min_value=0.001,
@@ -273,7 +292,8 @@ def main() -> None:
                              step=0.001,
                              format='%f',
                              key='slider_ADP',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the concentration of ADP in the cell.')
 
             p.P = param_widget('P Concentration [mM]',
                              min_value=0.001,
@@ -282,19 +302,22 @@ def main() -> None:
                              step=0.001,
                              format='%f',
                              key='slider_P',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the concentration of phosphorous (P) in the cell.')
 
         # Define an expander block for cell and env settings:
-        cellenv_settings_block = st.expander("Cell and Environmental Settings", expanded=default_expanded_state)
+        cellenv_settings_block = st.expander("Cell and Environmental Settings",
+                                             expanded=default_expanded_state)
         with cellenv_settings_block:
             p.T_C = param_widget('Temperature [degrees C]',
                              min_value=1.0,
                              max_value=60.0,
                              value=p.T_C,
-                             step=1.0,
+                             step=0.1,
                              format='%f',
                              key='slider_T',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the temperature of the system.')
 
             # Update temperature in Kelvin used in simulations:
             p.T = p.T_C + 273.15 # temp in Kelvin
@@ -303,10 +326,11 @@ def main() -> None:
                              min_value=1.0,
                              max_value=25.0,
                              value=p.r_cell_um,
-                             step=1.0,
+                             step=0.1,
                              format='%f',
                              key='slider_rcell',
-                             label_visibility='visible')
+                             label_visibility='visible',
+                             help='Set the radius of the cell.')
 
             # update r_cell to be in meters for simulations:
             p.r_cell = p.r_cell_um*1e-6
@@ -317,7 +341,11 @@ def main() -> None:
         with sim_settings_block:
 
             # Iterative solver will not be used by default:
-            itersol_checkbox = st.checkbox("Use iterative solver", value=False, key='checkbox_itersol')
+            itersol_checkbox = st.checkbox("Use iterative solver",
+                                           value=False,
+                                           key='checkbox_itersol',
+                                           help='Use the iterative solver that integrates the '
+                                                'system step-by-step in time?')
 
             if itersol_checkbox:
                 p.iterative_solver = True # Set the iterative solver parameter to True
@@ -330,7 +358,8 @@ def main() -> None:
                                           step=0.01,
                                           format='%f',
                                           key='slider_delta_t',
-                                          label_visibility='visible')
+                                          label_visibility='visible',
+                                          help='Set the time step for the iterative solver.')
 
                 # Iterative solver max iterations:
                 p.N_iter = param_widget('Simulation max iterations',
@@ -341,7 +370,7 @@ def main() -> None:
                                           format='%d',
                                           key='slider_Niter',
                                           label_visibility='visible',
-                                          help='Maximum number of timesteps that can be run.')
+                                          help='Set the maximum number of timesteps that can be run.')
 
                 # Iterative solver convergence tolerance:
                 p.steady_state_tol = param_widget('Convergence tolerance',
@@ -351,7 +380,9 @@ def main() -> None:
                                           step=1e-15,
                                           format='%e',
                                           key='slider_tol',
-                                          label_visibility='visible')
+                                          label_visibility='visible',
+                                          help='Set the tolerance, below which the simulation will be'
+                                               'assumed to be at steady-state.')
 
 
 
