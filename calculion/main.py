@@ -34,6 +34,7 @@ def main() -> None:
 
     # ..................{ IMPORTS                            }..................
     from calculion.science.params import CalculionParams
+    from calculion.science.string_names import StringNames
     from numpy import exp, column_stack
     from pandas import DataFrame
     # from calculion.science.compute import get_steady_state
@@ -51,6 +52,7 @@ def main() -> None:
 
     # ..................{ LOCALS                             }..................
     p = CalculionParams()  # Create a default parameters instance
+    l = StringNames() # string labels
 
     # ..................{ Calculion App             }..................
     import streamlit as st
@@ -71,6 +73,8 @@ def main() -> None:
     #-----SIDEBAR AREA--------------------------------------------------------------------------------------------------
     with st.sidebar:
 
+        st.write('**Initial Conditions**')
+
         # slider general settings:
         ion_min_val = 0.1  # min concentration of ions in mM
         ion_max_val = 250.0  # max concentration of ions in mM
@@ -85,6 +89,72 @@ def main() -> None:
 
         # Initialize an expander block for each set of variables:
         default_expanded_state = False # default state of the expander is expanded?
+
+        # Define another expander block collecting parameters for intracellular ion concentrations:
+        ion_in_block = st.expander("Ion Concentrations Inside Cell", expanded=default_expanded_state)
+
+        with ion_in_block:
+
+            p.Na_i = param_widget('Na+ in [mM]',
+                                  min_value=ion_min_val,
+                                  max_value=ion_max_val,
+                                  value=p.Na_i,
+                                  step=ion_slider_step,
+                                  format='%f',
+                                  key='slider_Na_i',
+                                  label_visibility='visible')
+
+            p.K_i = param_widget('K+ in [mM]',
+                                 min_value=ion_min_val,
+                                 max_value=ion_max_val,
+                                 value=p.K_i,
+                                 step=ion_slider_step,
+                                 format='%f',
+                                 key='slider_K_i',
+                                 label_visibility='visible')
+
+            p.Cl_i = param_widget('Cl- in [mM]',
+                                  min_value=ion_min_val,
+                                  max_value=ion_max_val,
+                                  value=p.Cl_i,
+                                  step=ion_slider_step,
+                                  format='%f',
+                                  key='slider_Cl_i',
+                                  label_visibility='visible')
+
+        st.write('**Simulation Parameters**')
+
+        # Define another expander block for specifying extracellular ion concentrations:
+        ion_out_block = st.expander("Ion Concentrations Outside Cell", expanded=default_expanded_state)
+
+        with ion_out_block:
+            # Automatically reset parameter values in the parameters object p depending on user-selection:
+            p.Na_o = param_widget('Na+ out [mM]',
+                             min_value=ion_min_val,
+                             max_value=ion_max_val,
+                             value=p.Na_o,
+                             step=ion_slider_step,
+                             format='%f',
+                             key='slider_Na_o',
+                             label_visibility='visible')
+
+            p.K_o = param_widget('K+ out [mM]',
+                             min_value=ion_min_val,
+                             max_value=ion_max_val,
+                             value=p.K_o,
+                             step=ion_slider_step,
+                             format='%f',
+                             key='slider_K_o',
+                             label_visibility='visible')
+
+            p.Cl_o = param_widget('Cl- out [mM]',
+                             min_value=ion_min_val,
+                             max_value=ion_max_val,
+                             value=p.Cl_o,
+                             step=ion_slider_step,
+                             format='%f',
+                             key='slider_Cl_o',
+                             label_visibility='visible')
 
         memperm_block = st.expander("Cell Membrane Ion Permeabilities", expanded=default_expanded_state)
 
@@ -125,75 +195,12 @@ def main() -> None:
             p.P_K = 1.0e-9*p.P_K_nm
             p.P_Cl = 1.0e-9*p.P_Cl_nm
 
-        # Define another expander block for specifying extracellular ion concentrations:
-        ion_out_block = st.expander("Ion Concentrations Outside Cell", expanded=default_expanded_state)
-
-        with ion_out_block:
-            # Automatically reset parameter values in the parameters object p depending on user-selection:
-            p.Na_o = param_widget('Na+ out [mM]',
-                             min_value=ion_min_val,
-                             max_value=ion_max_val,
-                             value=p.Na_o,
-                             step=ion_slider_step,
-                             format='%f',
-                             key='slider_Na_o',
-                             label_visibility='visible')
-
-            p.K_o = param_widget('K+ out [mM]',
-                             min_value=ion_min_val,
-                             max_value=ion_max_val,
-                             value=p.K_o,
-                             step=ion_slider_step,
-                             format='%f',
-                             key='slider_K_o',
-                             label_visibility='visible')
-
-            p.Cl_o = param_widget('Cl- out [mM]',
-                             min_value=ion_min_val,
-                             max_value=ion_max_val,
-                             value=p.Cl_o,
-                             step=ion_slider_step,
-                             format='%f',
-                             key='slider_Cl_o',
-                             label_visibility='visible')
-
-        # Define another expander block collecting parameters for intracellular ion concentrations:
-        ion_in_block = st.expander("Ion Concentrations Inside Cell", expanded=default_expanded_state)
-
-        with ion_in_block:
-
-            p.Na_i = param_widget('Na+ in [mM]',
-                             min_value=ion_min_val,
-                             max_value=ion_max_val,
-                             value=p.Na_i,
-                             step=ion_slider_step,
-                             format='%f',
-                             key='slider_Na_i',
-                             label_visibility='visible')
-
-            p.K_i = param_widget('K+ in [mM]',
-                             min_value=ion_min_val,
-                             max_value=ion_max_val,
-                             value=p.K_i,
-                             step=ion_slider_step,
-                             format='%f',
-                             key='slider_K_i',
-                             label_visibility='visible')
-
-            p.Cl_i = param_widget('Cl- in [mM]',
-                             min_value=ion_min_val,
-                             max_value=ion_max_val,
-                             value=p.Cl_i,
-                             step=ion_slider_step,
-                             format='%f',
-                             key='slider_Cl_i',
-                             label_visibility='visible')
 
         # Define another expander block for pump and transporter settings:
         pumps_block = st.expander("Ion Pump and Transporter Settings", expanded=default_expanded_state)
 
         with pumps_block:
-            omega_NaK_o = param_widget('Na,K-ATPase Pump Rate [units]',
+            omega_NaK_o = param_widget('Na-K-ATPase Pump Rate [units]',
                              min_value=0.0,
                              max_value=1.0,
                              value=p.omega_NaK*1e12,
@@ -204,6 +211,32 @@ def main() -> None:
 
             # update the na-k-atpase pump rate in units used in the simulation:
             p.omega_NaK = omega_NaK_o*1e-12
+
+            # Na-K-2Cl cotransporter properties:
+            omega_NaKCl_o = param_widget('Na-K-2Cl Cotransporter Rate [units]',
+                             min_value=0.0,
+                             max_value=1.0,
+                             value=p.omega_NaKCl*1e14,
+                             step=0.01,
+                             format='%f',
+                             key='slider_omega_NaKCl',
+                             label_visibility='visible')
+
+            # update the na-k-2Cl cotransporter rate in units used in the simulation:
+            p.omega_NaKCl = omega_NaKCl_o*1e-14
+
+            # K-Cl symporter properties:
+            omega_KCl_o = param_widget('K-Cl Symporter Rate [units]',
+                             min_value=0.0,
+                             max_value=50.0,
+                             value=p.omega_KCl*1e12,
+                             step=0.1,
+                             format='%f',
+                             key='slider_omega_KCl',
+                             label_visibility='visible')
+
+            # update the K-Cl symporter rate in units used in the simulation:
+            p.omega_KCl = omega_KCl_o*1e-12
 
         # Define another expander block for pump and transporter settings:
         metabolic_block = st.expander("Metabolic Settings", expanded=default_expanded_state)
@@ -283,8 +316,8 @@ def main() -> None:
 
         with sim_settings_block:
 
-            # Iterative solver will be used by default
-            itersol_checkbox = st.checkbox("Use iterative solver", value=True, key='checkbox_itersol')
+            # Iterative solver will not be used by default:
+            itersol_checkbox = st.checkbox("Use iterative solver", value=False, key='checkbox_itersol')
 
             if itersol_checkbox:
                 p.iterative_solver = True # Set the iterative solver parameter to True
@@ -307,73 +340,20 @@ def main() -> None:
                                           step=1,
                                           format='%d',
                                           key='slider_Niter',
-                                          label_visibility='visible')
+                                          label_visibility='visible',
+                                          help='Maximum number of timesteps that can be run.')
 
                 # Iterative solver convergence tolerance:
                 p.steady_state_tol = param_widget('Convergence tolerance',
-                                          min_value=1e-10,
-                                          max_value=1e-5,
+                                          min_value=1e-20,
+                                          max_value=1e-6,
                                           value=p.steady_state_tol,
-                                          step=1e-10,
+                                          step=1e-15,
                                           format='%e',
                                           key='slider_tol',
                                           label_visibility='visible')
 
-                if st.checkbox('Update environment concentrations', value=False, key='checkbox_env_con'):
-                    p.update_env = True
 
-                    # FIXME: if this is checked, set the slider and p-value for timestep to a smaller value:
-                    # Here only the p-value is changed, but we need to change the slider
-                    p.delta_t = 0.1
-
-                    # Extracellular space properties
-                    p.d_ecm_um = param_widget('Extracellular space thickness [um]',
-                                              min_value=0.1,
-                                              max_value=1000.0,
-                                              value=p.d_ecm_um,
-                                              step=0.1,
-                                              format='%f',
-                                              key='slider_decm',
-                                              label_visibility='visible')
-
-                    # Update extracellular space width to meters for simulations:
-                    p.d_ecm = p.d_ecm_um * 1e-6
-
-                else:
-                    p.update_env = False
-
-                if st.checkbox('Fully dynamic Vmem updates', value=False, key='checkbox_dyn_vmem'):
-                    p.quasi_static_vmem = False
-
-                    # FIXME: if this is checked, set the slider and p-value for timestep to a smaller value:
-                    # Here only the p-val is changed, but we need to change the slider
-                    p.delta_t = 0.1
-
-                    # Membrane relative electrical permittivity space properties
-                    p.e_r = param_widget('Membrane relative permittivity',
-                                         min_value=1.0,
-                                         max_value=100.0,
-                                         value=p.e_r,
-                                         step=1.0,
-                                         format='%f',
-                                         key='slider_mem_er',
-                                         label_visibility='visible')
-
-                    # Update membrane thickness:
-                    p.d_mem_nm = param_widget('Membrane thickness [nm]',
-                                              min_value=1.0,
-                                              max_value=10.0,
-                                              value=p.d_mem_nm,
-                                              step=1.0,
-                                              format='%f',
-                                              key='slider_dmem',
-                                              label_visibility='visible')
-
-                    # Update membrane thickness to meters for simulations:
-                    p.d_mem = p.d_mem_nm * 1e-9
-
-                else:
-                    p.quasi_static_vmem = True
 
             else:
                 p.iterative_solver = False # reset the iterative solver parameter to False
@@ -385,7 +365,7 @@ def main() -> None:
     @st.cache # Cache the results of this slower function
     def calculate_ss_results(p):
 
-        sim = CompSys(p) # Create an instance of the main computational simulator
+        sim = CompSys()  # Create an instance of the main computational simulator
 
         params_vect_o, consts_vect = sim.collect_params(p) # Get initial values of the computational simulator
 
@@ -397,7 +377,13 @@ def main() -> None:
             params_vect = sim.calc_steady_state(p)
 
         else:
-            params_vect_time, opti_funk_time, time_vect, print_message = sim.calc_timestepped(p)
+            (params_vect_time,
+             opti_funk_time,
+             time_vect,
+             print_message) = sim.calc_timestepped(p, N_iter=p.N_iter,
+                                                    del_t=p.delta_t,
+                                                    ti = 0.0,
+                                                    tol=p.steady_state_tol)
             params_vect = params_vect_time[-1] # Get the last time-frame as the final parameters
 
             # Save time-dependent properties to the time_properties_dict:
@@ -440,39 +426,29 @@ def main() -> None:
 
         with col1:
             st.write('###### Steady-State Bioelectrical Potentials')
-            st.dataframe(elec_vals_ss)
+            st.dataframe(elec_vals_ss.style.format("{:.1f}"))
 
         with col2:
             st.write('###### Steady-State Ion Concentrations')
-            st.dataframe(ion_vals_ss)
+            st.dataframe(ion_vals_ss.style.format("{:.1f}"))
 
         # Iterative solver results:
         if itersol_checkbox:
             st.write("#### Iterative Simulation Results")
 
-            time = time_props['time_vect']
+            # time = time_props['time_vect']
 
             st.write('###### Bioelectrical Potentials')
             st.line_chart(volt_timedat,
-                          x='Time (hours)',
-                          y=('V_mem', 'V_rev Na+', 'V_rev K+', 'V_rev Cl-'),
+                          x=l.time,
+                          # y=(l.Vmem_o, l.Ved_Na_o, l.Ved_K_o, l.Ved_Cl_o),
                           use_container_width=True)
 
-            # Stack the results of ion concentration changes as a function of time:
-            ion_dat = column_stack((time / 3600,
-                             time_props[''],
-                             time_props[''],
-                             time_props['']))
-
-            ion_datframe = DataFrame(ion_dat, columns = ['Time (hours)',
-                                                         'Na+ in',
-                                                         'K+ in',
-                                                         'Cl- in'])
 
             st.write('###### Intracellular Ion Concentrations')
-            st.line_chart(ion_datframe,
-                          x='Time (hours)',
-                          y=('Na+ in', 'K+ in', 'Cl- in'),
+            st.line_chart(chem_timedat,
+                          x=l.time,
+                          # y=(l.Na_in_o, l.K_in_o, l.Cl_in_o),
                           use_container_width=True)
 
 

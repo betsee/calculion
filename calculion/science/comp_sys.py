@@ -16,6 +16,7 @@ from scipy.optimize import minimize
 import pandas as pd
 from pandas import DataFrame
 from calculion.science.params import CalculionParams
+from calculion.science.string_names import StringNames
 
 @beartype
 class CompSys(object):
@@ -26,11 +27,15 @@ class CompSys(object):
 
     '''
 
-    def __int__(self, tol=1.0e-15):
+    def __init__(self, tol=1.0e-15):
         '''
         Initialize the computational system with default parameters.
         '''
         self._tol = tol
+
+        # Compute the analytical system equations:
+        self._analytical_sys()
+        self._labels = StringNames()
 
     def _analytical_sys(self):
         '''
@@ -247,6 +252,8 @@ class CompSys(object):
          given a parameters and constants vector.
 
         '''
+        n = self._labels
+
         Vmem = self.vmem_funk(parami_v, consti_v)  # Vmem
         Na_rev = self.Na_rev_funk(parami_v, consti_v) # Na reversal
         K_rev = self.K_rev_funk(parami_v, consti_v) # K reversal
@@ -258,13 +265,13 @@ class CompSys(object):
         unit_conv = 1.0e3 # unit conversion to mv
 
         # Electrical properties dictionary
-        elec_props = {'Vₘ': np.round(Vmem*unit_conv, 1),
-                      'Vᵣ Na⁺': np.round(Na_rev*unit_conv, 1),
-                      'Vᵣ K⁺': np.round(K_rev*unit_conv, 1),
-                      'Vᵣ Cl⁻': np.round(Cl_rev*unit_conv, 1),
-                      'Vₑ Na⁺': np.round(Na_ed*unit_conv, 1),
-                      'Vₑ K⁺': np.round(K_ed*unit_conv, 1),
-                      'Vₑ Cl⁻': np.round(Cl_ed*unit_conv, 1)
+        elec_props = {n.Vmem: np.round(Vmem*unit_conv, 1),
+                      n.Vrev_Na: np.round(Na_rev*unit_conv, 1),
+                      n.Vrev_K: np.round(K_rev*unit_conv, 1),
+                      n.Vrev_Cl: np.round(Cl_rev*unit_conv, 1),
+                      n.Ved_Na: np.round(Na_ed*unit_conv, 1),
+                      n.Ved_K: np.round(K_ed*unit_conv, 1),
+                      n.Ved_Cl: np.round(Cl_ed*unit_conv, 1)
         }
 
         elec_dataframe = pd.DataFrame.from_dict(elec_props,
@@ -277,18 +284,20 @@ class CompSys(object):
         Returns a Pandas dataframe of the ion concentrations inside and outside of the cell
         given a parameters and constants vector.
         '''
+        n = self._labels
 
         steady_state_ions_dict = {
-            'Na⁺ᵢₙ': round(parami_v[0], round_dec),
-            'K⁺ᵢₙ': round(parami_v[1], round_dec),
-            'Cl⁻ᵢₙ': round(parami_v[2], round_dec),
-            'Na⁺ₒᵤₜ': round(consti_v[0], round_dec),
-            'K⁺ₒᵤₜ': round(consti_v[1], round_dec),
-            'Cl⁻ₒᵤₜ': round(consti_v[2], round_dec)
+            n.Na_in: round(parami_v[0], round_dec),
+            n.K_in: round(parami_v[1], round_dec),
+            n.Cl_in: round(parami_v[2], round_dec),
+            n.Na_out: round(consti_v[0], round_dec),
+            n.K_out: round(consti_v[1], round_dec),
+            n.Cl_out: round(consti_v[2], round_dec)
                  }
 
         ions_dataframe = pd.DataFrame.from_dict(steady_state_ions_dict,
-                                                orient='index', columns=['Concentration [mM]'])
+                                                orient='index',
+                                                columns=['Concentration [mM]'])
 
         return ions_dataframe
 
@@ -303,6 +312,8 @@ class CompSys(object):
         Na_ed_vect = []
         K_ed_vect = []
         Cl_ed_vect = []
+
+        n = self._labels # string names
 
         for parami_v in params_vect_set:
 
@@ -329,6 +340,7 @@ class CompSys(object):
         Na_ed_vect = np.asarray(Na_ed_vect)
         K_ed_vect = np.asarray(K_ed_vect)
         Cl_ed_vect = np.asarray(Cl_ed_vect)
+        time = np.asarray(time)
 
         # Stack the results of time-dependent properties:
         volt_dat = np.column_stack((time / 3600,
@@ -341,14 +353,14 @@ class CompSys(object):
                                  1e3 * Cl_ed_vect,
                                  ))
 
-        volt_timedat = DataFrame(volt_dat, columns=['Time (hours)',
-                                                    'Vₘ',
-                                                    'Vᵣ Na⁺',
-                                                    'Vᵣ K⁺',
-                                                    'Vᵣ Cl⁻',
-                                                    'Vₑ Na⁺',
-                                                    'Vₑ K⁺',
-                                                    'Vₑ Cl⁻'
+        volt_timedat = DataFrame(volt_dat, columns=[n.time,
+                                                    n.Vmem_o,
+                                                    n.Vrev_Na_o,
+                                                    n.Vrev_K_o,
+                                                    n.Vrev_Cl_o,
+                                                    n.Ved_Na_o,
+                                                    n.Ved_K_o,
+                                                    n.Ved_Cl_o
                                                     ])
 
         return volt_timedat
@@ -362,6 +374,10 @@ class CompSys(object):
         K_vect = []
         Cl_vect = []
 
+        time = np.asarray(time)
+
+        n = self._labels  # string names
+
         for parami in params_vect_set:
             Na_vect.append(parami[0])
             K_vect.append(parami[1])
@@ -374,10 +390,10 @@ class CompSys(object):
         # Stack the results of time-dependent properties:
         chem_dat = np.column_stack((time / 3600, Na_vect, K_vect, Cl_vect))
 
-        chem_timedat = DataFrame(chem_dat, columns=['Time (hours)',
-                                                    'Na⁺ᵢₙ (mM)',
-                                                    'K⁺ᵢₙ (mM)',
-                                                    'Cl⁻ᵢₙ (mM)'
+        chem_timedat = DataFrame(chem_dat, columns=[n.time,
+                                                    n.Na_in_o,
+                                                    n.K_in_o,
+                                                    n.Cl_in_o
                                                     ])
 
         return chem_timedat

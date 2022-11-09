@@ -32,9 +32,9 @@ class CalculionParams(object):
     update_env: bool = False # Update the env. concs. (True) or assume cell surrounded by large media bath (False)?
     quasi_static_vmem: bool = True # Use the quasi-static Vmem approximation?
     iterative_solver: bool = False # Use the iterative solver (True) or solve an optimization problem (False)?
-    steady_state_tol: float = 1.0e-7 # Convergence tolerance to use with iterative solver (change below taken to be ss).
+    steady_state_tol: float = 1.0e-12 # Convergence tolerance to use with iterative solver (change below taken to be ss).
     delta_t: float = 10.0 # Time step [s] for iterative solver
-    N_iter: int = 50000 # Maximum number of iterative time-steps to run to seek steady-state
+    N_iter: int = 5000 # Maximum number of iterative time-steps to run to seek steady-state
     target_Vmem = -10.0e-3 # Target Vmem in V
 
     # Cell and environmental properties and options:
@@ -64,8 +64,8 @@ class CalculionParams(object):
 
     # Pump and transporter parameters:
     omega_NaK: float = 5.0e-13 # Rate constant for the Na-K-ATPase ion pump
-    omega_NaKCl: float=1.0e-15 # Rate constant for the Na-K-2Cl cotransporter
-    omega_KCl: float=1.0e-15 # Rate constant for the K-Cl symporter
+    omega_NaKCl: float=0.0 # Rate constant for the Na-K-2Cl cotransporter (1.0e-15)
+    omega_KCl: float=0.0 # Rate constant for the K-Cl symporter (1.0e-15)
 
     # Calculated parameters (used internally in calculations):
     r_cell = r_cell_um*1e-6 # radius of the cell [m]
