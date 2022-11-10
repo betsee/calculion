@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2022 Beartype authors.
+# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -42,10 +42,10 @@ def test_doc_readme(monkeypatch) -> None:
         modified for the duration of this test.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
+    from calculion._util.path.utilpathself import get_main_readme_file
     from docutils.core import publish_parts
     from docutils.utils import Reporter
-    from calculion_test._util.path.pytpathmain import get_main_readme_file
 
     # Decoded plaintext contents of this project's readme file as a string.
     #

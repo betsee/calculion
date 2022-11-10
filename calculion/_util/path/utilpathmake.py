@@ -4,9 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Testable path factories** (i.e., callables creating and returning
-:class:`pathlib.Path` instances encapsulating testing-specific paths).
+**Path factories** (i.e., callables creating and returning :class:`pathlib.Path`
+instances encapsulating arbitrary paths).
 '''
+
+# ....................{ TODO                               }....................
+#FIXME: Unit test us up, please.
 
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -14,7 +17,10 @@
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype import beartype
-from calculion_test._util.pyterror import CalculionTestPathException
+from calculion.error import (
+    CalculionDirException,
+    CalculionFileException,
+)
 from pathlib import Path
 
 # ....................{ RELATIVIZERS                       }....................
@@ -24,15 +30,15 @@ from pathlib import Path
 @beartype
 def DirRelative(parent_dir: Path, relative_dirname: str) -> Path:
     '''
-    Concrete platform-agnostic :mod:`Path` object encapsulating the absolute
-    dirname of a directory relative to the passed :mod:`Path` object
+    Concrete platform-agnostic :class:`Path` object encapsulating the absolute
+    dirname of a directory relative to the passed :class:`Path` object
     encapsulating an arbitrary directory if found *or* raise an exception
     otherwise.
 
     Parameters
     ----------
     parent_dir : Path
-        :mod:`Path` encapsulating an arbitrary **parent directory** (i.e.,
+        :class:`Path` encapsulating an arbitrary **parent directory** (i.e.,
         directory containing the subdirectory to be returned).
     relative_dirname : str
         Relative dirname of this subdirectory relative to this parent
@@ -41,11 +47,11 @@ def DirRelative(parent_dir: Path, relative_dirname: str) -> Path:
     Returns
     ----------
     Path
-        :mod:`Path` directory relative to the passed :mod:`Path` directory.
+        :class:`Path` directory relative to the passed :class:`Path` directory.
 
     Raises
     ----------
-    CalculionTestPathException
+    CalculionDirException
         If this path exists but is either:
 
         * *Not* a directory.
@@ -68,7 +74,7 @@ def DirRelative(parent_dir: Path, relative_dirname: str) -> Path:
 
     # If this path is *NOT* a directory, raise an exception.
     if not subdir.is_dir():
-        raise CalculionTestPathException(f'Directory "{subdir}" not found.')
+        raise CalculionDirException(f'Directory "{subdir}" not found.')
     # Else, this path is a directory.
 
     # Return this directory.
@@ -78,14 +84,15 @@ def DirRelative(parent_dir: Path, relative_dirname: str) -> Path:
 @beartype
 def FileRelative(parent_dir: Path, relative_filename: str) -> Path:
     '''
-    Concrete platform-agnostic :mod:`Path` object encapsulating the absolute
-    filename of a file relative to the passed :mod:`Path` object encapsulating
-    an arbitrary directory if found *or* raise an exception otherwise.
+    Concrete platform-agnostic :class:`Path` object encapsulating the absolute
+    filename of a file relative to the passed :class:`Path` object
+    encapsulating an arbitrary directory if found *or* raise an exception
+    otherwise.
 
     Parameters
     ----------
     parent_dir : Path
-        :mod:`Path` encapsulating an arbitrary **parent directory** (i.e.,
+        :class:`Path` encapsulating an arbitrary **parent directory** (i.e.,
         directory containing the file to be returned).
     relative_filename : str
         Relative filename of this file relative to this parent directory.
@@ -93,11 +100,11 @@ def FileRelative(parent_dir: Path, relative_filename: str) -> Path:
     Returns
     ----------
     Path
-        :mod:`Path` file relative to the passed :mod:`Path` directory.
+        :class:`Path` file relative to the passed :class:`Path` directory.
 
     Raises
     ----------
-    CalculionTestPathException
+    CalculionFileException
         If this path exists but is either:
 
         * *Not* a directory.
@@ -120,7 +127,7 @@ def FileRelative(parent_dir: Path, relative_filename: str) -> Path:
 
     # If this path is *NOT* a file, raise an exception.
     if not file.is_file():
-        raise CalculionTestPathException(f'File "{file}" not found.')
+        raise CalculionFileException(f'File "{file}" not found.')
     # Else, this path is a file.
 
     # Return this file.

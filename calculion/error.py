@@ -28,4 +28,46 @@ class CalculionException(Exception, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ SUBCLASSES                         }....................
+# ....................{ PATH                               }....................
+class CalculionPathnameException(CalculionException):
+    '''
+    **Pathname exception.**
+
+    Instances of this exception subclass are raised from various submodules of
+    the :mod:`ionyouapp._util.path` subpackage.
+    '''
+
+    pass
+
+
+class CalculionPathException(CalculionException):
+    '''
+    **Path exception.**
+
+    Instances of this exception subclass are raised from various submodules of
+    the :mod:`ionyouapp._util.path` subpackage.
+    '''
+
+    pass
+
+
+class CalculionDirException(CalculionPathException):
+    '''
+    **Directory exception.**
+
+    Instances of this exception subclass are raised from various submodules of
+    the :mod:`ionyouapp._util.path` subpackage.
+    '''
+
+    pass
+
+
+class CalculionFileException(CalculionPathException):
+    '''
+    **File exception.**
+
+    Instances of this exception subclass are raised from various submodules of
+    the :mod:`ionyouapp._util.path` subpackage.
+    '''
+
+    pass

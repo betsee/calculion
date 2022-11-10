@@ -33,12 +33,13 @@ class CalculionTestException(CalculionException, metaclass=_ABCMeta):
     pass
 
 
-class CalculionTestPathException(CalculionTestException):
-    '''
-    **Calculion test path exceptions.**
-
-    This exception is raised at test time from callables and classes defined by
-    the :mod:`calculion_test._util.path` subpackage.
-    '''
-
-    pass
+#FIXME: Currently unused but preserved for posterity.
+# class CalculionTestPathException(CalculionTestException):
+#     '''
+#     **Calculion test path exceptions.**
+#
+#     This exception is raised at test time from callables and classes defined by
+#     the :mod:`calculion_test._util.path` subpackage.
+#     '''
+#
+#     pass
