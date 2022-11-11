@@ -8,9 +8,6 @@
 instances encapsulating arbitrary paths).
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Unit test us up, please.
-
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from

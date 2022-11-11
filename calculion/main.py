@@ -25,20 +25,48 @@ Specifically, this submodule is imported by:
 # validation, *NO* other modules are safely importable from.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+#FIXME: Dear Miss Beautymost,
+#   The main() function defined below now imports the three SVG filename getters
+#   I've added (and thankfully tested as working -- unbelievable as that is).
+#   They're just standard functions, except they return "pathlib.Path" objects
+#   rather than strings like you're probably expecting. Look... here's what I'm
+#   saying here. Just call these functions like so obtain actual strings:
+#       # Absolute filename of the "CellNetworkSchematic_3.svg" file.
+#       cell_network_schematic_filename = str(
+#           get_data_svg_cell_network_schematic_file())
+#
+#       # Absolute filename of the "CellNetworkSchematic_3b.svg" file.
+#       cell_network_schematic_b_filename = str(
+#           get_data_svg_cell_network_schematic_b_file())
+#
+#       # Absolute filename of the "MembraneSchematic_2.svg" file.
+#       membrane_schematic_filename = str(
+#           get_data_svg_membrane_schematic_file())
+#Thanks for being such an amazing partner through the turbulent shoals of life!
+#
+#Love,
+#Dragon Master Sess
+
 # ....................{ MAIN                               }....................
 #FIXME: Unit test us up, please.
 def main() -> None:
     '''
-    Script to run the Streamlit-based web app, Calculion.
+    Core function running this Streamlit-based web app: **Calculion.**
     '''
 
     # ..................{ IMPORTS                            }..................
+    import streamlit as st
+    from calculion.science.comp_sys import CompSys
     from calculion.science.params import CalculionParams
     from calculion.science.string_names import StringNames
+    from calculion._util.path.utilpathself import (
+        get_data_svg_cell_network_schematic_file,
+        get_data_svg_cell_network_schematic_b_file,
+        get_data_svg_membrane_schematic_file,
+    )
     from numpy import exp, column_stack
     from pandas import DataFrame
     # from calculion.science.compute import get_steady_state
-    from calculion.science.comp_sys import CompSys
     from streamlit import (
         title,
         # set_page_config
@@ -50,27 +78,23 @@ def main() -> None:
     # Human-readable title of this web app.
     title('Calculion')
 
+    # App subtitle, if we want it:
+    # st.write('Calculating the *slow* changes of bioelectricity')
+
     # ..................{ LOCALS                             }..................
     p = CalculionParams()  # Create a default parameters instance
     l = StringNames() # string labels
 
-    # ..................{ Calculion App             }..................
-    import streamlit as st
-
-
-
-    # App subtitle, if we want it:
-    # st.write('Calculating the *slow* changes of bioelectricity')
-
+    # ..................{ SIDEBAR                            }..................
     # def my_widget(key):
     #
     #     return st.button("Click me " + key)
 
-    # The sidebar will contain all widgets to collect user-data for the simulation:
-    # Create and name the sidebar:
+    # The sidebar will contain all widgets to collect user-data for the
+    # simulation. Create and name the sidebar.
     st.sidebar.header('Simulation Variables')
+
     # st.sidebar.write('#### Set simulation variables')
-    #-----SIDEBAR AREA--------------------------------------------------------------------------------------------------
     with st.sidebar:
 
         st.write('**Initial Conditions**')
@@ -389,9 +413,9 @@ def main() -> None:
             else:
                 p.iterative_solver = False # reset the iterative solver parameter to False
 
-
-    #-----MAIN RESULTS AREA---------------------------------------------------------------------------------------------
-    # After collecting parameter values from the user, compute the steady-state values for the bioelectrical system:
+    # ..................{ RESULTS                            }..................
+    # After collecting parameter values from the user, compute the steady-state
+    # values for the bioelectrical system.
 
     @st.cache # Cache the results of this slower function
     def calculate_ss_results(p):
@@ -438,14 +462,19 @@ def main() -> None:
     # In the main area present the results of the simulation:
     ion_vals_ss, elec_vals_ss, time_props, volt_timedat, chem_timedat = calculate_ss_results(p)
 
-    # Split the main area into three tabs:
-    # Introduction tab (tab1) will display a write-up of the theory behind Calculion
-    # Simulation Results tab will display the simulation results as tables and charts
-    # Bioelectrical Network tab will show a graphical depiction of the bioelectrical network.
-    tab1, tab2, tab3 = st.tabs(["Introduction", "Simulation Results", "Bioelectrical Network"])
+    # ..................{ TABS                               }..................
+    # Split the main area into these three tabs:
+    # * The "Introduction" tab (tab1) will display a write-up of the theory
+    #   behind Calculion.
+    # * The "Simulation Results" tab will display the simulation results as
+    #   tables and charts.
+    # * The "Bioelectrical Network" tab will show a graphical depiction of the
+    #   bioelectrical network.
+    tab1, tab2, tab3 = st.tabs([
+        'Introduction', 'Simulation Results', 'Bioelectrical Network'])
 
     with tab1:
-        st.write("### Why Calculion?")
+        st.write('### Why Calculion?')
         # App subtitle, if we want it:
         st.write('#### Calculating the *slow* changes of bioelectricity')
         st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
@@ -482,8 +511,6 @@ def main() -> None:
                           # y=(l.Na_in_o, l.K_in_o, l.Cl_in_o),
                           use_container_width=True)
 
-
-
-
+# ....................{ MAIN ~ run                         }....................
 # Run our Streamlit-based web app.
 main()

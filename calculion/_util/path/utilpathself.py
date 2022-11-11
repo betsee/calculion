@@ -9,10 +9,8 @@ project-specific paths relative to the current directory containing this
 project).
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Unit test us up, please.
-
 # ....................{ IMPORTS                            }....................
+from beartype import beartype
 from calculion.meta import PACKAGE_TEST_NAME
 from calculion._util.cache.utilcachecall import callable_cached
 from calculion._util.path.utilpathmake import (
@@ -23,6 +21,7 @@ from pathlib import Path
 
 # ....................{ GETTERS ~ package                  }....................
 @callable_cached
+@beartype
 def get_package_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **top-level package**
@@ -55,6 +54,7 @@ def get_package_dir() -> Path:
 
 # ....................{ GETTERS ~ main                     }....................
 @callable_cached
+@beartype
 def get_main_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **root project
@@ -83,6 +83,7 @@ def get_main_dir() -> Path:
 
 
 @callable_cached
+@beartype
 def get_main_readme_file() -> Path:
     '''
     :mod:`Path` encapsulating the absolute filename of the **project readme
@@ -98,6 +99,7 @@ def get_main_readme_file() -> Path:
 
 # ....................{ GETTERS ~ data : dir               }....................
 @callable_cached
+@beartype
 def get_data_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **project-wide data
@@ -111,26 +113,53 @@ def get_data_dir() -> Path:
 
 
 @callable_cached
-def get_data_kivy_dir() -> Path:
+@beartype
+def get_data_svg_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **project-wide Kivy
-    language subdirectory** (i.e., directory containing ``.kv``-suffixed files
-    describing the visual aesthetics of this Kivy app) if found *or* raise an
-    exception otherwise.
+    :mod:`Path` encapsulating the absolute dirname of the **project-wide
+    scalable vector graphics (SVG) subdirectory** (i.e., directory containing
+    ``.svg``-suffixed files describing losslessly scalable images) if found *or*
+    raise an exception otherwise.
     '''
 
     # Perverse pomposity!
-    return DirRelative(get_data_dir(), 'kv')
+    return DirRelative(get_data_dir(), 'svg')
 
-# ....................{ GETTERS ~ data : file              }....................
+# ....................{ GETTERS ~ data : file : svg        }....................
 @callable_cached
-def get_data_kivy_root_file() -> Path:
+@beartype
+def get_data_svg_cell_network_schematic_file() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute filename of the **project-wide root
-    Kivy language file** (i.e., ``.kv``-suffixed file describing the root
-    Kivy widget tree for this Kivy app) if found *or* raise an exception
+    :mod:`Path` encapsulating the absolute filename of the **project-wide**
+    ``CellNetworkSchematic_3.svg`` file** if found *or* raise an exception
+    otherwise.
+    '''
+
+    # Terrifying terseness!
+    return FileRelative(get_data_svg_dir(), 'CellNetworkSchematic_3.svg')
+
+
+@callable_cached
+@beartype
+def get_data_svg_cell_network_schematic_b_file() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute filename of the **project-wide**
+    ``CellNetworkSchematic_3B.svg`` file** if found *or* raise an exception
     otherwise.
     '''
 
     # Transverse transgression!
-    return FileRelative(get_data_kivy_dir(), 'kvmdapp.kv')
+    return FileRelative(get_data_svg_dir(), 'CellNetworkSchematic_3B.svg')
+
+
+@callable_cached
+@beartype
+def get_data_svg_membrane_schematic_file() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute filename of the **project-wide**
+    ``MembraneSchematic_2.svg`` file** if found *or* raise an exception
+    otherwise.
+    '''
+
+    # Terrifying terseness!
+    return FileRelative(get_data_svg_dir(), 'MembraneSchematic_2.svg')
