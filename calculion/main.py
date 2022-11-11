@@ -64,6 +64,8 @@ def main() -> None:
         get_data_svg_cell_network_schematic_file,
         get_data_svg_cell_network_schematic_b_file,
         get_data_svg_membrane_schematic_file,
+        get_data_png_cell_network_schematic_b_file,
+        get_data_png_membrane_schematic_file,
     )
     from numpy import exp, column_stack
     from pandas import DataFrame
@@ -546,12 +548,19 @@ def main() -> None:
                           use_container_width=True)
 
     with tab3:
-        # cell_net_image_fn = str(get_data_svg_cell_network_schematic_b_file())
-        # cell_net_image = Image.open(cell_net_image_fn)
-        # st.image(cell_net_image, caption='Behold the Cellular Bioelectric Network!')
-        cell_net_image_fn = str(get_data_svg_cell_network_schematic_b_file())
-        # cell_net_image = Image.open(cell_net_image_fn)
-        st.image(cell_net_image_fn, caption='Behold the Cellular Bioelectric Network!', width=100)
+
+        col1, col2 = st.columns(2)
+
+        with col2:
+            # cell_net_image_fn = str(get_data_svg_cell_network_schematic_b_file())
+            # cell_net_image = Image.open(cell_net_image_fn)
+            # st.image(cell_net_image, caption='Behold the Cellular Bioelectric Network!')
+            cell_net_image_fn = str(get_data_png_cell_network_schematic_b_file())
+            cell_net_image = Image.open(cell_net_image_fn)
+            st.image(cell_net_image,
+                     caption='Behold the Cellular Bioelectric Network!',
+                     use_column_width='always',
+                     output_format="PNG")
 # ....................{ MAIN ~ run                         }....................
 # Run our Streamlit-based web app.
 main()

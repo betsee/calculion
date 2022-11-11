@@ -125,6 +125,28 @@ def get_data_svg_dir() -> Path:
     # Perverse pomposity!
     return DirRelative(get_data_dir(), 'svg')
 
+@callable_cached
+@beartype
+def get_data_png_dir() -> Path:
+    return DirRelative(get_data_dir(), 'png')
+
+# ....................{ GETTERS ~ data : file : png        }....................
+@callable_cached
+@beartype
+def get_data_png_cell_network_schematic_b_file() -> Path:
+    '''
+
+    '''
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3B.png')
+
+@callable_cached
+@beartype
+def get_data_png_membrane_schematic_file() -> Path:
+    '''
+
+    '''
+    return FileRelative(get_data_png_dir(), 'MembraneScematic_2.png')
+
 # ....................{ GETTERS ~ data : file : svg        }....................
 @callable_cached
 @beartype

@@ -18,8 +18,8 @@
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
    sodipodi:docname="CellNetworkSchematic_3B.svg"
    inkscape:export-filename="/home/pietakio/py/calculion/calculion/data/png/CellNetworkSchematic_3B.png"
-   inkscape:export-xdpi="150"
-   inkscape:export-ydpi="150">
+   inkscape:export-xdpi="72"
+   inkscape:export-ydpi="72">
   <defs
      id="defs4">
     <marker
@@ -111,7 +111,7 @@
       <path
          id="path18412"
          d="M 0,0 5,-5 -12.5,0 5,5 Z"
-         style="fill:#338000;fill-opacity:1;fill-rule:evenodd;stroke:#338000;stroke-width:1.00000003pt;stroke-opacity:1"
+         style="fill:#66ff00;fill-opacity:1;fill-rule:evenodd;stroke:#66ff00;stroke-width:1.00000003pt;stroke-opacity:1"
          transform="matrix(-0.4,0,0,-0.4,-4,0)"
          inkscape:connector-curvature="0" />
     </marker>
@@ -2284,14 +2284,14 @@
   </defs>
   <sodipodi:namedview
      id="base"
-     pagecolor="#ffffff"
+     pagecolor="#000000"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="1"
+     inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.0367053"
-     inkscape:cx="529.43024"
-     inkscape:cy="973.899"
+     inkscape:cx="-300.12084"
+     inkscape:cy="958.4655"
      inkscape:document-units="px"
      inkscape:current-layer="layer6"
      showgrid="false"
@@ -2314,7 +2314,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
