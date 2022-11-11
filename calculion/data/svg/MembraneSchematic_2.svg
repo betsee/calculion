@@ -16,7 +16,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
-   sodipodi:docname="MembraneSchematic_2.svg">
+   sodipodi:docname="MembraneSchematic_2.svg"
+   inkscape:export-filename="/home/pietakio/py/calculion/calculion/data/png/MembraneSchematic_2.svg.png"
+   inkscape:export-xdpi="150"
+   inkscape:export-ydpi="150">
   <defs
      id="defs4">
     <marker
@@ -10211,8 +10214,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.9983248"
-     inkscape:cx="343.09579"
-     inkscape:cy="159.6768"
+     inkscape:cx="271.40911"
+     inkscape:cy="218.35985"
      inkscape:document-units="px"
      inkscape:current-layer="g25618-6"
      showgrid="false"
@@ -10233,7 +10236,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

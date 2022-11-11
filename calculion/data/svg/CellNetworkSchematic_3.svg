@@ -17,9 +17,9 @@
    version="1.1"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
    sodipodi:docname="CellNetworkSchematic_3.svg"
-   inkscape:export-filename="/home/pietakio/Documents/BETSE_Papers/PBMB_Review/RawFigs/F3_VmemMolecularPerspective/Vmem_Molecular_Perspective_1.png"
-   inkscape:export-xdpi="73.72419"
-   inkscape:export-ydpi="73.72419">
+   inkscape:export-filename="/home/pietakio/py/calculion/calculion/data/png/CellNetworkSchematic_3.png"
+   inkscape:export-xdpi="150"
+   inkscape:export-ydpi="150">
   <defs
      id="defs4">
     <marker
@@ -2290,8 +2290,8 @@
      inkscape:pageopacity="1"
      inkscape:pageshadow="2"
      inkscape:zoom="1.0367053"
-     inkscape:cx="944.20578"
-     inkscape:cy="788.69689"
+     inkscape:cx="529.43024"
+     inkscape:cy="973.89899"
      inkscape:document-units="px"
      inkscape:current-layer="layer6"
      showgrid="false"
@@ -2314,7 +2314,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -2807,7 +2807,7 @@
        sodipodi:nodetypes="cccccccc" />
     <path
        style="opacity:1;fill:none;fill-opacity:1;stroke:#004455;stroke-width:5.625;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker17046);paint-order:normal"
-       d="m 1153.0487,1487.9095 c -20.0348,1.2788 -40.0707,2.5577 -75.0281,2.1315 -34.9574,-0.4263 -84.83146,-2.5577 -121.17344,-7.3535 -36.34199,-4.7958 -59.14832,-12.2558 -65.64932,-38.048 -6.501,-25.7921 3.3035,-69.9123 18.01072,-117.3375 14.70722,-47.4251 34.31728,-98.1555 59.25523,-135.2421 24.93794,-37.0866 55.20561,-60.5334 85.47141,-83.9788"
+       d="m 1153.0487,1487.9095 c -20.0348,1.2788 -40.0707,2.5577 -75.0281,2.1315 -34.9574,-0.4263 -84.83146,-2.5577 -121.17344,-7.3535 -36.34199,-4.7958 -59.14832,-12.2558 -65.64932,-38.048 -6.50101,-25.7921 3.30351,-69.9124 18.01073,-117.3375 14.70722,-47.4252 34.31726,-98.1555 59.25521,-135.2421 24.93796,-37.0867 55.20562,-60.5335 85.47142,-83.9788"
        id="path17034"
        inkscape:connector-curvature="0"
        inkscape:path-effect="#path-effect17036"
