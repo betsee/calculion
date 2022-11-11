@@ -56,6 +56,7 @@ def main() -> None:
 
     # ..................{ IMPORTS                            }..................
     import streamlit as st
+    from PIL import Image
     from calculion.science.comp_sys import CompSys
     from calculion.science.params import CalculionParams
     from calculion.science.string_names import StringNames
@@ -499,18 +500,58 @@ def main() -> None:
             # time = time_props['time_vect']
 
             st.write('###### Bioelectrical Potentials')
+
+            all_V_series = [l.Vmem_o, l.Ved_Na_o, l.Ved_K_o, l.Ved_Cl_o, l.Vrev_Na_o, l.Vrev_K_o, l.Vrev_Cl_o]
+            all_chem_series = [l.Na_in_o, l.K_in_o, l.Cl_in_o]
+
+            shown_V_series = []
+            shown_chem_series = []
+
+            show_Vmem = st.checkbox(l.Vmem, value=True, help=f'Show membrane potential, {l.Vmem}, on the graph?')
+            show_Ved_Na = st.checkbox(l.Ved_Na, value=False, help=f'Show Na+ electrochemical driving potential, {l.Ved_Na}, on the graph?')
+            show_Ved_K = st.checkbox(l.Ved_K, value=False, help=f'Show K+ electrochemical driving potential, {l.Ved_K}, on the graph?')
+            show_Ved_Cl = st.checkbox(l.Ved_Cl, value=False, help=f'Show Cl- electrochemical driving potential, {l.Ved_Cl}, on the graph?')
+            show_Vrev_Na = st.checkbox(l.Vrev_Na, value=False, help=f'Show Na+ reversal potential, {l.Vrev_Na}, on the graph?')
+            show_Vrev_K = st.checkbox(l.Vrev_K, value=False, help=f'Show K+ reversal potential, {l.Vrev_K}, on the graph?')
+            show_Vrev_Cl = st.checkbox(l.Vrev_Cl, value=False, help=f'Show Cl- reversal potential, {l.Vrev_Cl}, on the graph?')
+
+            V_series_bools = [show_Vmem, show_Ved_Na, show_Ved_K, show_Ved_Cl, show_Vrev_Na, show_Vrev_K, show_Vrev_Cl]
+
+            for vbool, vname in zip(V_series_bools, all_V_series):
+                if vbool:
+                    shown_V_series.append(vname)
+
+
             st.line_chart(volt_timedat,
                           x=l.time,
-                          # y=(l.Vmem_o, l.Ved_Na_o, l.Ved_K_o, l.Ved_Cl_o),
+                          y=shown_V_series,
                           use_container_width=True)
 
 
             st.write('###### Intracellular Ion Concentrations')
+
+            show_Na_in = st.checkbox(l.Na_in, value=True, help=f'Show Na+ concentration in the cytoplasm, {l.Na_in}, on the graph?')
+            show_K_in = st.checkbox(l.K_in, value=True, help=f'Show K+ concentration in the cytoplasm, {l.K_in}, on the graph?')
+            show_Cl_in = st.checkbox(l.Cl_in, value=True, help=f'Show Cl- concentration in the cytoplasm, {l.Cl_in}, on the graph?')
+
+            chem_series_bools = [show_Na_in, show_K_in, show_Cl_in]
+
+            for cbool, cname in zip(chem_series_bools, all_chem_series):
+                if cbool:
+                    shown_chem_series.append(cname)
+
             st.line_chart(chem_timedat,
                           x=l.time,
-                          # y=(l.Na_in_o, l.K_in_o, l.Cl_in_o),
+                          y=shown_chem_series,
                           use_container_width=True)
 
+    with tab3:
+        # cell_net_image_fn = str(get_data_svg_cell_network_schematic_b_file())
+        # cell_net_image = Image.open(cell_net_image_fn)
+        # st.image(cell_net_image, caption='Behold the Cellular Bioelectric Network!')
+        cell_net_image_fn = str(get_data_svg_cell_network_schematic_b_file())
+        # cell_net_image = Image.open(cell_net_image_fn)
+        st.image(cell_net_image_fn, caption='Behold the Cellular Bioelectric Network!', width=100)
 # ....................{ MAIN ~ run                         }....................
 # Run our Streamlit-based web app.
 main()
