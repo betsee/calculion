@@ -45,7 +45,7 @@ def main() -> None:
         get_data_png_cell_network_schematic_b_file,
         get_data_png_membrane_schematic_file,
     )
-    # from numpy import exp, column_stack
+    from numpy import exp  #, column_stack
     # from pandas import DataFrame
     # from calculion.science.compute import get_steady_state
     from streamlit import (

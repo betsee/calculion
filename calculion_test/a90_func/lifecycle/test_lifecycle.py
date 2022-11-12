@@ -16,22 +16,8 @@ This submodule integration tests the public API of the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from calculion_test._util.mark.pytskip import skip
 
 # ....................{ TESTS                              }....................
-#FIXME: Consider posting a new feature request on the Streamlit issue tracker
-#publicly suggesting that Streamlit publish an official "pytest-streamlit"
-#plugin trivially enabling Streamlit apps to be tested under "pytest". That
-#plugin would provide support (presumably in the form of one or more pytest
-#fixtures) for:
-#* Programmatically running any arbitrary Streamlit app.
-#* A Streamlit mock API similar to that of the existing third-party
-#  "streamlit_mock" package but hopefully more actively maintained against
-#  upstream changes in the Streamlit API.
-#FIXME: We've now filed an upstream feature request tracking this issue:
-#    https://github.com/streamlit/streamlit/issues/5683
-
-@skip('Currently broken due to raising fatal "Invalid instruction" errors.')
 def test_app_lifecycle(capsys) -> None:
     '''
     Integration test exercising the **maximally trivial app lifecycle** (i.e.,
