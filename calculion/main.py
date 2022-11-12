@@ -25,28 +25,6 @@ Specifically, this submodule is imported by:
 # validation, *NO* other modules are safely importable from.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#FIXME: Dear Miss Beautymost,
-#   The main() function defined below now imports the three SVG filename getters
-#   I've added (and thankfully tested as working -- unbelievable as that is).
-#   They're just standard functions, except they return "pathlib.Path" objects
-#   rather than strings like you're probably expecting. Look... here's what I'm
-#   saying here. Just call these functions like so obtain actual strings:
-#       # Absolute filename of the "CellNetworkSchematic_3.svg" file.
-#       cell_network_schematic_filename = str(
-#           get_data_svg_cell_network_schematic_file())
-#
-#       # Absolute filename of the "CellNetworkSchematic_3b.svg" file.
-#       cell_network_schematic_b_filename = str(
-#           get_data_svg_cell_network_schematic_b_file())
-#
-#       # Absolute filename of the "MembraneSchematic_2.svg" file.
-#       membrane_schematic_filename = str(
-#           get_data_svg_membrane_schematic_file())
-#Thanks for being such an amazing partner through the turbulent shoals of life!
-#
-#Love,
-#Dragon Master Sess
-
 # ....................{ MAIN                               }....................
 #FIXME: Unit test us up, please.
 def main() -> None:
@@ -67,8 +45,8 @@ def main() -> None:
         get_data_png_cell_network_schematic_b_file,
         get_data_png_membrane_schematic_file,
     )
-    from numpy import exp, column_stack
-    from pandas import DataFrame
+    # from numpy import exp, column_stack
+    # from pandas import DataFrame
     # from calculion.science.compute import get_steady_state
     from streamlit import (
         title,

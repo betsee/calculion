@@ -21,10 +21,13 @@ PYTHON_ARGS=(
     # Python interpreter to be run.
     command python3.9
 
-    #FIXME: Uncomment this as needed (e.g., to debug hidden resource warnings).
+    # #FIXME: Uncomment this as needed (e.g., to debug hidden resource warnings).
     # # Enable the Python Development Mode (PDM). See also commentary for the
     # # ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
     # -X dev
+    #
+    # # Enable tracing (i.e., debugging) of "import" statements.
+    # -v
 
     # Implicitly import the "calculion.__main__" dunder module, which
     # programmatically runs "streamlit run calculion/main.py" in a portable
