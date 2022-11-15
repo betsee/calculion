@@ -172,13 +172,13 @@ Human-readable name of the license this package is licensed under.
 '''
 
 # ....................{ METADATA ~ package                 }....................
-PACKAGE_NAME = 'calculion'
+PACKAGE_MAIN_NAME = 'calculion'
 '''
 Fully-qualified name of the top-level Python package containing this submodule.
 '''
 
 
-PACKAGE_TEST_NAME = f'{PACKAGE_NAME}_test'
+PACKAGE_TEST_NAME = f'{PACKAGE_MAIN_NAME}_test'
 '''
 Fully-qualified name of the top-level Python package exercising this project.
 '''

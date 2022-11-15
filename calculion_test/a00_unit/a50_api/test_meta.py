@@ -27,7 +27,7 @@ def test_meta() -> None:
 
     # Assert this submodule's public attributes to be of the expected types.
     assert isinstance(meta.NAME, str)
-    assert isinstance(meta.PACKAGE_NAME, str)
+    assert isinstance(meta.PACKAGE_MAIN_NAME, str)
     assert isinstance(meta.PACKAGE_TEST_NAME, str)
     assert isinstance(meta.LICENSE, str)
     assert isinstance(meta.PYTHON_VERSION_MIN, str)
