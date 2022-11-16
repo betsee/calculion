@@ -45,7 +45,7 @@ def main() -> None:
         get_data_png_cell_network_schematic_3_file,
         get_data_png_membrane_schematic_file,
     )
-    from numpy import exp  #, column_stack
+    from numpy import exp, sum  #, column_stack
     # from pandas import DataFrame
     # from calculion.science.compute import get_steady_state
     from streamlit import (
@@ -350,8 +350,141 @@ def main() -> None:
             # update r_cell to be in meters for simulations:
             p.r_cell = p.r_cell_um*1e-6
 
+        # # Define a final expander block for simulator settings:
+        # sim_settings_block = st.expander("Simulation Settings", expanded=default_expanded_state)
+        #
+        # with sim_settings_block:
+        #
+        #     # Iterative solver will not be used by default:
+        #     itersol_checkbox = st.checkbox("Use iterative solver",
+        #                                    value=False,
+        #                                    key='checkbox_itersol',
+        #                                    help='Use the iterative solver that integrates the '
+        #                                         'system step-by-step in time?')
+        #
+        #     if itersol_checkbox:
+        #         p.iterative_solver = True # Set the iterative solver parameter to True
+        #
+        #         # Iterative solver time step:
+        #         p.delta_t = param_widget('Simulation time-step [s]',
+        #                                   min_value=1.0e-3,
+        #                                   max_value=100.0,
+        #                                   value=p.delta_t,
+        #                                   step=0.01,
+        #                                   format='%f',
+        #                                   key='slider_delta_t',
+        #                                   label_visibility='visible',
+        #                                   help='Set the time step for the iterative solver.')
+        #
+        #         # Iterative solver max iterations:
+        #         p.N_iter = param_widget('Simulation max iterations',
+        #                                   min_value=10,
+        #                                   max_value=100000,
+        #                                   value=p.N_iter,
+        #                                   step=1,
+        #                                   format='%d',
+        #                                   key='slider_Niter',
+        #                                   label_visibility='visible',
+        #                                   help='Set the maximum number of timesteps that can be run.')
+        #
+        #         # Iterative solver convergence tolerance:
+        #         p.steady_state_tol = param_widget('Convergence tolerance',
+        #                                   min_value=1e-20,
+        #                                   max_value=1e-6,
+        #                                   value=p.steady_state_tol,
+        #                                   step=1e-15,
+        #                                   format='%e',
+        #                                   key='slider_tol',
+        #                                   label_visibility='visible',
+        #                                   help='Set the tolerance, below which the simulation will be'
+        #                                        'assumed to be at steady-state.')
+        #
+        #
+        #
+        #     else:
+        #         p.iterative_solver = False # reset the iterative solver parameter to False
+
+    # ..................{ RESULTS                            }..................
+    # After collecting parameter values from the user, compute the steady-state
+    # values for the bioelectrical system.
+
+    @st.cache # Cache the results of this slower function
+    def calculate_ss_results(p):
+
+        sim = CompSys()  # Create an instance of the main computational simulator
+
+        params_vect_o, consts_vect = sim.collect_params(p) # Get initial values of the computational simulator
+
+        time_properties_dict = {}
+        volt_timedat = {}
+        chem_timedat = {}
+
+        if p.iterative_solver is False:
+            params_vect = sim.calc_steady_state(p)
+
+        else:
+            (params_vect_time,
+             opti_funk_time,
+             time_vect,
+             print_message) = sim.calc_timestepped(p, N_iter=p.N_iter,
+                                                    del_t=p.delta_t,
+                                                    ti = 0.0,
+                                                    tol=p.steady_state_tol)
+            params_vect = params_vect_time[-1] # Get the last time-frame as the final parameters
+
+            # Save time-dependent properties to the time_properties_dict:
+            time_properties_dict['params_vect_time'] = params_vect_time
+            time_properties_dict['opti_funk_time'] = opti_funk_time
+            time_properties_dict['time_vect'] = time_vect
+
+            # Use the time-dependent parameters to compute all electrical and chem properties as a function of time:
+            volt_timedat = sim.calc_elec_param_set(params_vect_time, consts_vect, time_vect)
+            chem_timedat = sim.calc_chem_param_set(params_vect_time, consts_vect, time_vect)
+
+        # Get the concentration ss dataframe:
+        ion_ss = sim.return_chem_props_dict(params_vect, consts_vect)
+
+        # Get the electrical properties dataframe:
+        elec_ss = sim.return_elec_props_dict(params_vect, consts_vect)
+
+
+        return ion_ss, elec_ss, time_properties_dict, volt_timedat, chem_timedat
+
+    # In the main area present the results of the simulation:
+    # ion_vals_ss, elec_vals_ss, time_props, volt_timedat, chem_timedat = calculate_ss_results(p)
+
+    # ..................{ TABS                               }..................
+    # Split the main area into these three tabs:
+    # * The "Introduction" tab (tab1) will display a write-up of the theory
+    #   behind Calculion.
+    # * The "Simulation Results" tab will display the simulation results as
+    #   tables and charts.
+    # * The "Bioelectrical Network" tab will show a graphical depiction of the
+    #   bioelectrical network.
+    tab1, tab2, tab3 = st.tabs([
+        'Introduction', 'Simulation', 'Bioelectrical Network'])
+
+    with tab1:
+        st.write('### Why Calculion?')
+        # App subtitle, if we want it:
+        st.write('#### Calculating the *slow* changes of bioelectricity')
+        st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
+
+        mem_image_fn = str(get_data_png_membrane_schematic_file())
+        mem_image = Image.open(mem_image_fn)
+        st.image(mem_image,
+                 caption='Behold the Cellular Bioelectric Network!',
+                 use_column_width='always',
+                 output_format="PNG")
+
+    with tab2:
+        st.write("### Simulation")
+
+        st.write("*Alter sidebar Simulation Variables to explore the possibilities...*")
+
         # Define a final expander block for simulator settings:
         sim_settings_block = st.expander("Simulation Settings", expanded=default_expanded_state)
+
 
         with sim_settings_block:
 
@@ -404,82 +537,10 @@ def main() -> None:
             else:
                 p.iterative_solver = False # reset the iterative solver parameter to False
 
-    # ..................{ RESULTS                            }..................
-    # After collecting parameter values from the user, compute the steady-state
-    # values for the bioelectrical system.
+        st.write("### Results")
+        # Calculate the results of the simulation:
+        ion_vals_ss, elec_vals_ss, time_props, volt_timedat, chem_timedat = calculate_ss_results(p)
 
-    @st.cache # Cache the results of this slower function
-    def calculate_ss_results(p):
-
-        sim = CompSys()  # Create an instance of the main computational simulator
-
-        params_vect_o, consts_vect = sim.collect_params(p) # Get initial values of the computational simulator
-
-        time_properties_dict = {}
-        volt_timedat = {}
-        chem_timedat = {}
-
-        if p.iterative_solver is False:
-            params_vect = sim.calc_steady_state(p)
-
-        else:
-            (params_vect_time,
-             opti_funk_time,
-             time_vect,
-             print_message) = sim.calc_timestepped(p, N_iter=p.N_iter,
-                                                    del_t=p.delta_t,
-                                                    ti = 0.0,
-                                                    tol=p.steady_state_tol)
-            params_vect = params_vect_time[-1] # Get the last time-frame as the final parameters
-
-            # Save time-dependent properties to the time_properties_dict:
-            time_properties_dict['params_vect_time'] = params_vect_time
-            time_properties_dict['opti_funk_time'] = opti_funk_time
-            time_properties_dict['time_vect'] = time_vect
-
-            # Use the time-dependent parameters to compute all electrical and chem properties as a function of time:
-            volt_timedat = sim.calc_elec_param_set(params_vect_time, consts_vect, time_vect)
-            chem_timedat = sim.calc_chem_param_set(params_vect_time, consts_vect, time_vect)
-
-        # Get the concentration ss dataframe:
-        ion_ss = sim.return_chem_props_dict(params_vect, consts_vect)
-
-        # Get the electrical properties dataframe:
-        elec_ss = sim.return_elec_props_dict(params_vect, consts_vect)
-
-
-        return ion_ss, elec_ss, time_properties_dict, volt_timedat, chem_timedat
-
-    # In the main area present the results of the simulation:
-    ion_vals_ss, elec_vals_ss, time_props, volt_timedat, chem_timedat = calculate_ss_results(p)
-
-    # ..................{ TABS                               }..................
-    # Split the main area into these three tabs:
-    # * The "Introduction" tab (tab1) will display a write-up of the theory
-    #   behind Calculion.
-    # * The "Simulation Results" tab will display the simulation results as
-    #   tables and charts.
-    # * The "Bioelectrical Network" tab will show a graphical depiction of the
-    #   bioelectrical network.
-    tab1, tab2, tab3 = st.tabs([
-        'Introduction', 'Simulation', 'Bioelectrical Network'])
-
-    with tab1:
-        st.write('### Why Calculion?')
-        # App subtitle, if we want it:
-        st.write('#### Calculating the *slow* changes of bioelectricity')
-        st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
-
-        mem_image_fn = str(get_data_png_membrane_schematic_file())
-        mem_image = Image.open(mem_image_fn)
-        st.image(mem_image,
-                 caption='Behold the Cellular Bioelectric Network!',
-                 use_column_width='always',
-                 output_format="PNG")
-
-    with tab2:
-        st.write("### Simulation")
-        # st.write("*(Alter sidebar Simulation Variables to explore the possibilities...)*")
         col1, col2 = st.columns(2)
 
         with col1:
@@ -504,13 +565,38 @@ def main() -> None:
             shown_V_series = []
             shown_chem_series = []
 
-            show_Vmem = st.checkbox(l.Vmem, value=True, help=f'Show membrane potential, {l.Vmem}, on the graph?')
-            show_Ved_Na = st.checkbox(l.Ved_Na, value=False, help=f'Show Na+ electrochemical driving potential, {l.Ved_Na}, on the graph?')
-            show_Ved_K = st.checkbox(l.Ved_K, value=False, help=f'Show K+ electrochemical driving potential, {l.Ved_K}, on the graph?')
-            show_Ved_Cl = st.checkbox(l.Ved_Cl, value=False, help=f'Show Cl- electrochemical driving potential, {l.Ved_Cl}, on the graph?')
-            show_Vrev_Na = st.checkbox(l.Vrev_Na, value=False, help=f'Show Na+ reversal potential, {l.Vrev_Na}, on the graph?')
-            show_Vrev_K = st.checkbox(l.Vrev_K, value=False, help=f'Show K+ reversal potential, {l.Vrev_K}, on the graph?')
-            show_Vrev_Cl = st.checkbox(l.Vrev_Cl, value=False, help=f'Show Cl- reversal potential, {l.Vrev_Cl}, on the graph?')
+            show_Vmem = st.checkbox(l.Vmem, value=True,
+                                        help=f'Show membrane potential, {l.Vmem}, on the graph?')
+
+            # Columns to arrange voltage series checkboxes horizontally:
+            vc0, vc1, vc2, vc3, vc4, vc5 = st.columns(6)
+
+            with vc0:
+                show_Ved_Na = st.checkbox(l.Ved_Na,
+                                          value=False,
+                                          help=f'Show Na+ electrochemical driving potential,'
+                                               f' {l.Ved_Na}, on the graph?')
+            with vc1:
+                show_Ved_K = st.checkbox(l.Ved_K, value=False,
+                                         help=f'Show K+ electrochemical driving potential, '
+                                              f'{l.Ved_K}, on the graph?')
+
+            with vc2:
+                show_Ved_Cl = st.checkbox(l.Ved_Cl, value=False,
+                                          help=f'Show Cl- electrochemical driving potential, '
+                                               f'{l.Ved_Cl}, on the graph?')
+
+            with vc3:
+                show_Vrev_Na = st.checkbox(l.Vrev_Na, value=False,
+                                           help=f'Show Na+ reversal potential, '
+                                                f'{l.Vrev_Na}, on the graph?')
+            with vc4:
+                show_Vrev_K = st.checkbox(l.Vrev_K, value=False,
+                                          help=f'Show K+ reversal potential, {l.Vrev_K}, on the graph?')
+
+            with vc5:
+                show_Vrev_Cl = st.checkbox(l.Vrev_Cl, value=False,
+                                           help=f'Show Cl- reversal potential, {l.Vrev_Cl}, on the graph?')
 
             V_series_bools = [show_Vmem, show_Ved_Na, show_Ved_K, show_Ved_Cl, show_Vrev_Na, show_Vrev_K, show_Vrev_Cl]
 
@@ -518,18 +604,29 @@ def main() -> None:
                 if vbool:
                     shown_V_series.append(vname)
 
-
+            # st.write(f'l.time: {l.time}')
+            # st.write(f'volt_timedat: {volt_timedat}')
             st.line_chart(volt_timedat,
                           x=l.time,
                           y=shown_V_series,
                           use_container_width=True)
 
-
             st.write('###### Intracellular Ion Concentrations')
 
-            show_Na_in = st.checkbox(l.Na_in, value=True, help=f'Show Na+ concentration in the cytoplasm, {l.Na_in}, on the graph?')
-            show_K_in = st.checkbox(l.K_in, value=True, help=f'Show K+ concentration in the cytoplasm, {l.K_in}, on the graph?')
-            show_Cl_in = st.checkbox(l.Cl_in, value=True, help=f'Show Cl- concentration in the cytoplasm, {l.Cl_in}, on the graph?')
+            # Columns to arrange concentration series checkboxes horizontally:
+            cc0, cc1, cc2 = st.columns(3)
+
+            with cc0:
+                show_Na_in = st.checkbox(l.Na_in, value=True,
+                                         help=f'Show Na+ concentration in the cytoplasm, {l.Na_in}, on the graph?')
+
+            with cc1:
+                show_K_in = st.checkbox(l.K_in, value=True, help=f'Show K+ concentration in the cytoplasm, '
+                                                                 f'{l.K_in}, on the graph?')
+
+            with cc2:
+                show_Cl_in = st.checkbox(l.Cl_in, value=True, help=f'Show Cl- concentration in the cytoplasm,'
+                                                                   f' {l.Cl_in}, on the graph?')
 
             chem_series_bools = [show_Na_in, show_K_in, show_Cl_in]
 
@@ -543,11 +640,9 @@ def main() -> None:
                           use_container_width=True)
 
     with tab3:
-
         col1, col2 = st.columns(2)
 
         with col2:
-
             if NaKCl_on and KCl_on:
                 cell_net_image_fn = str(get_data_png_cell_network_schematic_3_file())
                 cell_net_image = Image.open(cell_net_image_fn)

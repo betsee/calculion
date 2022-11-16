@@ -11,10 +11,10 @@ from beartype import beartype
 from dataclasses import dataclass
 
 @beartype
-@dataclass
+@dataclass(frozen=True)
 class StringNames(object):
     '''
-    Commonly used string parameter names.
+    Immutable object defining commonly used string parameter names.
     '''
 
     # Fancy labels with subscripts and superscripts:
@@ -34,6 +34,8 @@ class StringNames(object):
     NaKCl_cotrans: str = 'Na⁺,K⁺,2Cl⁻ co-transporter'
     KCl_symp: str = 'K⁺,Cl⁻ symporter'
 
+    time: str = 'Time (hours)'
+
     # Plain labels:
     Vmem_o: str = 'Vmem'
     Vrev_Na_o: str = 'Vrev Na+'
@@ -50,5 +52,3 @@ class StringNames(object):
     Cl_out_o: str = 'Cl- out'
     NaKCl_cotrans_o: str = 'Na-K-Cl co-transporter'
     KCl_symp_o: str = 'K-Cl symporter'
-
-    time: str = 'Time (hours)'
