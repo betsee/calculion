@@ -31,6 +31,8 @@ class StringNames(object):
     Na_out: str = 'Na⁺ₒᵤₜ'
     K_out: str = 'K⁺ₒᵤₜ'
     Cl_out: str = 'Cl⁻ₒᵤₜ'
+    NaKCl_cotrans: str = 'Na⁺,K⁺,2Cl⁻ co-transporter'
+    KCl_symp: str = 'K⁺,Cl⁻ symporter'
 
     # Plain labels:
     Vmem_o: str = 'Vmem'
@@ -46,5 +48,7 @@ class StringNames(object):
     Na_out_o: str = 'Na+ out'
     K_out_o: str = 'K+ out'
     Cl_out_o: str = 'Cl- out'
+    NaKCl_cotrans_o: str = 'Na-K-Cl co-transporter'
+    KCl_symp_o: str = 'K-Cl symporter'
 
     time: str = 'Time (hours)'

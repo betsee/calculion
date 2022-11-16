@@ -133,11 +133,36 @@ def get_data_png_dir() -> Path:
 # ....................{ GETTERS ~ data : file : png        }....................
 @callable_cached
 @beartype
-def get_data_png_cell_network_schematic_b_file() -> Path:
+def get_data_png_cell_network_schematic_0_file() -> Path:
     '''
 
     '''
-    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3B.png')
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_BaseLayer.png')
+
+@callable_cached
+@beartype
+def get_data_png_cell_network_schematic_1_file() -> Path:
+    '''
+
+    '''
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_1.png')
+
+@callable_cached
+@beartype
+def get_data_png_cell_network_schematic_2_file() -> Path:
+    '''
+
+    '''
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_2.png')
+
+
+@callable_cached
+@beartype
+def get_data_png_cell_network_schematic_3_file() -> Path:
+    '''
+
+    '''
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_3.png')
 
 @callable_cached
 @beartype
@@ -148,40 +173,40 @@ def get_data_png_membrane_schematic_file() -> Path:
     return FileRelative(get_data_png_dir(), 'MembraneScematic_2.png')
 
 # ....................{ GETTERS ~ data : file : svg        }....................
-@callable_cached
-@beartype
-def get_data_svg_cell_network_schematic_file() -> Path:
-    '''
-    :mod:`Path` encapsulating the absolute filename of the **project-wide**
-    ``CellNetworkSchematic_3.svg`` file** if found *or* raise an exception
-    otherwise.
-    '''
-
-    # Terrifying terseness!
-    return FileRelative(get_data_svg_dir(), 'CellNetworkSchematic_3.svg')
-
-
-@callable_cached
-@beartype
-def get_data_svg_cell_network_schematic_b_file() -> Path:
-    '''
-    :mod:`Path` encapsulating the absolute filename of the **project-wide**
-    ``CellNetworkSchematic_3B.svg`` file** if found *or* raise an exception
-    otherwise.
-    '''
-
-    # Transverse transgression!
-    return FileRelative(get_data_svg_dir(), 'CellNetworkSchematic_3B.svg')
-
-
-@callable_cached
-@beartype
-def get_data_svg_membrane_schematic_file() -> Path:
-    '''
-    :mod:`Path` encapsulating the absolute filename of the **project-wide**
-    ``MembraneSchematic_2.svg`` file** if found *or* raise an exception
-    otherwise.
-    '''
-
-    # Terrifying terseness!
-    return FileRelative(get_data_svg_dir(), 'MembraneSchematic_2.svg')
+# @callable_cached
+# @beartype
+# def get_data_svg_cell_network_schematic_file() -> Path:
+#     '''
+#     :mod:`Path` encapsulating the absolute filename of the **project-wide**
+#     ``CellNetworkSchematic_3.svg`` file** if found *or* raise an exception
+#     otherwise.
+#     '''
+#
+#     # Terrifying terseness!
+#     return FileRelative(get_data_svg_dir(), 'CellNetworkSchematic_3.svg')
+#
+#
+# @callable_cached
+# @beartype
+# def get_data_svg_cell_network_schematic_b_file() -> Path:
+#     '''
+#     :mod:`Path` encapsulating the absolute filename of the **project-wide**
+#     ``CellNetworkSchematic_3B.svg`` file** if found *or* raise an exception
+#     otherwise.
+#     '''
+#
+#     # Transverse transgression!
+#     return FileRelative(get_data_svg_dir(), 'CellNetworkSchematic_3B.svg')
+#
+#
+# @callable_cached
+# @beartype
+# def get_data_svg_membrane_schematic_file() -> Path:
+#     '''
+#     :mod:`Path` encapsulating the absolute filename of the **project-wide**
+#     ``MembraneSchematic_2.svg`` file** if found *or* raise an exception
+#     otherwise.
+#     '''
+#
+#     # Terrifying terseness!
+#     return FileRelative(get_data_svg_dir(), 'MembraneSchematic_2.svg')

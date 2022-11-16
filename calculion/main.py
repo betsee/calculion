@@ -39,10 +39,10 @@ def main() -> None:
     from calculion.science.params import CalculionParams
     from calculion.science.string_names import StringNames
     from calculion._util.path.utilpathself import (
-        get_data_svg_cell_network_schematic_file,
-        get_data_svg_cell_network_schematic_b_file,
-        get_data_svg_membrane_schematic_file,
-        get_data_png_cell_network_schematic_b_file,
+        get_data_png_cell_network_schematic_0_file,
+        get_data_png_cell_network_schematic_1_file,
+        get_data_png_cell_network_schematic_2_file,
+        get_data_png_cell_network_schematic_3_file,
         get_data_png_membrane_schematic_file,
     )
     from numpy import exp  #, column_stack
@@ -67,10 +67,6 @@ def main() -> None:
     l = StringNames() # string labels
 
     # ..................{ SIDEBAR                            }..................
-    # def my_widget(key):
-    #
-    #     return st.button("Click me " + key)
-
     # The sidebar will contain all widgets to collect user-data for the
     # simulation. Create and name the sidebar.
     st.sidebar.header('Simulation Variables')
@@ -231,34 +227,42 @@ def main() -> None:
             # update the na-k-atpase pump rate in units used in the simulation:
             p.omega_NaK = omega_NaK_o*1e-12
 
-            # Na-K-2Cl cotransporter properties:
-            omega_NaKCl_o = param_widget('Na-K-2Cl Cotransporter Rate [units]',
-                             min_value=0.0,
-                             max_value=1.0,
-                             value=p.omega_NaKCl*1e14,
-                             step=0.01,
-                             format='%f',
-                             key='slider_omega_NaKCl',
-                             label_visibility='visible',
-                             help='Set the maximum rate of the Na-K-2Cl cotransporter.')
+            # # Let the user specify whether they want the additional NaKCl cotransporter for secondary transport:
+            NaKCl_on = st.checkbox(l.NaKCl_cotrans_o, vale=False, help=f'Cell expresses {l.NaKCl_cotrans} ?')
 
-            # update the na-k-2Cl cotransporter rate in units used in the simulation:
-            p.omega_NaKCl = omega_NaKCl_o*1e-14
+            if NaKCl_on:
+                # Na-K-2Cl cotransporter properties:
+                omega_NaKCl_o = param_widget('Na-K-2Cl Cotransporter Rate [units]',
+                                 min_value=0.0,
+                                 max_value=1.0,
+                                 value=p.omega_NaKCl*1e14,
+                                 step=0.01,
+                                 format='%f',
+                                 key='slider_omega_NaKCl',
+                                 label_visibility='visible',
+                                 help='Set the maximum rate of the Na-K-2Cl cotransporter.')
 
-            # K-Cl symporter properties:
-            omega_KCl_o = param_widget('K-Cl Symporter Rate [units]',
-                             min_value=0.0,
-                             max_value=50.0,
-                             value=p.omega_KCl*1e12,
-                             step=0.1,
-                             format='%f',
-                             key='slider_omega_KCl',
-                             label_visibility='visible',
-                             help='Set the maximum rate of the K-Cl symporter.'
-                                       )
+                # update the na-k-2Cl cotransporter rate in units used in the simulation:
+                p.omega_NaKCl = omega_NaKCl_o*1e-14
 
-            # update the K-Cl symporter rate in units used in the simulation:
-            p.omega_KCl = omega_KCl_o*1e-12
+            # # Let the user specify whether they want the additional KCl symporter for secondary transport:
+            KCl_on = st.checkbox(l.KCl_symp_o, vale=False, help=f'Cell expresses {l.KCl_symp} ?')
+
+            if KCl_on:
+                # K-Cl symporter properties:
+                omega_KCl_o = param_widget('K-Cl Symporter Rate [units]',
+                                 min_value=0.0,
+                                 max_value=50.0,
+                                 value=p.omega_KCl*1e12,
+                                 step=0.1,
+                                 format='%f',
+                                 key='slider_omega_KCl',
+                                 label_visibility='visible',
+                                 help='Set the maximum rate of the K-Cl symporter.'
+                                           )
+
+                # update the K-Cl symporter rate in units used in the simulation:
+                p.omega_KCl = omega_KCl_o*1e-12
 
         # Define another expander block for pump and transporter settings:
         metabolic_block = st.expander("Metabolic Settings", expanded=default_expanded_state)
@@ -460,6 +464,13 @@ def main() -> None:
         st.write('#### Calculating the *slow* changes of bioelectricity')
         st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
 
+        mem_image_fn = str(get_data_png_membrane_schematic_file())
+        mem_image = Image.open(mem_image_fn)
+        st.image(mem_image,
+                 caption='Behold the Cellular Bioelectric Network!',
+                 use_column_width='always',
+                 output_format="PNG")
+
     with tab2:
         st.write("### Simulation Results")
         # st.write("*(Alter sidebar Simulation Variables to explore the possibilities...)*")
@@ -530,17 +541,42 @@ def main() -> None:
         col1, col2 = st.columns(2)
 
         with col2:
-            # FIXME: Dear Sessums, here is where you can play with importing and visualizing the svg import!
 
-            # cell_net_image_fn = str(get_data_svg_cell_network_schematic_b_file())
-            # cell_net_image = Image.open(cell_net_image_fn)
+            if NaKCl_on and KCl_on:
+                cell_net_image_fn = str(get_data_png_cell_network_schematic_3_file())
+                cell_net_image = Image.open(cell_net_image_fn)
+                st.image(cell_net_image,
+                         # caption='Behold the Cellular Bioelectric Network!',
+                         use_column_width='always',
+                         output_format="PNG")
 
-            cell_net_image_fn = str(get_data_png_cell_network_schematic_b_file())
-            cell_net_image = Image.open(cell_net_image_fn)
-            st.image(cell_net_image,
-                     caption='Behold the Cellular Bioelectric Network!',
-                     use_column_width='always',
-                     output_format="PNG")
+            elif not NaKCl_on and not KCl_on:
+
+                cell_net_image_fn = str(get_data_png_cell_network_schematic_0_file())
+                cell_net_image = Image.open(cell_net_image_fn)
+                st.image(cell_net_image,
+                         caption='Behold the Cellular Bioelectric Network!',
+                         use_column_width='always',
+                         output_format="PNG")
+
+            elif NaKCl_on and not KCl_on:
+                cell_net_image_fn = str(get_data_png_cell_network_schematic_1_file())
+                cell_net_image = Image.open(cell_net_image_fn)
+                st.image(cell_net_image,
+                         # caption='Behold the Cellular Bioelectric Network!',
+                         use_column_width='always',
+                         output_format="PNG")
+
+            elif not NaKCl_on and KCl_on:
+                cell_net_image_fn = str(get_data_png_cell_network_schematic_2_file())
+                cell_net_image = Image.open(cell_net_image_fn)
+                st.image(cell_net_image,
+                         # caption='Behold the Cellular Bioelectric Network!',
+                         use_column_width='always',
+                         output_format="PNG")
+
+            else:
+                raise Exception("Did not account for this scenario!")
 # ....................{ MAIN ~ run                         }....................
 # Run our Streamlit-based web app.
 main()
