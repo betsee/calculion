@@ -530,9 +530,11 @@ def main() -> None:
         col1, col2 = st.columns(2)
 
         with col2:
+            # FIXME: Dear Sessums, here is where you can play with importing and visualizing the svg import!
+
             # cell_net_image_fn = str(get_data_svg_cell_network_schematic_b_file())
             # cell_net_image = Image.open(cell_net_image_fn)
-            # st.image(cell_net_image, caption='Behold the Cellular Bioelectric Network!')
+
             cell_net_image_fn = str(get_data_png_cell_network_schematic_b_file())
             cell_net_image = Image.open(cell_net_image_fn)
             st.image(cell_net_image,
