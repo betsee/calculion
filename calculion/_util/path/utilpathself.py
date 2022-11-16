@@ -170,7 +170,7 @@ def get_data_png_membrane_schematic_file() -> Path:
     '''
 
     '''
-    return FileRelative(get_data_png_dir(), 'MembraneScematic_2.png')
+    return FileRelative(get_data_png_dir(), 'MembraneSchematic_2.png')
 
 # ....................{ GETTERS ~ data : file : svg        }....................
 # @callable_cached

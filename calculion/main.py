@@ -228,7 +228,7 @@ def main() -> None:
             p.omega_NaK = omega_NaK_o*1e-12
 
             # # Let the user specify whether they want the additional NaKCl cotransporter for secondary transport:
-            NaKCl_on = st.checkbox(l.NaKCl_cotrans_o, vale=False, help=f'Cell expresses {l.NaKCl_cotrans} ?')
+            NaKCl_on = st.checkbox(l.NaKCl_cotrans_o, value=False, help=f'Cell expresses {l.NaKCl_cotrans} ?')
 
             if NaKCl_on:
                 # Na-K-2Cl cotransporter properties:
@@ -245,8 +245,11 @@ def main() -> None:
                 # update the na-k-2Cl cotransporter rate in units used in the simulation:
                 p.omega_NaKCl = omega_NaKCl_o*1e-14
 
+            else:
+                p.omega_NaKCl = 0.0 # otherwise set the rate to zero
+
             # # Let the user specify whether they want the additional KCl symporter for secondary transport:
-            KCl_on = st.checkbox(l.KCl_symp_o, vale=False, help=f'Cell expresses {l.KCl_symp} ?')
+            KCl_on = st.checkbox(l.KCl_symp_o, value=False, help=f'Cell expresses {l.KCl_symp} ?')
 
             if KCl_on:
                 # K-Cl symporter properties:
@@ -263,6 +266,9 @@ def main() -> None:
 
                 # update the K-Cl symporter rate in units used in the simulation:
                 p.omega_KCl = omega_KCl_o*1e-12
+
+            else:
+                p.omega_KCl = 0.0 # otherwise set the rate to zero
 
         # Define another expander block for pump and transporter settings:
         metabolic_block = st.expander("Metabolic Settings", expanded=default_expanded_state)
@@ -456,7 +462,7 @@ def main() -> None:
     # * The "Bioelectrical Network" tab will show a graphical depiction of the
     #   bioelectrical network.
     tab1, tab2, tab3 = st.tabs([
-        'Introduction', 'Simulation Results', 'Bioelectrical Network'])
+        'Introduction', 'Simulation', 'Bioelectrical Network'])
 
     with tab1:
         st.write('### Why Calculion?')
@@ -472,7 +478,7 @@ def main() -> None:
                  output_format="PNG")
 
     with tab2:
-        st.write("### Simulation Results")
+        st.write("### Simulation")
         # st.write("*(Alter sidebar Simulation Variables to explore the possibilities...)*")
         col1, col2 = st.columns(2)
 

@@ -64,8 +64,8 @@ class CalculionParams(object):
 
     # Pump and transporter parameters:
     omega_NaK: float = 5.0e-13 # Rate constant for the Na-K-ATPase ion pump
-    omega_NaKCl: float=0.0 # Rate constant for the Na-K-2Cl cotransporter (1.0e-15)
-    omega_KCl: float=0.0 # Rate constant for the K-Cl symporter (1.0e-15)
+    omega_NaKCl: float=1.0e-15 # Rate constant for the Na-K-2Cl cotransporter (1.0e-15)
+    omega_KCl: float=1.0e-13 # Rate constant for the K-Cl symporter (1.0e-15)
 
     # Calculated parameters (used internally in calculations):
     r_cell = r_cell_um*1e-6 # radius of the cell [m]
