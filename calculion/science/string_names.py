@@ -31,8 +31,12 @@ class StringNames(object):
     Na_out: str = 'Na⁺ₒᵤₜ'
     K_out: str = 'K⁺ₒᵤₜ'
     Cl_out: str = 'Cl⁻ₒᵤₜ'
-    NaKCl_cotrans: str = 'Na⁺,K⁺,2Cl⁻ co-transporter'
-    KCl_symp: str = 'K⁺,Cl⁻ symporter'
+    NaK_pump: str = 'Na⁺, K⁺ ATPase ion pump'
+    NaKCl_cotrans: str = 'Na⁺, K⁺, 2Cl⁻ co-transporter'
+    KCl_symp: str = 'K⁺, Cl⁻ symporter'
+    Na: str = 'Na⁺'
+    K: str = 'K⁺'
+    Cl: str = 'Cl⁻'
 
     time: str = 'Time (hours)'
 
@@ -50,5 +54,6 @@ class StringNames(object):
     Na_out_o: str = 'Na+ out'
     K_out_o: str = 'K+ out'
     Cl_out_o: str = 'Cl- out'
+    NaK_pump_o: str = 'Na-K-ATPase ion pump'
     NaKCl_cotrans_o: str = 'Na-K-Cl co-transporter'
     KCl_symp_o: str = 'K-Cl symporter'
