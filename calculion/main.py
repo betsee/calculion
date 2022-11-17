@@ -678,6 +678,11 @@ def main() -> None:
 
             else:
                 raise Exception("Did not account for this scenario!")
+
+            st.write(f'Transmembrane Potential: {l.Vmem} = {elec_vals_ss.iloc[0, 0]} mV')
+            st.write(f'Na⁺ Driving Potential: {l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV')
+            st.write(f'K⁺ Driving Potential: {l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV')
+            st.write(f'Cl⁻ Driving Potential: {l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV')
 # ....................{ MAIN ~ run                         }....................
 # Run our Streamlit-based web app.
 main()
