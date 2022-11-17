@@ -211,7 +211,7 @@ def main() -> None:
             p.P_Cl = 1.0e-9*p.P_Cl_nm
 
         # Define another expander block for pump and transporter settings:
-        pumps_block = st.expander("Ion Pump and Transporter Settings", expanded=default_expanded_state)
+        pumps_block = st.expander("Ion Pump and Transporters", expanded=default_expanded_state)
 
         with pumps_block:
             omega_NaK_o = param_widget('Na-K-ATPase Pump Rate [units]',
@@ -350,59 +350,6 @@ def main() -> None:
             # update r_cell to be in meters for simulations:
             p.r_cell = p.r_cell_um*1e-6
 
-        # # Define a final expander block for simulator settings:
-        # sim_settings_block = st.expander("Simulation Settings", expanded=default_expanded_state)
-        #
-        # with sim_settings_block:
-        #
-        #     # Iterative solver will not be used by default:
-        #     itersol_checkbox = st.checkbox("Use iterative solver",
-        #                                    value=False,
-        #                                    key='checkbox_itersol',
-        #                                    help='Use the iterative solver that integrates the '
-        #                                         'system step-by-step in time?')
-        #
-        #     if itersol_checkbox:
-        #         p.iterative_solver = True # Set the iterative solver parameter to True
-        #
-        #         # Iterative solver time step:
-        #         p.delta_t = param_widget('Simulation time-step [s]',
-        #                                   min_value=1.0e-3,
-        #                                   max_value=100.0,
-        #                                   value=p.delta_t,
-        #                                   step=0.01,
-        #                                   format='%f',
-        #                                   key='slider_delta_t',
-        #                                   label_visibility='visible',
-        #                                   help='Set the time step for the iterative solver.')
-        #
-        #         # Iterative solver max iterations:
-        #         p.N_iter = param_widget('Simulation max iterations',
-        #                                   min_value=10,
-        #                                   max_value=100000,
-        #                                   value=p.N_iter,
-        #                                   step=1,
-        #                                   format='%d',
-        #                                   key='slider_Niter',
-        #                                   label_visibility='visible',
-        #                                   help='Set the maximum number of timesteps that can be run.')
-        #
-        #         # Iterative solver convergence tolerance:
-        #         p.steady_state_tol = param_widget('Convergence tolerance',
-        #                                   min_value=1e-20,
-        #                                   max_value=1e-6,
-        #                                   value=p.steady_state_tol,
-        #                                   step=1e-15,
-        #                                   format='%e',
-        #                                   key='slider_tol',
-        #                                   label_visibility='visible',
-        #                                   help='Set the tolerance, below which the simulation will be'
-        #                                        'assumed to be at steady-state.')
-        #
-        #
-        #
-        #     else:
-        #         p.iterative_solver = False # reset the iterative solver parameter to False
 
     # ..................{ RESULTS                            }..................
     # After collecting parameter values from the user, compute the steady-state
@@ -661,11 +608,16 @@ def main() -> None:
                      f'due to the exit of positive charge.')
 
             if not NaKCl_on and not KCl_on:
-                st.write(f'When {l.Cl} is not subject to active transport, then when in steady-state the '
+                st.write(f'When {l.Cl} is not subject to active transport, then when in steady-state, the '
                          f'electrochemical driving force on {l.Cl} will be zero '
                          f'({l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV) with {l.Cl} being in equilibrium with '
                          f'the transmembrane electrical and concentration gradient. When {l.Cl} channels are opened, '
                          f'there is no flux of {l.Cl} and no effect on cell {l.Vmem}.')
+
+                st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
+                         f'expression levels. Therefore, increasing membrane {l.Na} and '
+                         f'{l.K} permeability in the sidebar Simulation Variables should show '
+                         f'{l.Vmem} depolarization and hyperpolarization, respectively.')
 
             if NaKCl_on and not KCl_on:
                 st.write(f'The {l.NaKCl_cotrans} uses the impetus for {l.Na} to enter the cell to bring '
@@ -678,6 +630,13 @@ def main() -> None:
                          f'When {l.Cl} channels are opened,'
                          f'this outward flux of {l.Cl} leads to {l.Vmem} depolarization.')
 
+                st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
+                         f'expression levels. Therefore, increasing membrane {l.Na} and '
+                         f'{l.K} permeability in the sidebar Simulation Variables should show '
+                         f'{l.Vmem} depolarization and hyperpolarization, respectively. '
+                         f'With the {l.NaKCl_cotrans}, increasing {l.Cl} permeability should show'
+                         f'{l.Vmem} depolarization.')
+
             if not NaKCl_on and KCl_on:
                 st.write(f'The {l.KCl_symp} uses the impetus for {l.K} to exit the cell to bring '
                          f'{l.Cl} with it in secondary active transport. '
@@ -688,6 +647,13 @@ def main() -> None:
                          f'in favour with transmembrane concentration gradients. '
                          f'When {l.Cl} channels are opened, '
                          f'this inward flux of {l.Cl} leads to {l.Vmem} hyperpolarization.')
+
+                st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
+                         f'expression levels. Therefore, increasing membrane {l.Na} and '
+                         f'{l.K} permeability in the sidebar Simulation Variables should show '
+                         f'{l.Vmem} depolarization and hyperpolarization, respectively. '
+                         f'With the {l.KCl_symp}, increasing {l.Cl} permeability should show'
+                         f'{l.Vmem} hyperpolarization.')
 
             if NaKCl_on and KCl_on:
                 st.write(f'The {l.NaKCl_cotrans} uses the impetus for {l.Na} to enter the cell to bring '
@@ -700,6 +666,15 @@ def main() -> None:
                          f'electrochemical driving force on {l.Cl} ({l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV) '
                          f'will depend on which transporter flux is stronger.'
                          )
+
+                st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
+                         f'expression levels. Therefore, increasing membrane {l.Na} and '
+                         f'{l.K} permeability in the sidebar Simulation Variables should show '
+                         f'{l.Vmem} depolarization and hyperpolarization, respectively. '
+                         f'The effect of increasing {l.Cl} permeability will depend on the '
+                         f'relative strength of the {l.NaKCl_cotrans} to the {l.KCl_symp}.')
+
+
 
         with col2:
             if NaKCl_on and KCl_on:
