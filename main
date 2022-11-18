@@ -18,36 +18,44 @@ set -e
 # ....................{ ARRAYS                             }....................
 # Array of all arguments with which to invoke Python.
 PYTHON_ARGS=(
-    # Python interpreter to be run.
-    command python3.10
+    #FIXME: Comment this to run this app under the high-level "streamlit run"
+    #command rather than the low-level "python* -m streamlit run" importation.
+    #Although the latter is significantly more configurable and thus preferable
+    #for local development, the former is actually the approach that Streamlit
+    #Cloud uses to run deployed apps. Ergo, *ONLY* the "streamlit run" command
+    #suffices to run this app in a Streamlit Cloud-centric manner.
 
-    # #FIXME: Uncomment this as needed (e.g., to debug hidden resource warnings).
-    # # Enable the Python Development Mode (PDM). See also commentary for the
-    # # ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
-    # -X dev
+    # # Python interpreter to be run.
+    # command python3.10
     #
-    # # Enable tracing (i.e., debugging) of "import" statements.
-    # -v
-
-    # Implicitly import the "calculion.__main__" dunder module, which
-    # programmatically runs "streamlit run calculion/main.py" in a portable
-    # manner aware of Python packaging and distribution standards.
+    # # #FIXME: Uncomment this as needed (e.g., to debug hidden resource warnings).
+    # # # Enable the Python Development Mode (PDM). See also commentary for the
+    # # # ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
+    # # -X dev
+    # #
+    # # # Enable tracing (i.e., debugging) of "import" statements.
+    # # -v
     #
-    # Note that this is *NOT* the standard way Streamlit apps are run from the
-    # command line. That's a good thing. By default, Streamlit apps run from the
-    # command line via the "streamlit run" subcommand *CANNOT* be portably
-    # distributed as standard Python packages published to standard Python
-    # package repositories (e.g., PyPI, conda-forge).
+    # # Implicitly import the "calculion.__main__" dunder module, which
+    # # programmatically runs "streamlit run calculion/main.py" in a portable
+    # # manner aware of Python packaging and distribution standards.
+    # #
+    # # Note that this is *NOT* the standard way Streamlit apps are run from the
+    # # command line. That's a good thing. By default, Streamlit apps run from the
+    # # command line via the "streamlit run" subcommand *CANNOT* be portably
+    # # distributed as standard Python packages published to standard Python
+    # # package repositories (e.g., PyPI, conda-forge).
+    # #
+    # # See the "calculion.__main__" dunder module for further discussion.
+    # # -m calculion
     #
-    # See the "calculion.__main__" dunder module for further discussion.
-    # -m calculion
-
-    #FIXME: Uncommand this as needed.
-    # Implicitly import the "calculion.__main__" dunder module, which
-    # "streamlit.__main__" dunder submodule and run the
-    # __main__() function defined by that submodule, launching a new Tornado
-    # HTTP server running the Streamlit web dashboard displaying this web app.
-    -m streamlit
+    # #FIXME: Uncommand this as needed.
+    # # Implicitly import the "calculion.__main__" dunder module, which
+    # # "streamlit.__main__" dunder submodule and run the
+    # # __main__() function defined by that submodule, launching a new Tornado
+    # # HTTP server running the Streamlit web dashboard displaying this web app.
+    # -m
+    streamlit
 
     # Streamlit subcommand to be run, ordering Streamlit to show this web app.
     run
