@@ -114,6 +114,18 @@ def get_data_dir() -> Path:
 
 @callable_cached
 @beartype
+def get_data_png_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **project-wide
+    portable network graphics (PNG) subdirectory** (i.e., directory containing
+    ``.png``-suffixed files describing lossless but *not* scalable images) if
+    found *or* raise an exception otherwise.
+    '''
+    return DirRelative(get_data_dir(), 'png')
+
+
+@callable_cached
+@beartype
 def get_data_svg_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **project-wide
@@ -125,51 +137,45 @@ def get_data_svg_dir() -> Path:
     # Perverse pomposity!
     return DirRelative(get_data_dir(), 'svg')
 
-@callable_cached
-@beartype
-def get_data_png_dir() -> Path:
-    return DirRelative(get_data_dir(), 'png')
-
 # ....................{ GETTERS ~ data : file : png        }....................
+#FIXME: Docstring us up, please.
 @callable_cached
 @beartype
 def get_data_png_cell_network_schematic_0_file() -> Path:
-    '''
 
-    '''
-    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_BaseLayer.png')
+    return FileRelative(
+        get_data_png_dir(), 'CellNetworkSchematic_3C_BaseLayer.png')
 
+
+#FIXME: Docstring us up, please.
 @callable_cached
 @beartype
 def get_data_png_cell_network_schematic_1_file() -> Path:
-    '''
 
-    '''
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_1.png')
 
+
+#FIXME: Docstring us up, please.
 @callable_cached
 @beartype
 def get_data_png_cell_network_schematic_2_file() -> Path:
-    '''
 
-    '''
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_2.png')
 
 
+#FIXME: Docstring us up, please.
 @callable_cached
 @beartype
 def get_data_png_cell_network_schematic_3_file() -> Path:
-    '''
 
-    '''
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_3.png')
 
+
+#FIXME: Docstring us up, please.
 @callable_cached
 @beartype
 def get_data_png_membrane_schematic_file() -> Path:
-    '''
 
-    '''
     return FileRelative(get_data_png_dir(), 'MembraneSchematic_2.png')
 
 # ....................{ GETTERS ~ data : file : svg        }....................

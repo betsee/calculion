@@ -83,7 +83,6 @@ _register_dir()
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ MAIN                               }....................
-#FIXME: Unit test us up, please.
 def main() -> None:
     '''
     Core function running this Streamlit-based web app: **Calculion.**

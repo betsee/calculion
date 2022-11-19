@@ -23,6 +23,26 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: *THIS FILE IS NOW OBSOLETE.* By Streamlit Cloud mandate, all project
+#metadata now resides in the top-level "pyproject.toml" file. That said, various
+#functionality throughout the codebase still expects this submodule to exist.
+#Thankfully, we should *NOT* need to entirely eliminate this submodule. Instead,
+#this submodule can continue to happily exist -- albeit as a surrogate of
+#"pyproject.toml". How so? Simple. Refactor this submodule to either:
+#* Defer to the "importlib.metadata" submodule, which internally defers to
+#  "pyproject.toml". For example, here's how one would set this project's
+#  version below:
+#    from importlib.metadata import version
+#    VERSION = version('calculion')
+#  The issue here is that many globals declared below have *NO* corresponding
+#  "importlib.metadata" API. So it goes. That said, there is *BASICALLY* no
+#  alternative, because...
+#* We can't defer to the "tomllib" submodule. This requires Python >= 3.11,
+#  which is non-ideal. But that's not the *REAL* issue. The real issue is that
+#  "tomllib" requires a TOML file to read. Makes sense. But "pyproject.toml"
+#  *CANNOT* be assumed to exist when this project is installed in the standard
+#  way to a "site-packages/" directory.
+
 #FIXME: [QA] Prevalidate that all packages listed under
 #"LIBS_RUNTIME_MANDATORY" are all importable at app startup *BEFORE* attempting
 #to import from those packages. Doing so will expose whether any underlying
@@ -47,7 +67,7 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 import sys as _sys
 
 # ....................{ METADATA                           }....................
-NAME = 'CalculIon'
+NAME = 'Calculion'
 '''
 Human-readable package name.
 '''
@@ -79,7 +99,7 @@ Human-readable package name.
 #   "vtk" and thus "pyvista" and thus this package currently *CANNOT* be
 #   installed under Python 3.10. See also this unresolved VTK issue:
 #       https://gitlab.kitware.com/vtk/vtk/-/issues/18335
-PYTHON_VERSION_MIN = '3.9.0'
+PYTHON_VERSION_MIN = '3.10.0'
 '''
 Human-readable minimum version of Python required by this package as a
 ``.``-delimited string.
@@ -224,7 +244,7 @@ Machine-readable package version as a tuple of integers.
 
 # ....................{ METADATA ~ synopsis                }....................
 SYNOPSIS = (
-    'CalulIon is an open-source cross-platform web-based simulator for '
+    'Calculion is an open-source cross-platform web-based simulator for '
     'single-cell computational problems in the field of bioelectricity.'
 )
 '''
@@ -248,7 +268,7 @@ comma-delimited string.
 
 For brevity, this string *only* lists authors explicitly assigned copyrights.
 For the list of all contributors regardless of copyright assignment or
-attribution, see the top-level ``AUTHORS.md`` file.
+attribution, please see the GitHub UI.
 '''
 
 

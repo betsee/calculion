@@ -4,13 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-Classes and methods to calculate properties for the complete single-cell bioelectric system,
-including optimization methods to solve for equilibrium concentrations and
-target values.
+Classes and methods to calculate properties for the complete single-cell
+bioelectric system, including optimization methods to solve for equilibrium
+concentrations and target values.
 '''
 
 # ....................{ IMPORTS                            }....................
-
 import numpy as np
 from numpy import ndarray
 from beartype import beartype
@@ -24,7 +23,7 @@ from scipy.optimize import minimize
 @beartype
 class Optimizer(object):
     '''
-    **CalculIon single cell bioelectricity simulator** (i.e., high-level object
+    **Calculion single cell bioelectricity simulator** (i.e., high-level object
     performing core simulation computations).
     '''
 

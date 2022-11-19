@@ -10,6 +10,14 @@ This submodule conforms to the standard :mod:`setuptools`-based "makefile"
 format, instrumenting most high-level installation tasks for this package.
 '''
 
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: *THIS FILE IS AN OBSOLETE RELIC AND SHOULD NOT BE DEPENDED UPON.*
+# This setuptools-specific file (ignored by Streamlit Cloud) has been entirely
+# superceded by the poetry-specific "pyproject.toml" file (recognized by
+# Streamlit Cloud). This file has been preserved for backward compatibility but
+# should otherwise be ignored as the dangerously obsolete relic it clearly is.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # ....................{ KLUDGES ~ path                     }....................
 # Explicitly register all files and subdirectories of the root directory
 # containing this top-level "setup.py" script to be importable modules and

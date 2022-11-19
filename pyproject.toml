@@ -1,0 +1,290 @@
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                           )--------------------
+# Project-wide packager-agnostic configuration. Unlike all other top-level
+# configuration files (e.g., "setup.py", "MANIFEST.in") specific to some
+# utility in Python's package management ecosystem (e.g., "pip", "setuptools"),
+# this file strictly conforms to a standards-compliant PEP and hence
+# generically applies to *ALL* such utilities.
+#
+# Welcome to project distribution hell, where only twenty distinct files in
+# twenty distinct formats suffice to distribute a single project.
+#
+# --------------------( MOTIVATION                         )--------------------
+# Streamlit currently requires either:
+# * This standard file to be defined in a poetry-specific way. Poetry violates
+#   PEP standards and is thus non-ideal. Nonetheless, ignoring poetry, this
+#   single file suffices to package this entire project. Doing so avoids
+#   repetition of this fragile core metadata elsewhere and thus preserves the
+#   Don't Repeat Yourself (DRY) principle.
+# * The non-standard "requirements.txt" file to be defined. That single file
+#   does *NOT* suffice to package this entire project, requiring repetition of
+#   fragile core metadata elsewhere and thus violating DRY.
+#
+# Since the benefit of preserving DRY in packaging significantly exceeds any
+# marginal harm of using poetry, this single file is the optimal solution.
+#
+# --------------------( SEE ALSO                           )--------------------
+# * https://snarky.ca/clarifying-pep-518
+#   "Clarifying PEP 518 (a.k.a. pyproject.toml)", a human-readable article from
+#   one of the principal authors of the "pyproject.toml" standard.
+
+# ....................{ TODO                               }....................
+#FIXME: Poetry violates standards and is thus non-ideal. Hatch, on the other
+#hand, embraces standards and has been officially adopted by the Python
+#Packaging Authority (PyPA) organization that manage the cheeshop (PyPI). I can
+#personally confirm that Hatch is a substantial improvement over poetry that
+#we are strongly considering using in @beartype as well.
+#
+#So... what's the holdup, then? In a word, Streamlit. Streamlit currently
+#requires this file to be defined in a poetry-specific way. Since that is bad,
+#consider submitting a feature request to the Streamlit issue tracker politely
+#begging them to generalize their Streamlit Cloud deployment strategy to
+#generically support *ANY* PEP 517-compliant build backend -- including Hatch.
+
+# ....................{ PEP 621                            }....................
+# PEP 621-compliant section generically defining project metadata in a build
+# tool-agnostic manner.
+#
+# Note that poetry currently ignores this section but does intend to comply with
+# PEP 621 for some future release. Indeed, it appears likely that poetry (and
+# other "pyproject.toml"-based build tools) will *EVENTUALLY* deprecate their
+# existing support for build tool-specific metadata. See also this currently
+# open issue on the subject:
+#     https://github.com/python-poetry/roadmap/issues/3
+[project]
+# Fully-qualified name of this project's top-level Python package.
+name = "calculion"
+
+# Human-readable package version as a "."-delimited string.
+version = "0.0.1"
+
+# Human-readable single-line synopsis of this project.
+#
+# By PyPI design, this string must *NOT* span multiple lines or paragraphs.
+description = """\
+Calculion is an open-source cross-platform web-based simulator for single-cell \
+computational problems in the field of bioelectricity.\
+"""
+
+# Relative filename of the file of the license this project is licensed under.
+#
+# Note that PEP 621 prohibits this table (i.e., dictionary) from defining both
+# the "file" and "text" keys (e.g., 'text = "MIT"'). While defining both would
+# certainly be preferable, the "file" key takes precedence over the "text" key.
+license = { file = "LICENSE" }
+
+# Relative filename of the file of the license this project is licensed under.
+readme = "README.rst"
+
+# List of all lowercase alphabetic keywords synopsising this project.
+#
+# These keywords may be arbitrarily selected so as to pretend to improve search
+# engine optimization (SEO). In actuality, they do absolutely nothing.
+keywords = [
+    "biology",
+    "multiphysics",
+    "science",
+    "simulator",
+]
+
+# List of all PyPI-specific trove classifier strings synopsizing this project.
+# Each such string *MUST* contain either two or three " :: " substrings
+# delimiting human-readable capitalized English words formally recognized by the
+# "distutils"-specific register() command. See also:
+# * https://pypi.org/classifiers
+#   Plaintext list of all trove classifier strings recognized by PyPI.
+classifiers = [
+    # PyPI-specific version type. The number specified here is a magic constant
+    # with no relation to this package's version numbering scheme. *sigh*
+    "Development Status :: 5 - Production/Stable",
+
+    # Miscellaneous metadata.
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+# List of all principal authors of this package as a list of tables (i.e.,
+# dictionaries) defining both the names and e-mail addresses of these authors.
+#
+# These authors should be thought of as the corresponding authors of a paper.
+# Academic correspondence should be redirected to these authors.
+authors = [
+    { name="Alexis Pietak", email="<alexis.pietak@gmail.com>" },
+]
+
+# List of all secondary authors of this package as a list of tables (i.e.,
+# dictionaries) defining both the names and e-mail addresses of these authors.
+#
+# These authors significantly contributed to the development of this project,
+# but lack the scientific expertise to respond to external inquiries. Therefore,
+# academic correspondence should *NOT* be redirected to these authors.
+maintainers = [
+    { name="Cecil Curry", email="<leycec@gmail.com>" },
+]
+
+# ....................{ PEP 621 ~ dependencies             }....................
+# Python interpreter versions required by this package.
+#
+# A relatively recent version of Python is required due to:
+# * PEP 585-compliant type hints (e.g., "list[str]"), now leveraged through the
+#   codebase due both to convenience and PEP 585's timely deprecation of PEP
+#   484-compliant type hints (e.g., "typing.list[str]") by 2026 -- which
+#   renders PEP 484-compliant type hints genuinely dangerous in 2021.
+# * "importlib.metadata", first introduced with Python 3.8.0.
+#
+# Note that:
+# * Our mandatory runtime dependency on "pyvista" transitively requires "vtk".
+#   For unknown reasons, "vtk" has yet to publish Python 3.10 wheels. Since
+#   "vtk" is *ONLY* installable via binary wheels, this effectively means that
+#   "vtk" and thus "pyvista" and thus this package currently *CANNOT* be
+#   installed under Python 3.10 using "pip". See also this unresolved VTK issue:
+#       https://gitlab.kitware.com/vtk/vtk/-/issues/18335
+requires-python = ">=3.10"
+
+# List of all mandatory runtime dependencies.'
+dependencies = [
+    # QA stack. Dismantled, this is:
+    # * beartype >= 0.11.0, the first release to support class decoration.
+    "beartype >=0.11.0",
+
+    # Science stack.
+    "numpy >=1.22.0",
+    "pandas >=1.5.0",
+    "scipy >=1.7.0",
+    "sympy >=1.9.0",
+
+    # Web stack.
+    "streamlit >=1.12.0",
+
+    #FIXME: Uncomment as needed, please.
+    # # 2D stack.
+    # "svgpathtools >=1.4.1",
+    #
+    # # 3D stack.
+    # "pyvista >=0.30.0",
+]
+
+# ....................{ PEP 621 ~ urls                     }....................
+# Table (i.e., dictionary) mapping from the PyPI-recognized name of each
+# relevant project URL to that URL.
+[project.urls]
+
+#FIXME: Additionally define an issue tracker URL, please.
+
+homepage = "https://calculion.streamlit.app"
+repository = "https://github.com/betsee/calculion"
+
+#FIXME: Replace with a link to more suitable documentation, please.
+documentation = "https://github.com/betsee/calculion/blob/main/README.rst"
+
+# ....................{ PEP 517                            }....................
+# PEP 517-compliant section declaring the third-party build tools required to
+# install this "pyproject.toml"-based project.
+[build-system]
+
+# List of all third-party Python packages required to build (i.e., install) this
+# project from both codebase tarballs and binary wheels.
+requires = ["poetry-core >=1.0.0"]
+
+# Fully-qualified name of the Python submodule of a third-party Python package
+# listed above to be imported at runtime by third-party Python package managers
+# (e.g., "pip") to build this project.
+build-backend = "poetry.core.masonry.api"
+
+# ....................{ POETRY                             }....................
+# PEP 621-noncompliant sections defining poetry-specific project metadata.
+#
+# Note that these sections generally omit commentary and discussion except where
+# required for readability. Why? Because the PEP 621-compliant "[project]"
+# section defined above obsoletes these PEP 621-noncompliant sections defined
+# below. When poetry supports the former, most of the latter will be removed.
+[tool.poetry]
+name = "calculion"
+version = "0.0.1"
+description = """\
+Calculion is an open-source cross-platform web-based simulator for single-cell \
+computational problems in the field of bioelectricity.\
+"""
+license = "MIT"
+readme = "README.rst"
+homepage = "https://calculion.streamlit.app"
+repository = "https://github.com/betsee/calculion"
+documentation = "https://github.com/betsee/calculion/blob/main/README.rst"
+
+keywords = [
+    "biology",
+    "multiphysics",
+    "science",
+    "simulator",
+]
+classifiers = [
+    # PyPI-specific version type. The number specified here is a magic constant
+    # with no relation to this package's version numbering scheme. *sigh*
+    "Development Status :: 5 - Production/Stable",
+
+    # Miscellaneous metadata.
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+authors = [
+    { name="Alexis Pietak", email="<alexis.pietak@gmail.com>" },
+]
+maintainers = [
+    { name="Cecil Curry", email="<leycec@gmail.com>" },
+]
+
+# Poetry-specific metadata differing from "[project]" above.
+#
+# Note that build metadata like this is out-of-scope for PEP 621 and thus likely
+# requires another section entirely to "[project]" when generalizing this
+# configuration away from poetry.
+packages = [
+    { include = "calculion" }
+]
+include = [
+    { path = "calculion_tests", format = "sdist" }
+]
+
+# Prevent "poetry" from overwriting our existing "setup.py" file. Gah!
+[tool.poetry.build]
+generate-setup-file = false
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+
+# QA stack. Dismantled, this is:
+# * beartype >= 0.11.0, the first release to support class decoration.
+beartype = ">=0.11.0"
+
+# Science stack.
+numpy = ">=1.22.0"
+pandas = ">=1.5.0"
+scipy = ">=1.7.0"
+sympy = ">=1.9.0"
+
+# Web stack.
+streamlit = ">=1.12.0"
+
+#FIXME: Uncomment if we ever require "tox".
+# [tool.poetry.group.dev.dependencies]
+# tox = "^3.18"
+
+[tool.poetry.group.test.dependencies]
+# pytest should ideally remain the only hard dependency for testing on local
+# machines. While our testing regime optionally leverages third-party frameworks
+# and pytest plugins (e.g., "tox", "pytest-xdist"), these dependencies are *NOT*
+# required for simple testing.
+#
+# A relatively modern version of pytest is required.
+pytest = ">=4.0.0"

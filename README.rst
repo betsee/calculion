@@ -13,13 +13,16 @@
 .. # ------------------( SYNOPSIS                            )------------------
 
 =========
-CalculIon
+Calculion
 =========
 
-**CalulIon** is an open-source cross-platform web-based simulator for
-single-cell computational multiphysics problems in the field of bioelectricity.
+|app-badge| |ci-badge|
 
-CalculIon is `portably implemented <calculion codebase_>`__ in Streamlit_ **×**
+**Calculion** is an `open-source cross-platform web-based simulator for
+single-cell computational multiphysics problems in the field of bioelectricity
+<calculion app_>`__.
+
+Calculion is `portably implemented <calculion codebase_>`__ in Streamlit_ **×**
 CPython_, `continuously stress-tested <calculion tests_>`__ via
 `GitHub Actions`_ **×** tox_ **×** pytest_  **×** Codecov_, and
 `permissively distributed <calculion license_>`__ under the `MIT license`_. For
@@ -43,21 +46,24 @@ released versions of Streamlit_ and CPython_.
 
 .. # ------------------( DESCRIPTION                         )------------------
 
-Todo
-====
-
 Install
 =======
 
-CalculIon currently lacks an official installer. *So it goes.*
+Calculion currently lacks an official installer. *So it goes.*
 
 License
 =======
 
-CalculIon is `open-source software released <calculion license_>`__ under the
+Calculion is `open-source software released <calculion license_>`__ under the
 `permissive MIT license <MIT license_>`__.
 
-.. # ------------------( IMAGES                              )------------------
+.. # ------------------( IMAGES ~ badge                      )------------------
+.. |app-badge| image:: https://static.streamlit.io/badges/streamlit_badge_black_white.svg
+   :target: https://calculion.streamlit.app
+   :alt: Calculion web app (graciously hosted by Streamlit Cloud)
+.. |ci-badge| image:: https://github.com/betsee/calculion/workflows/test/badge.svg
+   :target: https://github.com/betsee/calculion/actions?workflow=test
+   :alt: Calculion continuous integration (CI) status
 
 .. # ------------------( LINKS ~ calculion : local          )------------------
 .. _calculion License:
@@ -73,6 +79,8 @@ CalculIon is `open-source software released <calculion license_>`__ under the
 .. # ------------------( LINKS ~ calculion : remote         )------------------
 .. _calculion:
    https://gitlab.com/betsee/calculion
+.. _calculion app:
+   https://calculion.streamlit.app
 .. _calculion codebase:
    https://gitlab.com/betsee/calculion
 .. _calculion pulls:

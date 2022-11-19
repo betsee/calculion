@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**CalculIon.**
+**Calculion.**
 
 For :pep:`8` compliance, this namespace exposes a subset of the metadata
 constants provided by the :mod:`calculion.meta` submodule commonly inspected and

@@ -29,10 +29,13 @@ def test_utilpathself() -> None:
         get_main_dir,
         get_main_readme_file,
         get_data_dir,
+        get_data_png_dir,
         get_data_svg_dir,
-        get_data_svg_cell_network_schematic_file,
-        get_data_svg_cell_network_schematic_b_file,
-        get_data_svg_membrane_schematic_file,
+        get_data_png_cell_network_schematic_0_file,
+        get_data_png_cell_network_schematic_1_file,
+        get_data_png_cell_network_schematic_2_file,
+        get_data_png_cell_network_schematic_3_file,
+        get_data_png_membrane_schematic_file,
     )
 
     # Assert each public getter published by the
@@ -42,7 +45,10 @@ def test_utilpathself() -> None:
     get_main_dir()
     get_main_readme_file()
     get_data_dir()
+    get_data_png_dir()
     get_data_svg_dir()
-    get_data_svg_cell_network_schematic_file()
-    get_data_svg_cell_network_schematic_b_file()
-    get_data_svg_membrane_schematic_file()
+    get_data_png_cell_network_schematic_0_file()
+    get_data_png_cell_network_schematic_1_file()
+    get_data_png_cell_network_schematic_2_file()
+    get_data_png_cell_network_schematic_3_file()
+    get_data_png_membrane_schematic_file()
