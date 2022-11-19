@@ -238,10 +238,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 authors = [
-    { name="Alexis Pietak", email="<alexis.pietak@gmail.com>" },
+    "Alexis Pietak <alexis.pietak@gmail.com>",
 ]
 maintainers = [
-    { name="Cecil Curry", email="<leycec@gmail.com>" },
+    "Cecil Curry <leycec@gmail.com>",
 ]
 
 # Poetry-specific metadata differing from "[project]" above.
