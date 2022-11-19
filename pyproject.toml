@@ -31,6 +31,13 @@
 #   "Clarifying PEP 518 (a.k.a. pyproject.toml)", a human-readable article from
 #   one of the principal authors of the "pyproject.toml" standard.
 
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Synchronize the live Streamlit Cloud-hosted instance of this app
+# against modifications to this file by manually rebooting that instance *AFTER*
+# pushing commits performing these modifications. Streamlit Cloud itself does
+# *NOT* automatically detect these modifications and reboot that instance.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # ....................{ TODO                               }....................
 #FIXME: Poetry violates standards and is thus non-ideal. Hatch, on the other
 #hand, embraces standards and has been officially adopted by the Python
@@ -261,7 +268,21 @@ include = [
 generate-setup-file = false
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+# Range of Python interpreter versions required by this project.
+#
+# Note that poetry requires that an upper bound be declared. Why? Because poetry
+# is overly zealous when deployed to Streamlit Cloud. Specifically, poetry
+# nonsensically insists that this declaration is incompatible with numerous
+# upstream dependencies we literally could care less about: e.g.,
+#     The current project's Python requirement (>=3.10) is not compatible with
+#     some of the required packages Python requirement:
+#     - cachetools requires Python ~=3.7, so it will not be satisfied for Python
+#       >=4.0
+#     Check your dependencies Python requirement: The Python requirement can be
+#     specified via the `python` or `markers` properties
+#     For cachetools, a possible solution would be to set the `python` property
+#     to ">=3.10,<4.0"
+python = ">=3.10,<4.0"
 
 # QA stack. Dismantled, this is:
 # * beartype >= 0.11.0, the first release to support class decoration.
