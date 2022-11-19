@@ -301,6 +301,9 @@ streamlit = ">=1.12.0"
 # [tool.poetry.group.dev.dependencies]
 # tox = "^3.18"
 
+[tool.poetry.group.test]
+optional = true
+
 [tool.poetry.group.test.dependencies]
 # pytest should ideally remain the only hard dependency for testing on local
 # machines. While our testing regime optionally leverages third-party frameworks
@@ -309,3 +312,8 @@ streamlit = ">=1.12.0"
 #
 # A relatively modern version of pytest is required.
 pytest = ">=4.0.0"
+
+[tool.poetry.extras]
+# List of all optional runtime dependencies to be installed when this project is
+# installed with the optional "test" extra (e.g., "pip install .[test]").
+test = ['pytest']
