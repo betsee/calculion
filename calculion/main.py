@@ -106,14 +106,14 @@ def main() -> None:
     # from calculion.science.compute import get_steady_state
     from streamlit import (
         title,
-        # set_page_config
+        set_page_config
     )
 
     # ..................{ HEADERS                            }..................
-    # set_page_config(layout="wide") # set a wide page configuration?
+    set_page_config(layout="wide") # set a wide page configuration?
 
     # Human-readable title of this web app.
-    title('Calculion')
+    title('CalculIon')
 
     # App subtitle, if we want it:
     # st.write('Calculating the *slow* changes of bioelectricity')
@@ -468,10 +468,12 @@ def main() -> None:
         'Introduction', 'Simulation', 'Bioelectrical Network'])
 
     with tab1:
-        st.write('### Why Calculion?')
+        st.write('### CalculIon: A Comprehensive Model of Bioelectricity')
         # App subtitle, if we want it:
-        st.write('#### Calculating the *slow* changes of bioelectricity')
+        # st.write('#### Calculating the *slow* changes of bioelectricity')
         st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
+        st.latex(r'''\nabla\times\overrightarrow{H}=J_{cond}+\frac{d\overrightarrow{D}}{dt}''')
+
 
         mem_image_fn = str(get_data_png_membrane_schematic_file())
         mem_image = Image.open(mem_image_fn)
