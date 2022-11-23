@@ -137,6 +137,17 @@ def get_data_svg_dir() -> Path:
     # Perverse pomposity!
     return DirRelative(get_data_dir(), 'svg')
 
+@callable_cached
+@beartype
+def get_data_html_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **project-wide
+    portable html subdirectory** (i.e., directory containing
+    ``.html``-suffixed files describing lossless but *not* scalable images) if
+    found *or* raise an exception otherwise.
+    '''
+    return DirRelative(get_data_dir(), 'html')
+
 # ....................{ GETTERS ~ data : file : png        }....................
 #FIXME: Docstring us up, please.
 @callable_cached
@@ -177,6 +188,19 @@ def get_data_png_cell_network_schematic_3_file() -> Path:
 def get_data_png_membrane_schematic_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'MembraneSchematic_2.png')
+
+@callable_cached
+@beartype
+def get_data_png_banner_file() -> Path:
+
+    return FileRelative(get_data_png_dir(), 'calculion_logo_banner_i.png')
+
+
+# @callable_cached
+# @beartype
+# def get_data_html_test_file() -> Path:
+#
+#     return FileRelative(get_data_html_dir(), 'test_1.html')
 
 # ....................{ GETTERS ~ data : file : svg        }....................
 # @callable_cached

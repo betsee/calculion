@@ -100,6 +100,7 @@ def main() -> None:
         get_data_png_cell_network_schematic_2_file,
         get_data_png_cell_network_schematic_3_file,
         get_data_png_membrane_schematic_file,
+        get_data_png_banner_file
     )
     from numpy import exp, sum  #, column_stack
     # from pandas import DataFrame
@@ -113,7 +114,12 @@ def main() -> None:
     set_page_config(layout="wide") # set a wide page configuration?
 
     # Human-readable title of this web app.
-    title('CalculIon')
+    # title('CalculIon')
+    banner_image_fn = str(get_data_png_banner_file())
+    banner_image = Image.open(banner_image_fn)
+    st.image(banner_image,
+             use_column_width='always',
+             output_format="PNG")
 
     # App subtitle, if we want it:
     # st.write('Calculating the *slow* changes of bioelectricity')
@@ -468,11 +474,19 @@ def main() -> None:
         'Introduction', 'Simulation', 'Bioelectrical Network'])
 
     with tab1:
-        st.write('### CalculIon: A Comprehensive Model of Bioelectricity')
+        st.write('### Introducing a Comprehensive Bioelectrical Model')
         # App subtitle, if we want it:
         # st.write('#### Calculating the *slow* changes of bioelectricity')
-        st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
-        st.latex(r'''\nabla\times\overrightarrow{H}=J_{cond}+\frac{d\overrightarrow{D}}{dt}''')
+
+        # # This is how to serve up some html:
+        # test_html_fn = get_data_html_test_file()
+        # with open(test_html_fn,'r') as f:
+        #     html_data = f.read()
+
+        # st.components.v1.html(html_data, scrolling=True)
+
+        # st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
+        # st.latex(r'''\nabla\times\overrightarrow{H}=J_{cond}+\frac{d\overrightarrow{D}}{dt}''')
 
 
         mem_image_fn = str(get_data_png_membrane_schematic_file())
