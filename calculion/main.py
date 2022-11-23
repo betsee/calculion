@@ -474,7 +474,7 @@ def main() -> None:
         'Introduction', 'Simulation', 'Bioelectrical Network'])
 
     with tab1:
-        st.write('### Introducing a Comprehensive Bioelectrical Model')
+        st.write('### A Comprehensive Bioelectrical Model')
         # App subtitle, if we want it:
         # st.write('#### Calculating the *slow* changes of bioelectricity')
 
@@ -485,14 +485,14 @@ def main() -> None:
 
         # st.components.v1.html(html_data, scrolling=True)
 
-        # st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
+        st.write('Here we will have a preamble describing the motivation and theory behind Calculion.')
         # st.latex(r'''\nabla\times\overrightarrow{H}=J_{cond}+\frac{d\overrightarrow{D}}{dt}''')
 
 
         mem_image_fn = str(get_data_png_membrane_schematic_file())
         mem_image = Image.open(mem_image_fn)
         st.image(mem_image,
-                 caption='Behold the Cellular Bioelectric Network!',
+                 # caption='Behold the Cellular Bioelectric Network!',
                  use_column_width='always',
                  output_format="PNG")
 
