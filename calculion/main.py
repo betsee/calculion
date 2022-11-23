@@ -111,7 +111,7 @@ def main() -> None:
     )
 
     # ..................{ HEADERS                            }..................
-    # set_page_config(layout="wide") # set a wide page configuration?
+    set_page_config(layout="wide") # set a wide page configuration?
 
     # Human-readable title of this web app.
     # title('CalculIon')
