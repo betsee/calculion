@@ -12,9 +12,9 @@
 
 .. # ------------------( SYNOPSIS                            )------------------
 
-=========
-Calculion
-=========
+==================
+|calculion-banner|
+==================
 
 |app-badge| |ci-badge|
 
@@ -56,6 +56,11 @@ License
 
 Calculion is `open-source software released <calculion license_>`__ under the
 `permissive MIT license <MIT license_>`__.
+
+.. # ------------------( IMAGES                              )------------------
+.. |calculion-banner| image:: https://github.com/betsee/calculion/raw/main/calculion/data/png/calculion_logo_banner_o.png
+   :target: https://calculion.streamlit.app
+   :alt: Calculion: The single-cell bioelectricity simulator
 
 .. # ------------------( IMAGES ~ badge                      )------------------
 .. |app-badge| image:: https://static.streamlit.io/badges/streamlit_badge_black_white.svg
