@@ -8,14 +8,13 @@ Creates a computational system to calculate steady-state equilibrium concentrati
 bioelectric system from user-specified properties, as well as time-dependent concentrations and Vmem. Calculations are
 made from analytical equations.
 '''
-from beartype import beartype, BeartypeConf
-from beartype.typing import Optional
+from beartype import beartype
 import sympy as sp
 import numpy as np
 from scipy.optimize import minimize
 import pandas as pd
 from pandas import DataFrame
-from calculion.science.params import CalculionParams
+from calculion.scratch_science.params import CalculionParams
 from calculion.science.string_names import StringNames
 
 @beartype

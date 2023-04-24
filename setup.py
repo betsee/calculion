@@ -116,7 +116,7 @@ from calculion import meta
 _KEYWORDS = [
     'biology',
     'multiphysics',
-    'science',
+    'scratch_science',
     'simulator',
 ]
 '''

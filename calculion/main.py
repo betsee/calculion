@@ -91,8 +91,9 @@ def main() -> None:
     # ..................{ IMPORTS                            }..................
     import streamlit as st
     from PIL import Image
-    from calculion.science.comp_sys import CompSys
-    from calculion.science.params import CalculionParams
+    from calculion.science.sim_params import BioeParams
+    from calculion.science.bioe_system import BioElectricSystem
+    from calculion.science.bioe_sim import solve_sys_steady_state
     from calculion.science.string_names import StringNames
     from calculion._util.path.utilpathself import (
         get_data_png_cell_network_schematic_0_file,
@@ -102,11 +103,9 @@ def main() -> None:
         get_data_png_membrane_schematic_file,
         get_data_png_banner_file
     )
-    from numpy import exp, sum  #, column_stack
     # from pandas import DataFrame
-    # from calculion.science.compute import get_steady_state
+    # from calculion.scratch_science.compute import get_steady_state
     from streamlit import (
-        title,
         set_page_config
     )
 
@@ -125,7 +124,7 @@ def main() -> None:
     # st.write('Calculating the *slow* changes of bioelectricity')
 
     # ..................{ LOCALS                             }..................
-    p = CalculionParams()  # Create a default parameters instance
+    p = BioeParams()  # Create a default parameters instance
     l = StringNames() # string labels
 
     # ..................{ SIDEBAR                            }..................
@@ -160,30 +159,30 @@ def main() -> None:
 
         with ion_in_block:
 
-            p.Na_i = param_widget('Na+ in [mM]',
+            p.cNa_i = param_widget('Na+ in [mM]',
                                   min_value=ion_min_val,
                                   max_value=ion_max_val,
-                                  value=p.Na_i,
+                                  value=p.cNa_i,
                                   step=ion_slider_step,
                                   format='%f',
                                   key='slider_Na_i',
                                   label_visibility='visible',
                                   help='Set the starting value of Na⁺ in the cell.')
 
-            p.K_i = param_widget('K+ in [mM]',
+            p.cK_i = param_widget('K+ in [mM]',
                                  min_value=ion_min_val,
                                  max_value=ion_max_val,
-                                 value=p.K_i,
+                                 value=p.cK_i,
                                  step=ion_slider_step,
                                  format='%f',
                                  key='slider_K_i',
                                  label_visibility='visible',
                                  help='Set the starting value of K⁺ in the cell.')
 
-            p.Cl_i = param_widget('Cl- in [mM]',
+            p.cCl_i = param_widget('Cl- in [mM]',
                                   min_value=ion_min_val,
                                   max_value=ion_max_val,
-                                  value=p.Cl_i,
+                                  value=p.cCl_i,
                                   step=ion_slider_step,
                                   format='%f',
                                   key='slider_Cl_i',
@@ -197,30 +196,30 @@ def main() -> None:
 
         with ion_out_block:
             # Automatically reset parameter values in the parameters object p depending on user-selection:
-            p.Na_o = param_widget('Na+ out [mM]',
+            p.cNa_o = param_widget('Na+ out [mM]',
                              min_value=ion_min_val,
                              max_value=ion_max_val,
-                             value=p.Na_o,
+                             value=p.cNa_o,
                              step=ion_slider_step,
                              format='%f',
                              key='slider_Na_o',
                              label_visibility='visible',
                              help='Set the Na⁺ concentration outside the cell.')
 
-            p.K_o = param_widget('K+ out [mM]',
+            p.cK_o = param_widget('K+ out [mM]',
                              min_value=ion_min_val,
                              max_value=ion_max_val,
-                             value=p.K_o,
+                             value=p.cK_o,
                              step=ion_slider_step,
                              format='%f',
                              key='slider_K_o',
                              label_visibility='visible',
                              help='Set the K⁺ concentration outside the cell.')
 
-            p.Cl_o = param_widget('Cl- out [mM]',
+            p.cCl_o = param_widget('Cl- out [mM]',
                              min_value=ion_min_val,
                              max_value=ion_max_val,
-                             value=p.Cl_o,
+                             value=p.cCl_o,
                              step=ion_slider_step,
                              format='%f',
                              key='slider_Cl_o',
@@ -231,10 +230,10 @@ def main() -> None:
 
         with memperm_block:
 
-            p.P_Na_nm = param_widget('Na+ Permeability [nm/s]:',
+            p.base_PNa = param_widget('Na+ Permeability [nm/s]:',
                                min_value=memp_min_val,
                                max_value=memp_max_val,
-                               value=p.P_Na_nm,
+                               value=p.base_PNa,
                                step=memp_slider_step,
                                format='%f',
                                key='slider_P_Na',
@@ -243,10 +242,10 @@ def main() -> None:
                                     '\nThis simulates cellular expression of Na⁺ leak channels.'
                                )
 
-            p.P_K_nm = param_widget('K+ Permeability [nm/s]:',
+            p.base_PK = param_widget('K+ Permeability [nm/s]:',
                                min_value=memp_min_val,
                                max_value=memp_max_val,
-                               value=p.P_K_nm,
+                               value=p.base_PK,
                                step=memp_slider_step,
                                format='%f',
                                key='slider_P_K',
@@ -255,10 +254,10 @@ def main() -> None:
                                     '\nThis simulates cellular expression of K⁺ leak channels.'
                                )
 
-            p.P_Cl_nm = param_widget('Cl- Permeability [nm/s]:',
+            p.base_PCl = param_widget('Cl- Permeability [nm/s]:',
                                min_value=memp_min_val,
                                max_value=memp_max_val,
-                               value=p.P_Cl_nm,
+                               value=p.base_PCl,
                                step=memp_slider_step,
                                format='%f',
                                key='slider_P_Cl',
@@ -268,18 +267,18 @@ def main() -> None:
                                )
 
             # Update the main membrane permeabilities used in the simulation to m/s units:
-            p.P_Na = 1.0e-9*p.P_Na_nm
-            p.P_K = 1.0e-9*p.P_K_nm
-            p.P_Cl = 1.0e-9*p.P_Cl_nm
+            p.PNa = p.base_pmem*p.base_PNa
+            p.PK = p.base_pmem*p.base_PK
+            p.PCl = p.base_pmem*p.base_PCl
 
         # Define another expander block for pump and transporter settings:
         pumps_block = st.expander("Ion Pump and Transporters", expanded=default_expanded_state)
 
         with pumps_block:
-            omega_NaK_o = param_widget('Na-K-ATPase Pump Rate [units]',
+            p.base_NaKpump = param_widget('Na-K-ATPase Pump Rate [units]',
                              min_value=0.0,
                              max_value=1.0,
-                             value=p.omega_NaK*1e12,
+                             value=p.base_NaKpump,
                              step=0.01,
                              format='%f',
                              key='slider_omega_NaK',
@@ -287,17 +286,19 @@ def main() -> None:
                              help='Set the maximum rate of the Na-K-ATPase ion pump.')
 
             # update the na-k-atpase pump rate in units used in the simulation:
-            p.omega_NaK = omega_NaK_o*1e-12
+            p.PNaK_ATPase = p.base_pmem*p.base_NaKpump*p.pump_unit_modifier
 
             # # Let the user specify whether they want the additional NaKCl cotransporter for secondary transport:
             NaKCl_on = st.checkbox(l.NaKCl_cotrans_o, value=False, help=f'Cell expresses {l.NaKCl_cotrans} ?')
 
             if NaKCl_on:
                 # Na-K-2Cl cotransporter properties:
-                omega_NaKCl_o = param_widget('Na-K-2Cl Cotransporter Rate [units]',
+                p.use_NaKCl = True
+
+                p.base_NaKCl = param_widget('Na-K-2Cl Cotransporter Rate [units]',
                                  min_value=0.0,
                                  max_value=1.0,
-                                 value=p.omega_NaKCl*1e14,
+                                 value=p.base_NaKCl,
                                  step=0.01,
                                  format='%f',
                                  key='slider_omega_NaKCl',
@@ -305,20 +306,23 @@ def main() -> None:
                                  help='Set the maximum rate of the Na-K-2Cl cotransporter.')
 
                 # update the na-k-2Cl cotransporter rate in units used in the simulation:
-                p.omega_NaKCl = omega_NaKCl_o*1e-14
+                p.PNaKCl = p.base_pmem*p.base_NaKCl*p.pump_unit_modifier
 
             else:
-                p.omega_NaKCl = 0.0 # otherwise set the rate to zero
+                p.use_NaKCl = False
+                p.base_NaKCl = 0.0 # otherwise set the rate to zero
 
             # # Let the user specify whether they want the additional KCl symporter for secondary transport:
-            KCl_on = st.checkbox(l.KCl_symp_o, value=False, help=f'Cell expresses {l.KCl_symp} ?')
+            KCl_on = st.checkbox(l.KCl_symp_o,
+                                 value=False,
+                                 help=f'Cell expresses {l.KCl_symp} ?')
 
             if KCl_on:
                 # K-Cl symporter properties:
-                omega_KCl_o = param_widget('K-Cl Symporter Rate [units]',
+                p.base_KCl = param_widget('K-Cl Symporter Rate [units]',
                                  min_value=0.0,
                                  max_value=50.0,
-                                 value=p.omega_KCl*1e12,
+                                 value=p.base_KCl,
                                  step=0.1,
                                  format='%f',
                                  key='slider_omega_KCl',
@@ -327,10 +331,11 @@ def main() -> None:
                                            )
 
                 # update the K-Cl symporter rate in units used in the simulation:
-                p.omega_KCl = omega_KCl_o*1e-12
+                p.PKCl = p.base_pmem*p.base_KCl*p.pump_unit_modifier
 
             else:
-                p.omega_KCl = 0.0 # otherwise set the rate to zero
+                p.base_KCl = 0.0 # otherwise set the rate to zero
+                p.use_KCl = False
 
         # Define another expander block for pump and transporter settings:
         metabolic_block = st.expander("Metabolic Settings", expanded=default_expanded_state)
@@ -340,42 +345,40 @@ def main() -> None:
             delGATP = param_widget('Gibbs Free Energy ATP Hydrolysis [kJ/mol]',
                              min_value=-34.0,
                              max_value=-28.0,
-                             value=p.delGo_ATP*1e-3,
+                             value=p.delG_ATP*1e-3,
                              step=0.1,
                              format='%f',
                              key='slider_delGATP',
                              label_visibility='visible',
                              help='Set the Gibbs standard free energy for ATP hydrolysis.')
 
-            p.delGo_ATP = delGATP*1e3 # convert to units J/mol from kJ/mol
+            p.delG_ATP = delGATP*1e3 # convert to units J/mol from kJ/mol
 
-            # Recalculate equilibrium constant for ATP hydrolysis reaction
-            p.Keqm_NaK = exp(p.delGo_ATP / (p.R * p.T))
-
-            p.ATP = param_widget('ATP Concentration [mM]',
-                             min_value=0.1,
+            # Concentrations of metabolic items (these are not updated)
+            p.cATP = param_widget('ATP Concentration [mM]',
+                             min_value=0.001,
                              max_value=5.0,
-                             value=p.ATP,
-                             step=0.01,
+                             value=p.cATP,
+                             step=0.001,
                              format='%f',
                              key='slider_ATP',
                              label_visibility='visible',
                              help='Set the concentration of ATP in the cell.')
 
-            p.ADP = param_widget('ADP Concentration [mM]',
+            p.cADP = param_widget('ADP Concentration [mM]',
                              min_value=0.001,
                              max_value=5.0,
-                             value=p.ADP,
+                             value=p.cADP,
                              step=0.001,
                              format='%f',
                              key='slider_ADP',
                              label_visibility='visible',
                              help='Set the concentration of ADP in the cell.')
 
-            p.P = param_widget('P Concentration [mM]',
+            p.cPi = param_widget('P Concentration [mM]',
                              min_value=0.001,
                              max_value=5.0,
-                             value=p.P,
+                             value=p.cPi,
                              step=0.001,
                              format='%f',
                              key='slider_P',
@@ -420,47 +423,57 @@ def main() -> None:
     @st.cache # Cache the results of this slower function
     def calculate_ss_results(p):
 
-        sim = CompSys()  # Create an instance of the main computational simulator
+        p.update_parameters() # Update parameters in case calculation forgotten
 
-        params_vect_o, consts_vect = sim.collect_params(p) # Get initial values of the computational simulator
+        sim = BioElectricSystem(p) # Create the full bioelectrical study object
+        bes = sim.bes # alias to the ReactionSystem object
+
+        # First calculate the steady-state of the system:
+        bes.V_mem = 0.0
+
+        # steady-state solver, solution, param err, total sum squares error:
+        ss0, results_vect, x_err0, err0 = solve_sys_steady_state(bes,
+                                                         method='trust-constr',
+                                                         set_results=True)
+        # Get the concentration ss dataframe:
+        ion_ss = bes.return_chem_props_dict()
+
+        # Get the electrical properties dataframe:
+        elec_ss = bes.return_elec_props_dict()
+
+        return ion_ss, elec_ss
+
+    @st.cache # Cache the results of this slower function
+    def calculate_iter_results(p):
 
         time_properties_dict = {}
         volt_timedat = {}
         chem_timedat = {}
 
-        if p.iterative_solver is False:
-            params_vect = sim.calc_steady_state(p)
-
-        else:
-            (params_vect_time,
-             opti_funk_time,
-             time_vect,
-             print_message) = sim.calc_timestepped(p, N_iter=p.N_iter,
-                                                    del_t=p.delta_t,
-                                                    ti = 0.0,
-                                                    tol=p.steady_state_tol)
-            params_vect = params_vect_time[-1] # Get the last time-frame as the final parameters
-
-            # Save time-dependent properties to the time_properties_dict:
-            time_properties_dict['params_vect_time'] = params_vect_time
-            time_properties_dict['opti_funk_time'] = opti_funk_time
-            time_properties_dict['time_vect'] = time_vect
-
-            # Use the time-dependent parameters to compute all electrical and chem properties as a function of time:
-            volt_timedat = sim.calc_elec_param_set(params_vect_time, consts_vect, time_vect)
-            chem_timedat = sim.calc_chem_param_set(params_vect_time, consts_vect, time_vect)
-
-        # Get the concentration ss dataframe:
-        ion_ss = sim.return_chem_props_dict(params_vect, consts_vect)
-
-        # Get the electrical properties dataframe:
-        elec_ss = sim.return_elec_props_dict(params_vect, consts_vect)
+        return time_properties_dict, volt_timedat, chem_timedat
 
 
-        return ion_ss, elec_ss, time_properties_dict, volt_timedat, chem_timedat
 
-    # In the main area present the results of the simulation:
-    # ion_vals_ss, elec_vals_ss, time_props, volt_timedat, chem_timedat = calculate_ss_results(p)
+
+        # else:
+        #     (params_vect_time,
+        #      opti_funk_time,
+        #      time_vect,
+        #      print_message) = sim.calc_timestepped(p, N_iter=p.N_iter,
+        #                                             del_t=p.delta_t,
+        #                                             ti = 0.0,
+        #                                             tol=p.steady_state_tol)
+        #     results_vect = params_vect_time[-1] # Get the last time-frame as the final parameters
+        #
+        #     # Save time-dependent properties to the time_properties_dict:
+        #     time_properties_dict['params_vect_time'] = params_vect_time
+        #     time_properties_dict['opti_funk_time'] = opti_funk_time
+        #     time_properties_dict['time_vect'] = time_vect
+        #
+        #     # Use the time-dependent parameters to compute all electrical and chem properties as a function of time:
+        #     volt_timedat = bes.calc_elec_param_set(params_vect_time, consts_vect, time_vect)
+        #     chem_timedat = bes.calc_chem_param_set(params_vect_time, consts_vect, time_vect)
+
 
     # ..................{ TABS                               }..................
     # Split the main area into these three tabs:
@@ -514,7 +527,7 @@ def main() -> None:
                                                 'system step-by-step in time?')
 
             if itersol_checkbox:
-                p.iterative_solver = True # Set the iterative solver parameter to True
+                p.use_iterative_solver = True # Set the iterative solver parameter to True
 
                 # Iterative solver time step:
                 p.delta_t = param_widget('Simulation time-step [s]',
@@ -553,11 +566,12 @@ def main() -> None:
 
 
             else:
-                p.iterative_solver = False # reset the iterative solver parameter to False
+                p.use_iterative_solver = False # reset the iterative solver parameter to False
 
         st.write("### Results")
-        # Calculate the results of the simulation:
-        ion_vals_ss, elec_vals_ss, time_props, volt_timedat, chem_timedat = calculate_ss_results(p)
+
+        # Calculate the steady-state results of the system:
+        ion_vals_ss, elec_vals_ss = calculate_ss_results(p)
 
         col1, col2 = st.columns(2)
 
@@ -571,6 +585,9 @@ def main() -> None:
 
         # Iterative solver results:
         if itersol_checkbox:
+
+            time_props, volt_timedat, chem_timedat = calculate_iter_results(p)
+
             st.write("#### Iterative Simulation Results")
 
             # time = time_props['time_vect']

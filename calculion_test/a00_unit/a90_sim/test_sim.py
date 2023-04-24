@@ -19,13 +19,13 @@ This submodule unit tests the public API of the
 # ....................{ TESTS                              }....................
 def test_sim() -> None:
     '''
-    Test the optimizer API of the :class:`calculion.science.optimize.Optimizer`
+    Test the optimizer API of the :class:`calculion.scratch_science.optimize.Optimizer`
     class.
     '''
 
     # Defer test-specific imports.
-    from calculion.science.optimize import Optimizer
-    from calculion.science.params import CalculionParams
+    from calculion.scratch_science.optimize import Optimizer
+    from calculion.scratch_science.params import CalculionParams
 
     p = CalculionParams()
     sim = Optimizer()
@@ -51,8 +51,8 @@ def test_tsim()->None:
     Test functionality associated with iterative simulations in time.
     '''
 
-    from calculion.science.params import CalculionParams
-    from calculion.science.time_solver import TimeSolver
+    from calculion.scratch_science.params import CalculionParams
+    from calculion.scratch_science.time_solver import TimeSolver
 
     p = CalculionParams()
     p.delta_t = 1.0 # Adjust timestep and iterations to ensure that things run
@@ -84,8 +84,8 @@ def test_calc() -> None:
     Test the top-level function that calculates bioelectrical steady-state parameters.
 
     '''
-    from calculion.science.params import CalculionParams
-    from calculion.science.compute import get_steady_state
+    from calculion.scratch_science.params import CalculionParams
+    from calculion.scratch_science.compute import get_steady_state
 
     p = CalculionParams()  # Create a set of default parameters
 

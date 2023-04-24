@@ -14,9 +14,9 @@ import numpy as np
 from numpy import ndarray
 from beartype import beartype
 from beartype.typing import Optional, Union
-from calculion.science.flux import compute_flux_vector, make_reaction_matrix
-from calculion.science.params import CalculionParams
-from calculion.science.vmem import vmem_ghk_pump
+from calculion.scratch_science.flux import compute_flux_vector, make_reaction_matrix
+from calculion.scratch_science.params import CalculionParams
+from calculion.scratch_science.vmem import vmem_ghk_pump
 from scipy.optimize import minimize
 
 # ....................{ CLASSES                            }....................

@@ -11,10 +11,10 @@ Class to generate temporal updates to transmembrane potential Vmem and ion conce
 from beartype import beartype
 import numpy as np
 import sympy as sp
-from calculion.science.params import CalculionParams
-from calculion.science.vmem import vmem_ghk_pump
-from calculion.science.flux import make_reaction_matrix, compute_flux_vector
-from calculion.science.evolution_equations import update_all_var
+from calculion.scratch_science.params import CalculionParams
+from calculion.scratch_science.vmem import vmem_ghk_pump
+from calculion.scratch_science.flux import make_reaction_matrix, compute_flux_vector
+from calculion.scratch_science.evolution_equations import update_all_var
 
 # FIXME: We're still solving the whole analytic equation set every time this is declared, so are not
 # taking advantage of the hard-coded evolution equations...

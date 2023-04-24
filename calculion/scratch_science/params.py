@@ -24,7 +24,7 @@ class CalculionParams(object):
     R: float = 8.314  # Ideal gas constant [J/(K*mol)]
     F: float = 96485.0  # Faraday's Constant [C/mol]
     e_o: float = 8.3145e-12  # Electric permittivity free space [F/m]
-    z_Na: int = 1
+    z_Na: int = 1 # Ionic charge of sodium
     z_K: int = 1
     z_Cl: int = -1
     #---------

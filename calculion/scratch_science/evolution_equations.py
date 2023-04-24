@@ -12,8 +12,8 @@ from beartype import beartype
 from beartype.typing import Union
 import numpy as np
 from numpy import ndarray
-from calculion.science.params import CalculionParams
-from calculion.science.vmem import vmem_ghk_pump
+from calculion.scratch_science.params import CalculionParams
+from calculion.scratch_science.vmem import vmem_ghk_pump
 
 @beartype
 def update_all_var(variables_list: Union[ndarray, list],

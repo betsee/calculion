@@ -10,7 +10,7 @@ Methods to calculate ion flux.
 # ....................{ IMPORTS                            }....................
 import numpy as np
 from beartype import beartype
-from calculion.science.params import CalculionParams
+from calculion.scratch_science.params import CalculionParams
 #-------------------------------------------------------------------------------
 
 @beartype

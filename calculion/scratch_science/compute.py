@@ -11,10 +11,10 @@ from beartype import beartype, BeartypeConf
 from beartype.typing import Optional
 import pandas as pd
 from pandas import DataFrame
-from calculion.science.params import CalculionParams
-from calculion.science.optimize import Optimizer
-from calculion.science.time_solver import TimeSolver
-from calculion.science.vmem import vrev_na, vrev_k, vrev_cl, vmem_ghk_pump
+from calculion.scratch_science.params import CalculionParams
+from calculion.scratch_science.optimize import Optimizer
+from calculion.scratch_science.time_solver import TimeSolver
+from calculion.scratch_science.vmem import vrev_na, vrev_k, vrev_cl, vmem_ghk_pump
 # import streamlit as st
 
 # @st.cache
