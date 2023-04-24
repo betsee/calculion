@@ -12,6 +12,11 @@
 # Welcome to project distribution hell, where only twenty distinct files in
 # twenty distinct formats suffice to distribute a single project.
 #
+# --------------------( CAVEATS                            )--------------------
+# Python-agnostic low-level system requirements (e.g., GraphViz) *MUST* be
+# externally declared in the Streamlit-specific "packages.txt" file. Sadly,
+# Poetry itself provides *NO* means of declaring these requirements here.
+#
 # --------------------( MOTIVATION                         )--------------------
 # Streamlit currently requires either:
 # * This standard file to be defined in a poetry-specific way. Poetry violates
@@ -42,8 +47,8 @@
 #FIXME: Poetry violates standards and is thus non-ideal. Hatch, on the other
 #hand, embraces standards and has been officially adopted by the Python
 #Packaging Authority (PyPA) organization that manage the cheeshop (PyPI). I can
-#personally confirm that Hatch is a substantial improvement over poetry that
-#we are strongly considering using in @beartype as well.
+#personally confirm that Hatch is a substantial improvement over poetry that we
+#are strongly considering using in @beartype as well.
 #
 #So... what's the holdup, then? In a word, Streamlit. Streamlit currently
 #requires this file to be defined in a poetry-specific way. Since that is bad,
@@ -137,6 +142,10 @@ maintainers = [
 ]
 
 # ....................{ PEP 621 ~ dependencies             }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Synchronize this section with dependencies listed below.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # Python interpreter versions required by this package.
 #
 # A relatively recent version of Python is required due to:
@@ -155,8 +164,12 @@ maintainers = [
 #       https://gitlab.kitware.com/vtk/vtk/-/issues/18335
 requires-python = ">=3.10"
 
-# List of all mandatory runtime dependencies.'
+# List of all mandatory runtime dependencies.
 dependencies = [
+    # Graph stack.
+    "streamlit-agraph >= 0.0.45",
+    # "pydot >=1.4.1",
+
     # QA stack. Dismantled, this is:
     # * beartype >= 0.11.0, the first release to support class decoration.
     "beartype >=0.11.0",
@@ -171,9 +184,6 @@ dependencies = [
     "streamlit >=1.12.0",
 
     #FIXME: Uncomment as needed, please.
-    # # 2D stack.
-    # "svgpathtools >=1.4.1",
-    #
     # # 3D stack.
     # "pyvista >=0.30.0",
 ]
@@ -268,6 +278,10 @@ include = [
 generate-setup-file = false
 
 [tool.poetry.dependencies]
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Synchronize this section with dependencies listed above.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # Range of Python interpreter versions required by this project.
 #
 # Note that poetry requires that an upper bound be declared. Why? Because poetry
@@ -283,6 +297,9 @@ generate-setup-file = false
 #     For cachetools, a possible solution would be to set the `python` property
 #     to ">=3.10,<4.0"
 python = ">=3.10,<4.0"
+
+# Graph stack.
+streamlit-agraph = ">=0.0.45"
 
 # QA stack. Dismantled, this is:
 # * beartype >= 0.11.0, the first release to support class decoration.

@@ -1,0 +1,31 @@
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                           )--------------------
+# Project-wide Python-agnostic low-level APT requirements (e.g., GraphViz),
+# which *MUST* be declared in this Streamlit-specific "file. Sadly, Poetry
+# itself provides *NO* means of declaring these requirements in the
+# PEP 517-compliant "pyproject.toml" file.
+#
+# Welcome to project distribution hell, where only twenty distinct files in
+# twenty distinct formats suffice to distribute a single project.
+#
+# --------------------( SEE ALSO                           )--------------------
+# * https://docs.streamlit.io/streamlit-community-cloud/get-started/deploy-an-app/app-dependencies#apt-get-dependencies
+#   Official (albeit *VERY* sparse) Streamlit documentation on this file.
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Synchronize the live Streamlit Cloud-hosted instance of this app
+# against modifications to this file by manually rebooting that instance *AFTER*
+# pushing commits performing these modifications. Streamlit Cloud itself does
+# *NOT* automatically detect these modifications and reboot that instance.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# ....................{ APT                                }....................
+# Newline-delimited list of the names of *ALL* Debian-specific system packages
+# to be installed with Debian's system package manager: APT.
+
+# GraphViz.
+graphviz
+graphviz-dev
