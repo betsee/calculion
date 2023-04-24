@@ -94,6 +94,8 @@ def main() -> None:
     from calculion.science.sim_params import BioeParams
     from calculion.science.bioe_system import BioElectricSystem
     from calculion.science.bioe_sim import solve_sys_steady_state
+    from calculion.science.channel_base import PulseFunctionChannel
+    from calculion.science.chem_opti import IterSim
     from calculion.science.string_names import StringNames
     from calculion._util.path.utilpathself import (
         get_data_png_cell_network_schematic_0_file,
@@ -521,7 +523,7 @@ def main() -> None:
 
             # Iterative solver will not be used by default:
             itersol_checkbox = st.checkbox("Use iterative solver",
-                                           value=False,
+                                           value=p.use_iterative_solver,
                                            key='checkbox_itersol',
                                            help='Use the iterative solver that integrates the '
                                                 'system step-by-step in time?')
@@ -534,34 +536,66 @@ def main() -> None:
                                           min_value=1.0e-3,
                                           max_value=100.0,
                                           value=p.delta_t,
-                                          step=0.01,
+                                          step=1.0e-3,
                                           format='%f',
                                           key='slider_delta_t',
                                           label_visibility='visible',
                                           help='Set the time step for the iterative solver.')
 
                 # Iterative solver max iterations:
-                p.N_iter = param_widget('Simulation max iterations',
-                                          min_value=10,
-                                          max_value=100000,
-                                          value=p.N_iter,
-                                          step=1,
+                p.start_time = param_widget('Start time for the iterative simulation.',
+                                          min_value=0.0,
+                                          max_value=1.0e5*p.delta_t,
+                                          value=p.start_time,
+                                          step=p.delta_t,
                                           format='%d',
                                           key='slider_Niter',
                                           label_visibility='visible',
                                           help='Set the maximum number of timesteps that can be run.')
 
-                # Iterative solver convergence tolerance:
-                p.steady_state_tol = param_widget('Convergence tolerance',
-                                          min_value=1e-20,
-                                          max_value=1e-6,
-                                          value=p.steady_state_tol,
-                                          step=1e-15,
+                # Iterative solver end time:
+                p.end_time = param_widget('End time',
+                                          min_value=p.start_time + p.delta_t,
+                                          max_value=p.start_time + 1e6*p.delta_t,
+                                          value=p.end_time,
+                                          step=p.delta_t,
                                           format='%e',
-                                          key='slider_tol',
+                                          key='slider_endt',
                                           label_visibility='visible',
-                                          help='Set the tolerance, below which the simulation will be'
-                                               'assumed to be at steady-state.')
+                                          help='Set the simulation time at '
+                                               'which the iterative solver stops.')
+
+
+                # membrane permeability perturbations for sim:
+                # FIXME: we need panels to harvest user pref on channel sim here:
+                chan_list = []
+                if p.perturb_PNa:
+                    stepchan_Na = PulseFunctionChannel(['P_Na'],
+                                                       p.perturb_PNa_multi*p.base_pmem,
+                                                       p.perturb_PNa_start,
+                                                       p.perturb_PNa_end)
+                    chan_list.append(stepchan_Na)
+
+                if p.perturb_PK:
+                    stepchan_K = PulseFunctionChannel(['P_K'],
+                                                      p.perturb_PK_multi*p.base_pmem,
+                                                      p.perturb_PK_start,
+                                                      p.perturb_PK_end)
+                    chan_list.append(stepchan_K)
+
+                if p.perturb_PCl:
+                    stepchan_Cl = PulseFunctionChannel(['P_Cl'],
+                                                       p.perturb_PCl_multi*p.base_pmem,
+                                                       p.perturb_PCl_start,
+                                                       p.perturb_PCl_end)
+                    chan_list.append(stepchan_Cl)
+
+
+                # Update all the calculated parameters with the new settings:
+                p.update_parameters()
+
+                # isim = IterSim(bes, channels_list=[stepchan_Na, stepchan_K, stepchan_Cl])
+                # isim2 = IterSim(bes, channels_list=[stepchan_Na, stepchan_K, stepchan_Cl])
 
 
 
