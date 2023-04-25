@@ -9,7 +9,7 @@ Create a bioelectric system for a single cell
 '''
 from beartype import beartype
 from beartype.typing import Optional
-from calculion.science.sim_params import BioeParams
+from calculion.science.model_params import ModelParams
 from calculion.science.chem_base import (Chemical,
                                             TransportReaction,
                                             ClassicReaction,
@@ -92,16 +92,16 @@ class BioElectricSystem(object):
 
     '''
 
-    @beartype
+    # @beartype
     def __init__(self,
-                 p: Optional[BioeParams]=None,
+                 p: ModelParams,
                  irrev_fwd_only: bool = True):
         '''
         Initialize the Bioelectrical System.
 
         Parameters
         ------------
-        p : Optional[BioeParams]
+        p : Optional[ModelParams]
             An instance of BioeParams object.
 
         irrev_fwd_only : bool
@@ -112,7 +112,7 @@ class BioElectricSystem(object):
 
         if p is None:
             # Then make a default parameters object:
-            p = BioeParams()
+            p = ModelParams()
 
         self._p = p
 
@@ -123,13 +123,13 @@ class BioElectricSystem(object):
 
         self._build_system(p)
 
-    def _build_system(self, p):
+    def _build_system(self, p: ModelParams):
         '''
         Build the bioelectrical system.
 
         Parameters
         ------------
-        p : Optional[BioeParams]
+        p : Optional[ModelParams]
             An instance of BioeParams object.
 
         '''

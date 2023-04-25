@@ -15,6 +15,10 @@ Specifically, this submodule is imported by:
   (e.g., ``python3 -m calculion``).
 * Integration tests programmatically exercising app functionality.
 '''
+import copy
+
+import pandas as pd
+
 
 # ....................{ KLUDGES ~ path                     }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -91,7 +95,9 @@ def main() -> None:
     # ..................{ IMPORTS                            }..................
     import streamlit as st
     from PIL import Image
-    from calculion.science.sim_params import BioeParams
+    import numpy as np
+    from calculion.science.model_params import ModelParams
+    from calculion.science.sim_params import SimParams
     from calculion.science.bioe_system import BioElectricSystem
     from calculion.science.bioe_sim import solve_sys_steady_state
     from calculion.science.channel_base import PulseFunctionChannel
@@ -126,13 +132,14 @@ def main() -> None:
     # st.write('Calculating the *slow* changes of bioelectricity')
 
     # ..................{ LOCALS                             }..................
-    p = BioeParams()  # Create a default parameters instance
+    p = ModelParams()  # Create a default parameters instance for model properties
+    sim_p = SimParams() # Create default params for simulation properties
     l = StringNames() # string labels
 
     # ..................{ SIDEBAR                            }..................
     # The sidebar will contain all widgets to collect user-data for the
     # simulation. Create and name the sidebar.
-    st.sidebar.header('Simulation Variables')
+    st.sidebar.header('Model Variables')
 
     # st.sidebar.write('#### Set simulation variables')
     with st.sidebar:
@@ -143,8 +150,8 @@ def main() -> None:
         ion_min_val = 0.1  # min concentration of ions in mM
         ion_max_val = 250.0  # max concentration of ions in mM
         ion_slider_step = 0.1  # step-size for ion slider
-        memp_min_val = 0.01 # min value for membrane permeability in nm/s
-        memp_max_val = 5.0 # max value for membrane permeability in nm/s
+        memp_min_val = 0.0 # min value for membrane permeability in nm/s
+        memp_max_val = 200.0 # max value for membrane permeability in nm/s
         memp_slider_step = 0.01 # step-size for mem perm slider
 
         # Form of the widget to use for parameter value input from the user:
@@ -191,7 +198,7 @@ def main() -> None:
                                   label_visibility='visible',
                                   help='Set the starting value of Cl⁻ in the cell.')
 
-        st.write('**Simulation Parameters**')
+        st.write('**Model Parameters**')
 
         # Define another expander block for specifying extracellular ion concentrations:
         ion_out_block = st.expander("Ion Concentrations Outside Cell", expanded=default_expanded_state)
@@ -268,10 +275,10 @@ def main() -> None:
                                     '\nThis simulates cellular expression of Cl⁻ leak channels.'
                                )
 
-            # Update the main membrane permeabilities used in the simulation to m/s units:
-            p.PNa = p.base_pmem*p.base_PNa
-            p.PK = p.base_pmem*p.base_PK
-            p.PCl = p.base_pmem*p.base_PCl
+            # # Update the main membrane permeabilities used in the simulation to m/s units:
+            # p.PNa = p.base_pmem*p.base_PNa
+            # p.PK = p.base_pmem*p.base_PK
+            # p.PCl = p.base_pmem*p.base_PCl
 
         # Define another expander block for pump and transporter settings:
         pumps_block = st.expander("Ion Pump and Transporters", expanded=default_expanded_state)
@@ -279,7 +286,7 @@ def main() -> None:
         with pumps_block:
             p.base_NaKpump = param_widget('Na-K-ATPase Pump Rate [units]',
                              min_value=0.0,
-                             max_value=1.0,
+                             max_value=1.0e6,
                              value=p.base_NaKpump,
                              step=0.01,
                              format='%f',
@@ -299,7 +306,7 @@ def main() -> None:
 
                 p.base_NaKCl = param_widget('Na-K-2Cl Cotransporter Rate [units]',
                                  min_value=0.0,
-                                 max_value=1.0,
+                                 max_value=1.0e6,
                                  value=p.base_NaKCl,
                                  step=0.01,
                                  format='%f',
@@ -323,7 +330,7 @@ def main() -> None:
                 # K-Cl symporter properties:
                 p.base_KCl = param_widget('K-Cl Symporter Rate [units]',
                                  min_value=0.0,
-                                 max_value=50.0,
+                                 max_value=1.0e6,
                                  value=p.base_KCl,
                                  step=0.1,
                                  format='%f',
@@ -421,60 +428,49 @@ def main() -> None:
     # ..................{ RESULTS                            }..................
     # After collecting parameter values from the user, compute the steady-state
     # values for the bioelectrical system.
+    # @st.cache_data
+    def make_bioe_system(p):
+        sim = BioElectricSystem(p)  # Create the full bioelectrical study object
+        besi = sim.bes  # alias to the ReactionSystem object
+        return besi
 
-    @st.cache # Cache the results of this slower function
-    def calculate_ss_results(p):
+    # @st.cache_resource # Cache the results of this slower function
+    def calculate_ss_results(_besi):
 
-        p.update_parameters() # Update parameters in case calculation forgotten
-
-        sim = BioElectricSystem(p) # Create the full bioelectrical study object
-        bes = sim.bes # alias to the ReactionSystem object
+        # sim = BioElectricSystem(p)  # Create the full bioelectrical study object
+        # bes = sim.bes  # alias to the ReactionSystem object
 
         # First calculate the steady-state of the system:
-        bes.V_mem = 0.0
+        _besi.V_mem = 0.0
 
         # steady-state solver, solution, param err, total sum squares error:
-        ss0, results_vect, x_err0, err0 = solve_sys_steady_state(bes,
+        ss0, results_vect, x_err0, err0 = solve_sys_steady_state(_besi,
                                                          method='trust-constr',
                                                          set_results=True)
         # Get the concentration ss dataframe:
-        ion_ss = bes.return_chem_props_dict()
+        ion_ss = _besi.return_chem_props_dict()
 
         # Get the electrical properties dataframe:
-        elec_ss = bes.return_elec_props_dict()
+        elec_ss = _besi.return_elec_props_dict()
 
         return ion_ss, elec_ss
 
-    @st.cache # Cache the results of this slower function
-    def calculate_iter_results(p):
+    # @st.cache_data # Cache the results of this slower function
+    def calculate_iter_results(_besi, simp, chanlist):
 
-        time_properties_dict = {}
-        volt_timedat = {}
-        chem_timedat = {}
+        isim = IterSim(_besi, channels_list=chanlist)
 
-        return time_properties_dict, volt_timedat, chem_timedat
+        time, vm_time, chem_time = isim.run_iter_sim(simp.delta_t,
+                                                     simp.N_iter,
+                                                     use_quasi_static_approx=False,
+                                                     use_hodgkin_huxley=False,
+                                                     clamp_vmem_at=None,
+                                                     sweep_vmem_vals=None)
 
 
+        return time, vm_time, chem_time, isim
 
 
-        # else:
-        #     (params_vect_time,
-        #      opti_funk_time,
-        #      time_vect,
-        #      print_message) = sim.calc_timestepped(p, N_iter=p.N_iter,
-        #                                             del_t=p.delta_t,
-        #                                             ti = 0.0,
-        #                                             tol=p.steady_state_tol)
-        #     results_vect = params_vect_time[-1] # Get the last time-frame as the final parameters
-        #
-        #     # Save time-dependent properties to the time_properties_dict:
-        #     time_properties_dict['params_vect_time'] = params_vect_time
-        #     time_properties_dict['opti_funk_time'] = opti_funk_time
-        #     time_properties_dict['time_vect'] = time_vect
-        #
-        #     # Use the time-dependent parameters to compute all electrical and chem properties as a function of time:
-        #     volt_timedat = bes.calc_elec_param_set(params_vect_time, consts_vect, time_vect)
-        #     chem_timedat = bes.calc_chem_param_set(params_vect_time, consts_vect, time_vect)
 
 
     # ..................{ TABS                               }..................
@@ -489,7 +485,7 @@ def main() -> None:
         'Introduction', 'Simulation', 'Bioelectrical Network'])
 
     with tab1:
-        st.write('### A Comprehensive Bioelectrical Model')
+        st.write('### Describing the *slow* changes of bioelectricity.')
         # App subtitle, if we want it:
         # st.write('#### Calculating the *slow* changes of bioelectricity')
 
@@ -514,52 +510,53 @@ def main() -> None:
     with tab2:
         st.write("### Simulation")
 
-        st.write("*Alter sidebar Simulation Variables to explore the possibilities...*")
+        st.write("*Alter sidebar Model Variables to explore the possibilities...*")
 
         # Define a final expander block for simulator settings:
-        sim_settings_block = st.expander("Simulation Settings", expanded=default_expanded_state)
+        sim_settings_block = st.expander("Simulation Settings",
+                                         expanded=default_expanded_state)
 
         with sim_settings_block:
 
             # Iterative solver will not be used by default:
             itersol_checkbox = st.checkbox("Use iterative solver",
-                                           value=p.use_iterative_solver,
+                                           value=sim_p.use_iterative_solver,
                                            key='checkbox_itersol',
                                            help='Use the iterative solver that integrates the '
                                                 'system step-by-step in time?')
 
             if itersol_checkbox:
-                p.use_iterative_solver = True # Set the iterative solver parameter to True
+                sim_p.use_iterative_solver = True # Set the iterative solver parameter to True
 
                 # Iterative solver time step:
-                p.delta_t = param_widget('Simulation time-step [s]',
-                                          min_value=1.0e-3,
-                                          max_value=100.0,
-                                          value=p.delta_t,
-                                          step=1.0e-3,
+                sim_p.delta_t = param_widget('Simulation time-step [s]',
+                                          min_value=1.0e-4,
+                                          max_value=1.0,
+                                          value=sim_p.delta_t,
+                                          step=1.0e-4,
                                           format='%f',
                                           key='slider_delta_t',
                                           label_visibility='visible',
                                           help='Set the time step for the iterative solver.')
 
                 # Iterative solver max iterations:
-                p.start_time = param_widget('Start time for the iterative simulation.',
+                sim_p.start_time = param_widget('Start time for the iterative simulation.',
                                           min_value=0.0,
-                                          max_value=1.0e5*p.delta_t,
-                                          value=p.start_time,
-                                          step=p.delta_t,
-                                          format='%d',
+                                          max_value=1.0e5*sim_p.delta_t,
+                                          value=sim_p.start_time,
+                                          step=sim_p.delta_t,
+                                          format='%f',
                                           key='slider_Niter',
                                           label_visibility='visible',
                                           help='Set the maximum number of timesteps that can be run.')
 
                 # Iterative solver end time:
-                p.end_time = param_widget('End time',
-                                          min_value=p.start_time + p.delta_t,
-                                          max_value=p.start_time + 1e6*p.delta_t,
-                                          value=p.end_time,
-                                          step=p.delta_t,
-                                          format='%e',
+                sim_p.end_time = param_widget('End time',
+                                          min_value=sim_p.start_time + sim_p.delta_t,
+                                          max_value=sim_p.start_time + 1e6*sim_p.delta_t,
+                                          value=sim_p.end_time,
+                                          step=sim_p.delta_t,
+                                          format='%f',
                                           key='slider_endt',
                                           label_visibility='visible',
                                           help='Set the simulation time at '
@@ -569,144 +566,180 @@ def main() -> None:
                 # membrane permeability perturbations for sim:
                 # FIXME: we need panels to harvest user pref on channel sim here:
                 chan_list = []
-                if p.perturb_PNa:
+                if sim_p.perturb_PNa:
                     stepchan_Na = PulseFunctionChannel(['P_Na'],
-                                                       p.perturb_PNa_multi*p.base_pmem,
-                                                       p.perturb_PNa_start,
-                                                       p.perturb_PNa_end)
+                                                       sim_p.perturb_PNa_multi*p.base_pmem,
+                                                       sim_p.perturb_PNa_start,
+                                                       sim_p.perturb_PNa_end)
                     chan_list.append(stepchan_Na)
 
-                if p.perturb_PK:
+                if sim_p.perturb_PK:
                     stepchan_K = PulseFunctionChannel(['P_K'],
-                                                      p.perturb_PK_multi*p.base_pmem,
-                                                      p.perturb_PK_start,
-                                                      p.perturb_PK_end)
+                                                      sim_p.perturb_PK_multi*p.base_pmem,
+                                                      sim_p.perturb_PK_start,
+                                                      sim_p.perturb_PK_end)
                     chan_list.append(stepchan_K)
 
-                if p.perturb_PCl:
+                if sim_p.perturb_PCl:
                     stepchan_Cl = PulseFunctionChannel(['P_Cl'],
-                                                       p.perturb_PCl_multi*p.base_pmem,
-                                                       p.perturb_PCl_start,
-                                                       p.perturb_PCl_end)
+                                                       sim_p.perturb_PCl_multi*p.base_pmem,
+                                                       sim_p.perturb_PCl_start,
+                                                       sim_p.perturb_PCl_end)
                     chan_list.append(stepchan_Cl)
 
 
                 # Update all the calculated parameters with the new settings:
-                p.update_parameters()
+                # p.update_parameters()
 
                 # isim = IterSim(bes, channels_list=[stepchan_Na, stepchan_K, stepchan_Cl])
                 # isim2 = IterSim(bes, channels_list=[stepchan_Na, stepchan_K, stepchan_Cl])
 
-
-
-            else:
-                p.use_iterative_solver = False # reset the iterative solver parameter to False
-
         st.write("### Results")
 
+        p.update_parameters() # Update parameters in case calculation forgotten
+        sim_p.update_parameters() # Update parameters in case calculation forgotten
+
+        # Generate the bioelectrical system model object:
+        # sim = BioElectricSystem(p)  # Create the full bioelectrical study object
+        bes = make_bioe_system(p)
+        # bes = sim.bes  # alias to the ReactionSystem object
+        beso = copy.deepcopy(bes)  # Make a copy to save initial state
+
+        # Calculate the initial conditions of the system:
+        # Get the concentration ss dataframe:
+        ion_vals_init = beso.return_chem_props_dict()
+
+        # Get the electrical properties dataframe:
+        elec_vals_init = beso.return_elec_props_dict()
+
         # Calculate the steady-state results of the system:
-        ion_vals_ss, elec_vals_ss = calculate_ss_results(p)
+        ion_vals_ss, elec_vals_ss = calculate_ss_results(bes)
 
         col1, col2 = st.columns(2)
 
         with col1:
+            st.write('###### Initial Bioelectrical Potentials')
+            st.dataframe(elec_vals_init.style.format("{:.1f}"))
+
             st.write('###### Steady-State Bioelectrical Potentials')
             st.dataframe(elec_vals_ss.style.format("{:.1f}"))
 
         with col2:
+            st.write('###### Initial Ion Concentrations')
+            st.dataframe(ion_vals_init.style.format("{:.1f}"))
+
             st.write('###### Steady-State Ion Concentrations')
             st.dataframe(ion_vals_ss.style.format("{:.1f}"))
 
-        # Iterative solver results:
         if itersol_checkbox:
 
-            time_props, volt_timedat, chem_timedat = calculate_iter_results(p)
+            time, vm_time, chem_time, isim = calculate_iter_results(bes,
+                                                                    sim_p,
+                                                                    chan_list)
 
-            st.write("#### Iterative Simulation Results")
+            pmem_dataframe = pd.DataFrame(np.column_stack((time[sim_p.starttime_plot_ind:],
+                                                           (1/p.base_pmem)*isim.pmem_time[sim_p.starttime_plot_ind:])),
+                                          columns=['Time', 'P_Na', 'P_K', 'P_Cl'])
 
-            # time = time_props['time_vect']
+            st.line_chart(pmem_dataframe, x='Time', y=['P_Na', 'P_K', 'P_Cl'])
 
-            st.write('###### Bioelectrical Potentials')
+            vmem_dataframe = pd.DataFrame(np.column_stack((time[sim_p.starttime_plot_ind:],
+                                                           1e3*vm_time[sim_p.starttime_plot_ind:])),
+                                          columns=['Time', l.Vmem_o])
 
-            all_V_series = [l.Vmem_o, l.Ved_Na_o, l.Ved_K_o, l.Ved_Cl_o, l.Vrev_Na_o, l.Vrev_K_o, l.Vrev_Cl_o]
-            all_chem_series = [l.Na_in_o, l.K_in_o, l.Cl_in_o]
+            st.line_chart(vmem_dataframe, x='Time', y=l.Vmem_o)
+            # st.dataframe(vmem_dataframe.style.format("{:.1f}"))
 
-            shown_V_series = []
-            shown_chem_series = []
-
-            show_Vmem = st.checkbox(l.Vmem, value=True,
-                                        help=f'Show membrane potential, {l.Vmem}, on the graph?')
-
-            # Columns to arrange voltage series checkboxes horizontally:
-            vc0, vc1, vc2, vc3, vc4, vc5 = st.columns(6)
-
-            with vc0:
-                show_Ved_Na = st.checkbox(l.Ved_Na,
-                                          value=False,
-                                          help=f'Show Na+ electrochemical driving potential,'
-                                               f' {l.Ved_Na}, on the graph?')
-            with vc1:
-                show_Ved_K = st.checkbox(l.Ved_K, value=False,
-                                         help=f'Show K+ electrochemical driving potential, '
-                                              f'{l.Ved_K}, on the graph?')
-
-            with vc2:
-                show_Ved_Cl = st.checkbox(l.Ved_Cl, value=False,
-                                          help=f'Show Cl- electrochemical driving potential, '
-                                               f'{l.Ved_Cl}, on the graph?')
-
-            with vc3:
-                show_Vrev_Na = st.checkbox(l.Vrev_Na, value=False,
-                                           help=f'Show Na+ reversal potential, '
-                                                f'{l.Vrev_Na}, on the graph?')
-            with vc4:
-                show_Vrev_K = st.checkbox(l.Vrev_K, value=False,
-                                          help=f'Show K+ reversal potential, {l.Vrev_K}, on the graph?')
-
-            with vc5:
-                show_Vrev_Cl = st.checkbox(l.Vrev_Cl, value=False,
-                                           help=f'Show Cl- reversal potential, {l.Vrev_Cl}, on the graph?')
-
-            V_series_bools = [show_Vmem, show_Ved_Na, show_Ved_K, show_Ved_Cl, show_Vrev_Na, show_Vrev_K, show_Vrev_Cl]
-
-            for vbool, vname in zip(V_series_bools, all_V_series):
-                if vbool:
-                    shown_V_series.append(vname)
-
-            # st.write(f'l.time: {l.time}')
-            # st.write(f'volt_timedat: {volt_timedat}')
-            st.line_chart(volt_timedat,
-                          x=l.time,
-                          y=shown_V_series,
-                          use_container_width=True)
-
-            st.write('###### Intracellular Ion Concentrations')
-
-            # Columns to arrange concentration series checkboxes horizontally:
-            cc0, cc1, cc2 = st.columns(3)
-
-            with cc0:
-                show_Na_in = st.checkbox(l.Na_in, value=True,
-                                         help=f'Show Na+ concentration in the cytoplasm, {l.Na_in}, on the graph?')
-
-            with cc1:
-                show_K_in = st.checkbox(l.K_in, value=True, help=f'Show K+ concentration in the cytoplasm, '
-                                                                 f'{l.K_in}, on the graph?')
-
-            with cc2:
-                show_Cl_in = st.checkbox(l.Cl_in, value=True, help=f'Show Cl- concentration in the cytoplasm,'
-                                                                   f' {l.Cl_in}, on the graph?')
-
-            chem_series_bools = [show_Na_in, show_K_in, show_Cl_in]
-
-            for cbool, cname in zip(chem_series_bools, all_chem_series):
-                if cbool:
-                    shown_chem_series.append(cname)
-
-            st.line_chart(chem_timedat,
-                          x=l.time,
-                          y=shown_chem_series,
-                          use_container_width=True)
+        # # Iterative solver results:
+        # if itersol_checkbox:
+        #
+        #     time_props, volt_timedat, chem_timedat = calculate_iter_results(p)
+        #
+        #     st.write("#### Iterative Simulation Results")
+        #
+        #     # time = time_props['time_vect']
+        #
+        #     st.write('###### Bioelectrical Potentials')
+        #
+        #     all_V_series = [l.Vmem_o]
+        #     all_chem_series = [l.Na_in_o, l.K_in_o, l.Cl_in_o]
+        #
+        #     shown_V_series = []
+        #     shown_chem_series = []
+        #
+        #     show_Vmem = st.checkbox(l.Vmem, value=True,
+        #                                 help=f'Show membrane potential, {l.Vmem}, on the graph?')
+        #
+        #     # Columns to arrange voltage series checkboxes horizontally:
+        #     vc0, vc1, vc2, vc3, vc4, vc5 = st.columns(6)
+        #
+        #     with vc0:
+        #         show_Ved_Na = st.checkbox(l.Ved_Na,
+        #                                   value=False,
+        #                                   help=f'Show Na+ electrochemical driving potential,'
+        #                                        f' {l.Ved_Na}, on the graph?')
+        #     with vc1:
+        #         show_Ved_K = st.checkbox(l.Ved_K, value=False,
+        #                                  help=f'Show K+ electrochemical driving potential, '
+        #                                       f'{l.Ved_K}, on the graph?')
+        #
+        #     with vc2:
+        #         show_Ved_Cl = st.checkbox(l.Ved_Cl, value=False,
+        #                                   help=f'Show Cl- electrochemical driving potential, '
+        #                                        f'{l.Ved_Cl}, on the graph?')
+        #
+        #     with vc3:
+        #         show_Vrev_Na = st.checkbox(l.Vrev_Na, value=False,
+        #                                    help=f'Show Na+ reversal potential, '
+        #                                         f'{l.Vrev_Na}, on the graph?')
+        #     with vc4:
+        #         show_Vrev_K = st.checkbox(l.Vrev_K, value=False,
+        #                                   help=f'Show K+ reversal potential, {l.Vrev_K}, on the graph?')
+        #
+        #     with vc5:
+        #         show_Vrev_Cl = st.checkbox(l.Vrev_Cl, value=False,
+        #                                    help=f'Show Cl- reversal potential, {l.Vrev_Cl}, on the graph?')
+        #
+        #     V_series_bools = [show_Vmem, show_Ved_Na, show_Ved_K, show_Ved_Cl, show_Vrev_Na, show_Vrev_K, show_Vrev_Cl]
+        #
+        #     for vbool, vname in zip(V_series_bools, all_V_series):
+        #         if vbool:
+        #             shown_V_series.append(vname)
+        #
+        #     # st.write(f'l.time: {l.time}')
+        #     # st.write(f'volt_timedat: {volt_timedat}')
+        #     st.line_chart(volt_timedat,
+        #                   x=l.time,
+        #                   y=shown_V_series,
+        #                   use_container_width=True)
+        #
+        #     st.write('###### Intracellular Ion Concentrations')
+        #
+        #     # Columns to arrange concentration series checkboxes horizontally:
+        #     cc0, cc1, cc2 = st.columns(3)
+        #
+        #     with cc0:
+        #         show_Na_in = st.checkbox(l.Na_in, value=True,
+        #                                  help=f'Show Na+ concentration in the cytoplasm, {l.Na_in}, on the graph?')
+        #
+        #     with cc1:
+        #         show_K_in = st.checkbox(l.K_in, value=True, help=f'Show K+ concentration in the cytoplasm, '
+        #                                                          f'{l.K_in}, on the graph?')
+        #
+        #     with cc2:
+        #         show_Cl_in = st.checkbox(l.Cl_in, value=True, help=f'Show Cl- concentration in the cytoplasm,'
+        #                                                            f' {l.Cl_in}, on the graph?')
+        #
+        #     chem_series_bools = [show_Na_in, show_K_in, show_Cl_in]
+        #
+        #     for cbool, cname in zip(chem_series_bools, all_chem_series):
+        #         if cbool:
+        #             shown_chem_series.append(cname)
+        #
+        #     st.line_chart(chem_timedat,
+        #                   x=l.time,
+        #                   y=shown_chem_series,
+        #                   use_container_width=True)
 
     with tab3:
         col1, col2 = st.columns(2)
@@ -739,7 +772,7 @@ def main() -> None:
 
                 st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
                          f'expression levels. Therefore, increasing membrane {l.Na} and '
-                         f'{l.K} permeability in the sidebar Simulation Variables should show '
+                         f'{l.K} permeability in the sidebar Model Variables should show '
                          f'{l.Vmem} depolarization and hyperpolarization, respectively.')
 
             if NaKCl_on and not KCl_on:
@@ -755,7 +788,7 @@ def main() -> None:
 
                 st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
                          f'expression levels. Therefore, increasing membrane {l.Na} and '
-                         f'{l.K} permeability in the sidebar Simulation Variables should show '
+                         f'{l.K} permeability in the sidebar Model Variables should show '
                          f'{l.Vmem} depolarization and hyperpolarization, respectively. '
                          f'With the {l.NaKCl_cotrans}, increasing {l.Cl} permeability should show'
                          f'{l.Vmem} depolarization.')
@@ -773,7 +806,7 @@ def main() -> None:
 
                 st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
                          f'expression levels. Therefore, increasing membrane {l.Na} and '
-                         f'{l.K} permeability in the sidebar Simulation Variables should show '
+                         f'{l.K} permeability in the sidebar Model Variables should show '
                          f'{l.Vmem} depolarization and hyperpolarization, respectively. '
                          f'With the {l.KCl_symp}, increasing {l.Cl} permeability should show'
                          f'{l.Vmem} hyperpolarization.')
@@ -792,11 +825,10 @@ def main() -> None:
 
                 st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
                          f'expression levels. Therefore, increasing membrane {l.Na} and '
-                         f'{l.K} permeability in the sidebar Simulation Variables should show '
+                         f'{l.K} permeability in the sidebar Model Variables should show '
                          f'{l.Vmem} depolarization and hyperpolarization, respectively. '
                          f'The effect of increasing {l.Cl} permeability will depend on the '
                          f'relative strength of the {l.NaKCl_cotrans} to the {l.KCl_symp}.')
-
 
 
         with col2:

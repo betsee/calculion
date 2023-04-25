@@ -87,7 +87,7 @@ class CoupledReaction(object):
         Must be in the same order as the prod_list Chemicals.
 
     '''
-    @beartype
+    # @beartype
     def __init__(self,
                  react_list: list[Chemical],
                  react_stoic: list[Union[float, int]],
@@ -229,7 +229,7 @@ class ReactionABC(object, metaclass=ABCMeta):
 
     '''
 
-    @beartype
+    # @beartype
     def __init__(self,
                  react_list: list[Chemical],
                  react_stoic: list[Union[float, int]],
@@ -359,7 +359,7 @@ class ReactionABC(object, metaclass=ABCMeta):
         '''
         pass
 
-    @beartype
+    # @beartype
     def get_numerical(self, sympy_express):
         '''
         Convert an analytic sympy expression to a numerical numpy function with variable names list and
@@ -541,7 +541,7 @@ class TransportReaction(ReactionABC):
         Subsitute Vmem = Vi - Vo into all analytic expressions (True) or leave as-is (False)?
 
     '''
-    @beartype
+    # @beartype
     def __init__(self,
                  react_list: list[Chemical],
                  react_stoic: list[Union[float, int]],
@@ -1007,7 +1007,7 @@ class ClassicReaction(ReactionABC):
         or only foward flux (False)?
 
     '''
-    @beartype
+    # @beartype
     def __init__(self,
                  react_list: list[Chemical],
                  react_stoic: list[Union[float, int]],

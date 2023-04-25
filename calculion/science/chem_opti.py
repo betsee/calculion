@@ -18,7 +18,7 @@ from scipy.optimize import minimize, basinhopping
 from calculion.science.channel_base import DynamicChannelABC
 from calculion.science.chem_base import ReactionABC
 from calculion.science.reaction_system import ReactionSystem
-from calculion.science.sim_params import BioeParams
+from calculion.science.model_params import ModelParams
 
 class SteadyStateOpti(object):
     '''
@@ -346,7 +346,7 @@ class IterSim(object):
 
     '''
 
-    @beartype
+    # @beartype
     def __init__(self,
                  bes: ReactionSystem,
                  channels_list: Optional[list[DynamicChannelABC]]=None,
@@ -376,7 +376,7 @@ class IterSim(object):
             self.chem_sim_name.append(chm.name)
 
 
-    @beartype
+    # @beartype
     def run_iter_sim(self,
                      dt: float,
                      N_iter: int,
@@ -663,13 +663,13 @@ class FluxSim(object):
             self.prod_r_indices.append(ipror)
 
     @beartype
-    def generate_params(self, p: BioeParams):
+    def generate_params(self, p: ModelParams):
         '''
         Generate initial numerical values for the simulation params.
 
         Parameters
         -----------
-        p : BioeParams
+        p : ModelParams
             Instance of BioeParams with parameter values to run the simulation.
         '''
 
