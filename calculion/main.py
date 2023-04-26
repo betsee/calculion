@@ -15,9 +15,6 @@ Specifically, this submodule is imported by:
   (e.g., ``python3 -m calculion``).
 * Integration tests programmatically exercising app functionality.
 '''
-import copy
-
-import pandas as pd
 
 
 # ....................{ KLUDGES ~ path                     }....................
@@ -96,6 +93,8 @@ def main() -> None:
     import streamlit as st
     from PIL import Image
     import numpy as np
+    import copy
+    import pandas as pd
     from calculion.science.model_params import ModelParams
     from calculion.science.sim_params import SimParams
     from calculion.science.bioe_system import BioElectricSystem
