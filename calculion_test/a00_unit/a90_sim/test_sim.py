@@ -24,74 +24,84 @@ def test_sim() -> None:
     '''
 
     # Defer test-specific imports.
-    from calculion.scratch_science.optimize import Optimizer
-    from calculion.scratch_science.params import CalculionParams
+    from calculion.science.model_params import ModelParams
+    from calculion.science.sim_params import SimParams
+    from calculion.science.bioe_system import BioElectricSystem
+    from calculion.science.bioe_sim import solve_sys_steady_state
+    from calculion.science.channel_base import PulseFunctionChannel
+    from calculion.science.chem_opti import IterSim
 
-    p = CalculionParams()
-    sim = Optimizer()
+    p = ModelParams()  # Create a default parameters instance for model properties
+    sim_p = SimParams() # Create default params for simulation properties
 
-    # Test the optimizer's ability to find an equilibrium state:
-    V_mem_eq, Na_i_eq, K_i_eq, Cl_i_eq = sim.find_eqm_state(p.P_Na, p.P_K, p.P_Cl,
-                                                            p.Na_i, p.K_i, p.Cl_i,
-                                                            p.Na_o, p.K_o, p.Cl_o,
-                                                            p.ATP, p.ADP, p.P,
-                                                            p.Keqm_NaK, p.omega_NaK,
-                                                            p.alpha)
+    # Turn on all pumps and transporters for maximal test coverage:
+    p.use_NaK_ATPase = True
+    p.use_NaKCl = True
+    p.use_KCl = True
+
+    p.update_parameters() # update all parameters
+
+    sim = BioElectricSystem(p)  # Create the full bioelectrical study object
+    besi = sim.bes  # alias to the ReactionSystem object
+
+    # First calculate the steady-state of the system:
+    besi.V_mem = 0.0
+
+    # steady-state solver, solution, param err, total sum squares error:
+    ss0, results_vect, x_err0, err0 = solve_sys_steady_state(besi,
+                                                             method='trust-constr',
+                                                             set_results=True)
+
+    # Test the iterative solver:
+
+    stepchan_Na = PulseFunctionChannel(['P_Na'],
+                                       sim_p.perturb_PNa_multi * p.base_pmem,
+                                       sim_p.perturb_PNa_start,
+                                       sim_p.perturb_PNa_end)
+
+    stepchan_K = PulseFunctionChannel(['P_K'],
+                                       sim_p.perturb_PK_multi * p.base_pmem,
+                                       sim_p.perturb_PK_start,
+                                       sim_p.perturb_PK_end)
+
+    stepchan_Cl = PulseFunctionChannel(['P_Cl'],
+                                       sim_p.perturb_PCl_multi * p.base_pmem,
+                                       sim_p.perturb_PCl_start,
+                                       sim_p.perturb_PCl_end)
+
+    chanlist = [stepchan_Na, stepchan_K, stepchan_Cl]
+
+    isim = IterSim(besi, channels_list=chanlist)
+
+    time, vm_time, chem_time = isim.run_iter_sim(sim_p.delta_t,
+                                                 sim_p.N_iter,
+                                                 use_quasi_static_approx=False,
+                                                 use_hodgkin_huxley=False,
+                                                 clamp_vmem_at=None,
+                                                 sweep_vmem_vals=None)
+
+    time, vm_time, chem_time = isim.run_iter_sim(sim_p.delta_t,
+                                                 sim_p.N_iter,
+                                                 use_quasi_static_approx=False,
+                                                 use_hodgkin_huxley=True,
+                                                 clamp_vmem_at=None,
+                                                 sweep_vmem_vals=None)
+
+    time, vm_time, chem_time = isim.run_iter_sim(sim_p.delta_t,
+                                                 sim_p.N_iter,
+                                                 use_quasi_static_approx=False,
+                                                 use_hodgkin_huxley=False,
+                                                 clamp_vmem_at=-0.05,
+                                                 sweep_vmem_vals=None)
+
+    time, vm_time, chem_time = isim.run_iter_sim(sim_p.delta_t,
+                                                 sim_p.N_iter,
+                                                 use_quasi_static_approx=False,
+                                                 use_hodgkin_huxley=False,
+                                                 clamp_vmem_at=None,
+                                                 sweep_vmem_vals=(-0.08, 0.020))
 
 
-    # Test functionality that finds values of membrane permeability and pump rate that best match target vals:
-    Vm_target = -10e-3
-    P_Nat, P_Kt, P_Clt, omega_t = sim.find_target_values(Vm_target, p.P_Na, p.P_K, p.P_Cl, p.Na_i, p.K_i,
-                                                         p.Cl_i, p.Na_o, p.K_o, p.Cl_o, p.ATP, p.ADP, p.P,
-                                                         p.Keqm_NaK, p.omega_NaK,
-                                                         p.alpha)
 
-def test_tsim()->None:
-    '''
-    Test functionality associated with iterative simulations in time.
-    '''
 
-    from calculion.scratch_science.params import CalculionParams
-    from calculion.scratch_science.time_solver import TimeSolver
 
-    p = CalculionParams()
-    p.delta_t = 1.0 # Adjust timestep and iterations to ensure that things run
-    p.N_iter = 10
-
-    sim_time = TimeSolver(quasi_static_vmem=True, update_env=False, verbose=True)
-
-    sim_time.time_loop(p)
-    sim_time.time_loop1(p)
-    sim_time.time_loop2(p)
-
-    sim_time = TimeSolver(quasi_static_vmem=False, update_env=False, verbose=True)
-    sim_time.time_loop(p)
-    sim_time.time_loop1(p)
-    sim_time.time_loop2(p)
-
-    sim_time = TimeSolver(quasi_static_vmem=True, update_env=True, verbose=True)
-    sim_time.time_loop(p)
-    sim_time.time_loop1(p)
-    sim_time.time_loop2(p)
-
-    sim_time = TimeSolver(quasi_static_vmem=False, update_env=True, verbose=True)
-    sim_time.time_loop(p)
-    sim_time.time_loop1(p)
-    sim_time.time_loop2(p)
-
-def test_calc() -> None:
-    '''
-    Test the top-level function that calculates bioelectrical steady-state parameters.
-
-    '''
-    from calculion.scratch_science.params import CalculionParams
-    from calculion.scratch_science.compute import get_steady_state
-
-    p = CalculionParams()  # Create a set of default parameters
-
-    # Run through all the different ways to calculate the steady-state parameters:
-    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=False, update_env=False, quasi_static_vmem=True)
-    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=True, update_env=False, quasi_static_vmem=True)
-    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=True, update_env=True, quasi_static_vmem=True)
-    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=True, update_env=False, quasi_static_vmem=False)
-    ionparam, voltparam, _ = get_steady_state(p, iterative_sol=True, update_env=True, quasi_static_vmem=False)

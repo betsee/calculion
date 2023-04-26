@@ -139,7 +139,6 @@ def main() -> None:
     p = ModelParams()  # Create a default parameters instance for model properties
     sim_p = SimParams() # Create default params for simulation properties
     l = StringNames() # string labels
-    savedir = str(get_data_svg_dir()) # pathname for save directory
 
     # ..................{ SIDEBAR                            }..................
     # The sidebar will contain all widgets to collect user-data for the
