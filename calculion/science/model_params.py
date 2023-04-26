@@ -70,8 +70,6 @@ class ModelParams(object):
         # Membrane permittivities and reaction rate constants:
         self.base_pmem: float = 1.0e-9
 
-        self.pump_unit_modifier = 1.0 # 5.0e-6
-
         self.base_PNa: float = 1.0
         self.base_PK: float = 5.0
         self.base_PCl: float = 1.0
@@ -130,9 +128,9 @@ class ModelParams(object):
         self.PCl = self.base_pmem * self.base_PCl
 
         # Ion pump rate constants:
-        self.PNaK_ATPase = self.base_pmem * self.base_NaKpump * self.pump_unit_modifier
+        self.PNaK_ATPase = self.base_pmem * self.base_NaKpump
 
         # Transporter rate constants:
-        self.PNaKCl = self.base_pmem * self.base_NaKCl * self.pump_unit_modifier
-        self.PKCl = self.base_pmem * self.base_KCl * self.pump_unit_modifier
+        self.PNaKCl = self.base_pmem * self.base_NaKCl
+        self.PKCl = self.base_pmem * self.base_KCl
 

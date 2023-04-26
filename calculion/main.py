@@ -296,12 +296,12 @@ def main() -> None:
 
                 p.use_NaK_ATPase = True
 
-                p.base_NaKpump = param_widget('Na-K-ATPase Pump Rate [units]',
+                p.base_NaKpump = param_widget('Na-K-ATPase Pump Rate [nm/s]',
                                  min_value=0.0,
                                  max_value=1.0e6,
                                  value=p.base_NaKpump,
-                                 step=0.01,
-                                 format='%f',
+                                 step=1.0e3,
+                                 format='%e',
                                  key='slider_omega_NaK',
                                  label_visibility='visible',
                                  help='Set the maximum rate of the Na-K-ATPase ion pump.')
@@ -321,12 +321,12 @@ def main() -> None:
                 # Na-K-2Cl cotransporter properties:
                 p.use_NaKCl = True
 
-                p.base_NaKCl = param_widget('Na-K-2Cl Cotransporter Rate [units]',
+                p.base_NaKCl = param_widget('Na-K-2Cl Cotransporter Rate [nm/s]',
                                  min_value=0.0,
                                  max_value=1.0e6,
                                  value=p.base_NaKCl,
-                                 step=0.01,
-                                 format='%f',
+                                 step=1.0e2,
+                                 format='%e',
                                  key='slider_omega_NaKCl',
                                  label_visibility='visible',
                                  help='Set the maximum rate of the Na-K-2Cl cotransporter.')
@@ -347,12 +347,12 @@ def main() -> None:
                 p.use_KCl = True
                 # p.base_KCl = 0.0 # otherwise set the rate to zero
                 # K-Cl symporter properties:
-                p.base_KCl = param_widget('K-Cl Symporter Rate [units]',
+                p.base_KCl = param_widget('K-Cl Symporter Rate [nm/s]',
                                  min_value=0.0,
-                                 max_value=1.0e8,
+                                 max_value=1.0e6,
                                  value=p.base_KCl,
-                                 step=0.1,
-                                 format='%f',
+                                 step=1.0e2,
+                                 format='%e',
                                  key='slider_omega_KCl',
                                  label_visibility='visible',
                                  help='Set the maximum rate of the K-Cl symporter.'
@@ -575,7 +575,7 @@ def main() -> None:
 
         st.write(" ") # add a space
 
-        st.write("Alter Model Variables in the **Sidebar** to change simulated model "
+        st.write("Alter **Model Variables** in the **Sidebar** to change simulated model "
                  "parameters.")
 
         st.write(" ") # add a space
@@ -849,6 +849,10 @@ def main() -> None:
         # Generate the bioelectrical system model object:
         bes = make_bioe_system(p)
         beso = copy.deepcopy(bes)  # Make a copy to allow display and restoration of initial state
+
+        # Calculate the quasi-steady state Vmem for the initial conditions:
+        vmo = beso.solve_ss_vmem(method='TNC', force_opti=True)
+        beso.V_mem = vmo # Set the initial Vmem
 
         # Calculate the initial conditions of the system:
         # Get the concentration ss dataframe:
