@@ -572,13 +572,13 @@ def main() -> None:
                  f"to bioelectricity can be downloaded *here*.")
 
     with tab2:
-        st.write("### Simulation")
+        st.write("## Simulation")
 
         st.write("*Alter Model Variables in sidebar to explore outcomes...*")
 
         # Define a final expander block for simulator settings:
         sim_settings_block = st.expander("Simulation Settings",
-                                         expanded=default_expanded_state)
+                                         expanded=True)
 
         with sim_settings_block:
 
@@ -792,23 +792,16 @@ def main() -> None:
                 else:
                     sim_p.perturb_PCl = False
 
+        # SECTION TO DISPLAY RESULTS----------------------------------------------------------
 
-                # Update all the calculated parameters with the new settings:
-                # p.update_parameters()
+        st.write("## Results")
 
-                # isim = IterSim(bes, channels_list=[stepchan_Na, stepchan_K, stepchan_Cl])
-                # isim2 = IterSim(bes, channels_list=[stepchan_Na, stepchan_K, stepchan_Cl])
-
-        st.write("### Results")
-
-        p.update_parameters() # Update parameters in case calculation forgotten
-        sim_p.update_parameters() # Update parameters in case calculation forgotten
+        p.update_parameters() # Update parameters
+        sim_p.update_parameters() # Update sim parameters
 
         # Generate the bioelectrical system model object:
-        # sim = BioElectricSystem(p)  # Create the full bioelectrical study object
         bes = make_bioe_system(p)
-        # bes = sim.bes  # alias to the ReactionSystem object
-        beso = copy.deepcopy(bes)  # Make a copy to save initial state
+        beso = copy.deepcopy(bes)  # Make a copy to allow display and restoration of initial state
 
         # Calculate the initial conditions of the system:
         # Get the concentration ss dataframe:
@@ -820,21 +813,41 @@ def main() -> None:
         # Calculate the steady-state results of the system:
         ion_vals_ss, elec_vals_ss = calculate_ss_results(bes)
 
+        # Merge the initial and steady-state dataframes into one:
+        # First rename the columns and merge voltages:
+        elec_vals_init = elec_vals_init.rename(columns={"Voltage [mV]": "Initial V [mV]"})
+        elec_vals_ss = elec_vals_ss.rename(columns={"Voltage [mV]": "Steady State V [mV]"})
+
+        elec_vals_combo  = pd.concat([elec_vals_init , elec_vals_ss], axis=1, join="inner")
+
+        # Next rename the columns and merge concentration dataframes:
+        ion_vals_init = ion_vals_init.rename(columns={"Concentration [mM]": "Initial C [mM]"})
+        ion_vals_ss = ion_vals_ss.rename(columns={"Concentration [mM]": "Steady State C [mM]"})
+
+        ion_vals_combo  = pd.concat([ion_vals_init , ion_vals_ss], axis=1, join="inner")
+
+        st.write('#### Steady-State Properties')
+        st.write(" ") # Add a space
+
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write('###### Initial Bioelectrical Potentials')
-            st.dataframe(elec_vals_init.style.format("{:.1f}"))
+            st.write('##### Bioelectric Potentials')
+            st.dataframe(elec_vals_combo.style.format("{:.1f}"))
+            st.caption(f"Initial and steady-state bioelectric potentials, "
+                       f"showing transmembrane potential ({l.Vmem}), "
+                       f"ion reversal potentials ({l.Vrev_Na}, {l.Vrev_K}, and {l.Vrev_Cl}) and "
+                       f"ion electrochemical driving potentials ({l.Ved_Na}, {l.Ved_K}, and {l.Ved_Cl}).")
 
-            st.write('###### Steady-State Bioelectrical Potentials')
-            st.dataframe(elec_vals_ss.style.format("{:.1f}"))
 
         with col2:
-            st.write('###### Initial Ion Concentrations')
-            st.dataframe(ion_vals_init.style.format("{:.1f}"))
+            st.write('##### Ion Concentrations')
+            st.dataframe(ion_vals_combo.style.format("{:.1f}"))
+            st.caption("Initial and steady-state ion concentrations inside and out of the cell.")
 
-            st.write('###### Steady-State Ion Concentrations')
-            st.dataframe(ion_vals_ss.style.format("{:.1f}"))
+        st.write(" ") # Put a space in
+        st.write(" ") # Put a space in
+
 
         if itersol_checkbox:
 
@@ -844,15 +857,21 @@ def main() -> None:
 
             pmem_dataframe = pd.DataFrame(np.column_stack((time[sim_p.starttime_plot_ind:],
                                                            (1/p.base_pmem)*isim.pmem_time[sim_p.starttime_plot_ind:])),
-                                          columns=['Time', 'P_Na', 'P_K', 'P_Cl'])
+                                          columns=['Time (s)', 'P_Na', 'P_K', 'P_Cl'])
 
-            st.line_chart(pmem_dataframe, x='Time', y=['P_Na', 'P_K', 'P_Cl'])
+            st.write('#### Dynamic System Characteristics')
+            st.write('')
+            st.write('##### Changes to Ion Membrane Permeabilities with Time')
+            st.line_chart(pmem_dataframe, x='Time (s)', y=['P_Na', 'P_K', 'P_Cl'])
 
             vmem_dataframe = pd.DataFrame(np.column_stack((time[sim_p.starttime_plot_ind:],
                                                            1e3*vm_time[sim_p.starttime_plot_ind:])),
-                                          columns=['Time', l.Vmem_o])
+                                          columns=['Time (s)', l.Vmem])
 
-            st.line_chart(vmem_dataframe, x='Time', y=l.Vmem_o)
+            st.write('')
+            st.write('##### Changes to Vm with Time')
+
+            st.line_chart(vmem_dataframe, x='Time (s)', y=l.Vmem)
             # st.dataframe(vmem_dataframe.style.format("{:.1f}"))
 
         # # Iterative solver results:
@@ -1006,10 +1025,10 @@ def main() -> None:
 
                 st.write(f'The electrochemical gradient '
                          f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
-                         f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
+                         f'to neutralize the transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
                          f'Therefore, {l.K} has a moderately '
                          f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
-                         f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
+                         f'When {l.K} exits cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
                          f'due to the exit of positive charge.')
 
                 st.write(f'When {l.Cl} is not subject to active transport, then when in steady-state, the '
@@ -1036,10 +1055,10 @@ def main() -> None:
 
                 st.write(f'The electrochemical gradient '
                          f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
-                         f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
+                         f'to neutralize the transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
                          f'Therefore, {l.K} has a moderately '
                          f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
-                         f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
+                         f'When {l.K} exits cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
                          f'due to the exit of positive charge.')
 
                 st.write(f'The {l.NaKCl_cotrans} uses the impetus for {l.Na} to enter the cell to bring '
@@ -1072,10 +1091,10 @@ def main() -> None:
 
                 st.write(f'The electrochemical gradient '
                          f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
-                         f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
+                         f'to neutralize the transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
                          f'Therefore, {l.K} has a moderately '
                          f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
-                         f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
+                         f'When {l.K} exits cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
                          f'due to the exit of positive charge.')
 
                 st.write(f'The {l.KCl_symp} uses the impetus for {l.K} to exit the cell to bring '
@@ -1108,10 +1127,10 @@ def main() -> None:
 
                 st.write(f'The electrochemical gradient '
                          f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
-                         f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
+                         f'to neutralize the transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
                          f'Therefore, {l.K} has a moderately '
                          f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
-                         f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
+                         f'When {l.K} exits cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
                          f'due to the exit of positive charge.')
 
                 st.write(f'The {l.NaKCl_cotrans} uses the impetus for {l.Na} to enter the cell to bring '
