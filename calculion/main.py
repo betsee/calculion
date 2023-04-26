@@ -597,7 +597,7 @@ def main() -> None:
                 sim_p.use_iterative_solver = True # Set the iterative solver parameter to True
 
                 # Iterative solver time step:
-                sim_p.delta_t = param_widget('Simulation time-step [s]',
+                sim_p.delta_t = param_widget('Iterative simulation time-step [s]',
                                           min_value=1.0e-4,
                                           max_value=1.0,
                                           value=sim_p.delta_t,
@@ -608,7 +608,7 @@ def main() -> None:
                                           help='Set the time step for the iterative solver.')
 
                 # Iterative solver max iterations:
-                sim_p.start_time = param_widget('Start time for the iterative simulation.',
+                sim_p.start_time = param_widget('Start time for the iterative simulation [s].',
                                           min_value=0.0,
                                           max_value=1.0e5*sim_p.delta_t,
                                           value=sim_p.start_time,
@@ -619,7 +619,7 @@ def main() -> None:
                                           help='Set the maximum number of timesteps that can be run.')
 
                 # Iterative solver end time:
-                sim_p.end_time = param_widget('End time',
+                sim_p.end_time = param_widget('End time for the iterative simulation [s]',
                                           min_value=sim_p.start_time + sim_p.delta_t,
                                           max_value=sim_p.start_time + 1e6*sim_p.delta_t,
                                           value=sim_p.end_time,
@@ -635,7 +635,7 @@ def main() -> None:
                 with ch_col1:
 
                     # Checkboxes allowing user to include desired channels in iterative sim:
-                    chan_na_on = st.checkbox(l.PNa,
+                    chan_na_on = st.checkbox(f'Dynamically change {l.PNa}',
                                            value=True,
                                            help=f'Include change to membrane {l.Na} '
                                                 f'permeability in iterative simulation?')
@@ -676,7 +676,7 @@ def main() -> None:
 
                 with ch_col2:
 
-                    chan_k_on = st.checkbox(l.PK,
+                    chan_k_on = st.checkbox(f'Dynamically change {l.PK}',
                                            value=True,
                                            help=f'Include change to membrane {l.K} '
                                                 f'permeability in iterative simulation?')
@@ -718,7 +718,7 @@ def main() -> None:
 
                 with ch_col3:
 
-                    chan_cl_on = st.checkbox(l.PCl,
+                    chan_cl_on = st.checkbox(f'Dynamically change {l.PCl}',
                                            value=True,
                                            help=f'Include change to membrane {l.Cl} '
                                                 f'permeability in iterative simulation?')
