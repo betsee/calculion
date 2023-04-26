@@ -181,6 +181,30 @@ def get_data_png_cell_network_schematic_3_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_3.png')
 
+@callable_cached
+@beartype
+def get_data_png_cell_network_schematic_4_file() -> Path:
+
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_BaseLayer.png')
+
+@callable_cached
+@beartype
+def get_data_png_cell_network_schematic_5_file() -> Path:
+
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_1.png')
+
+@callable_cached
+@beartype
+def get_data_png_cell_network_schematic_6_file() -> Path:
+
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_2.png')
+
+@callable_cached
+@beartype
+def get_data_png_cell_network_schematic_7_file() -> Path:
+
+    return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_3.png')
+
 
 #FIXME: Docstring us up, please.
 @callable_cached

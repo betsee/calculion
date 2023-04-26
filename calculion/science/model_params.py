@@ -73,8 +73,8 @@ class ModelParams(object):
         self.pump_unit_modifier = 1.0 # 5.0e-6
 
         self.base_PNa: float = 1.0
-        self.base_PK: float = 25.0
-        self.base_PCl: float = 5.0
+        self.base_PK: float = 5.0
+        self.base_PCl: float = 1.0
 
         self.base_NaKpump: float = 4.0e5
         self.base_NaKCl: float = 2.0e4

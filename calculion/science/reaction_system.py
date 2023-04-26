@@ -22,6 +22,7 @@ from calculion.science.string_names import StringNames
 import pydot
 from pydot import Dot
 
+@beartype
 class ReactionSystem(object):
     '''
     Create a bioelectric system characterized by a system of reactions and ions
@@ -177,7 +178,6 @@ class ReactionSystem(object):
 
     '''
 
-    # @beartype
     def __init__(self,
                  p: ModelParams,
                  chem_vect: list[Chemical],
@@ -472,7 +472,6 @@ class ReactionSystem(object):
 
         print("Completed initialization of bioelectrical system.")
 
-    # @beartype
     def _get_param_vals(self, param_names_list: Union[list, ndarray]):
         '''
         Given a list of param names, this method harvests the parameter
@@ -490,7 +489,6 @@ class ReactionSystem(object):
 
         return param_vals_list
 
-    # @beartype
     def _set_param_vals(self,
                         param_names_list,
                         param_names_vals,
@@ -515,7 +513,6 @@ class ReactionSystem(object):
             for pi, vi in zip(param_names_list, param_names_vals):
                 setattr(self, pi.name, vi)
 
-    # @beartype
     def _get_chem_vals(self, param_chem_list: Union[list, ndarray]):
         '''
         Given a list of param names, this method harvests the parameter
@@ -548,7 +545,6 @@ class ReactionSystem(object):
     def opti_jc(self, vm, argv):
         return np.sqrt(self.jc_f(vm, argv) ** 2)
 
-    # @beartype
     def solve_ss_vmem(self, method: str='TNC', force_opti: bool=False):
         '''
         Estimate the steady-state voltage by finding the zero of the current equation.
@@ -618,7 +614,6 @@ class ReactionSystem(object):
             print(chm.name, pval)
         print(self.V_mem_s.name, self.V_mem*1e3)
 
-    # @beartype
     def get_pmem_vals(self, ion_perm_list: list[str], resting_pmem_dict: dict) -> dict:
         '''
         Create a dictionary with restime membrane permeability values for the system.
@@ -636,7 +631,6 @@ class ReactionSystem(object):
 
         return resting_pmem_dict
 
-    # @beartype
     def set_pmem_vals(self,
                       ion_perm_list: list[str],
                       perm_vals: Union[list, ndarray]):

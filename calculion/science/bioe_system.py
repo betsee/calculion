@@ -16,6 +16,7 @@ from calculion.science.chem_base import (Chemical,
                                             CoupledReaction)
 from calculion.science.reaction_system import ReactionSystem
 
+@beartype
 class BioElectricSystem(object):
     '''
     Create a bioelectric system for modeling a single cell.
@@ -92,7 +93,6 @@ class BioElectricSystem(object):
 
     '''
 
-    # @beartype
     def __init__(self,
                  p: ModelParams,
                  irrev_fwd_only: bool = True):

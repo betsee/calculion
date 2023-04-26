@@ -23,6 +23,12 @@ thus expected by external automation.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ IMPORTS                            }....................
+import beartype
+def identity_decorator(func_or_cls, *args, **kwargs):
+    return func_or_cls
+
+beartype.beartype = identity_decorator
+
 from calculion.meta import VERSION, VERSION_PARTS
 
 # ....................{ GLOBALS                            }....................

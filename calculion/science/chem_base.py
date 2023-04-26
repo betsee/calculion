@@ -17,6 +17,8 @@ import numpy as np
 from numpy import ndarray
 from calculion.science.chem_enum import ReactionClass, SystemDimension
 
+
+@beartype
 class Chemical(object):
     '''
     An object to store all the data associated with a typical ionic substance.
@@ -34,7 +36,7 @@ class Chemical(object):
         Sympy symbol object representing the chemical in analytic expressions.
 
     '''
-    @beartype
+
     def __init__(self, name: str, z: int, c: Union[float, ndarray]):
         '''
         Initialize the ion object.
@@ -54,7 +56,7 @@ class Chemical(object):
         self.symbol = sp.symbols(name, real=True, positive=True) # create a Sympy symbol for the name
         self.z = z # Charge of the ion
         self.c = c # Initial concentration of the ion
-
+@beartype
 class CoupledReaction(object):
     '''
     Class to define a reaction that will be coupled to another reaction, for example, this
@@ -87,7 +89,7 @@ class CoupledReaction(object):
         Must be in the same order as the prod_list Chemicals.
 
     '''
-    # @beartype
+
     def __init__(self,
                  react_list: list[Chemical],
                  react_stoic: list[Union[float, int]],
@@ -135,6 +137,7 @@ class CoupledReaction(object):
         else:
             self.deltaGo_s = sp.symbols(deltaGo_base_name, real=True)
 
+@beartype
 class ReactionABC(object, metaclass=ABCMeta):
     '''
     Base class for Reactions.
@@ -229,7 +232,6 @@ class ReactionABC(object, metaclass=ABCMeta):
 
     '''
 
-    # @beartype
     def __init__(self,
                  react_list: list[Chemical],
                  react_stoic: list[Union[float, int]],
@@ -371,6 +373,7 @@ class ReactionABC(object, metaclass=ABCMeta):
 
         return numpy_express, express_params_list
 
+@beartype
 class TransportReaction(ReactionABC):
     '''
     Define a chemical reaction characterized by movement of ions across a membrane
@@ -541,7 +544,6 @@ class TransportReaction(ReactionABC):
         Subsitute Vmem = Vi - Vo into all analytic expressions (True) or leave as-is (False)?
 
     '''
-    # @beartype
     def __init__(self,
                  react_list: list[Chemical],
                  react_stoic: list[Union[float, int]],
@@ -904,6 +906,7 @@ class TransportReaction(ReactionABC):
             # Symmetric currents wrt the ion base name:
             self.jc_dict[bn] = jc
 
+@beartype
 class ClassicReaction(ReactionABC):
     '''
     Define a chemical reaction characterized by consumption and production of
@@ -1007,7 +1010,7 @@ class ClassicReaction(ReactionABC):
         or only foward flux (False)?
 
     '''
-    # @beartype
+
     def __init__(self,
                  react_list: list[Chemical],
                  react_stoic: list[Union[float, int]],

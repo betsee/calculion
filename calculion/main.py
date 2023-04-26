@@ -108,6 +108,10 @@ def main() -> None:
         get_data_png_cell_network_schematic_1_file,
         get_data_png_cell_network_schematic_2_file,
         get_data_png_cell_network_schematic_3_file,
+        get_data_png_cell_network_schematic_4_file,
+        get_data_png_cell_network_schematic_5_file,
+        get_data_png_cell_network_schematic_6_file,
+        get_data_png_cell_network_schematic_7_file,
         get_data_png_membrane_schematic_file,
         get_data_png_banner_file
     )
@@ -284,21 +288,34 @@ def main() -> None:
         pumps_block = st.expander("Ion Pump and Transporters", expanded=default_expanded_state)
 
         with pumps_block:
-            p.base_NaKpump = param_widget('Na-K-ATPase Pump Rate [units]',
-                             min_value=0.0,
-                             max_value=1.0e6,
-                             value=p.base_NaKpump,
-                             step=0.01,
-                             format='%f',
-                             key='slider_omega_NaK',
-                             label_visibility='visible',
-                             help='Set the maximum rate of the Na-K-ATPase ion pump.')
-
-            # update the na-k-atpase pump rate in units used in the simulation:
-            p.PNaK_ATPase = p.base_pmem*p.base_NaKpump*p.pump_unit_modifier
 
             # # Let the user specify whether they want the additional NaKCl cotransporter for secondary transport:
-            NaKCl_on = st.checkbox(l.NaKCl_cotrans_o, value=False, help=f'Cell expresses {l.NaKCl_cotrans} ?')
+            NaKATP_on = st.checkbox(l.NaK_pump, value=True, help=f'Cell expresses {l.NaK_pump} ?')
+
+            if NaKATP_on:
+
+                p.use_NaK_ATPase = True
+
+                p.base_NaKpump = param_widget('Na-K-ATPase Pump Rate [units]',
+                                 min_value=0.0,
+                                 max_value=1.0e6,
+                                 value=p.base_NaKpump,
+                                 step=0.01,
+                                 format='%f',
+                                 key='slider_omega_NaK',
+                                 label_visibility='visible',
+                                 help='Set the maximum rate of the Na-K-ATPase ion pump.')
+
+                # update the na-k-atpase pump rate in units used in the simulation:
+                # p.PNaK_ATPase = p.base_pmem*p.base_NaKpump*p.pump_unit_modifier
+            else:
+                p.use_NaK_ATPase = False
+                p.base_NaKpump = 0.0 # otherwise set the rate to zero
+
+            # # Let the user specify whether they want the additional NaKCl cotransporter for secondary transport:
+            NaKCl_on = st.checkbox(l.NaKCl_cotrans_o,
+                                   value=False,
+                                   help=f'Cell expresses {l.NaKCl_cotrans} ?')
 
             if NaKCl_on:
                 # Na-K-2Cl cotransporter properties:
@@ -315,7 +332,7 @@ def main() -> None:
                                  help='Set the maximum rate of the Na-K-2Cl cotransporter.')
 
                 # update the na-k-2Cl cotransporter rate in units used in the simulation:
-                p.PNaKCl = p.base_pmem*p.base_NaKCl*p.pump_unit_modifier
+                # p.PNaKCl = p.base_pmem*p.base_NaKCl*p.pump_unit_modifier
 
             else:
                 p.use_NaKCl = False
@@ -327,10 +344,12 @@ def main() -> None:
                                  help=f'Cell expresses {l.KCl_symp} ?')
 
             if KCl_on:
+                p.use_KCl = True
+                # p.base_KCl = 0.0 # otherwise set the rate to zero
                 # K-Cl symporter properties:
                 p.base_KCl = param_widget('K-Cl Symporter Rate [units]',
                                  min_value=0.0,
-                                 max_value=1.0e6,
+                                 max_value=1.0e8,
                                  value=p.base_KCl,
                                  step=0.1,
                                  format='%f',
@@ -340,11 +359,11 @@ def main() -> None:
                                            )
 
                 # update the K-Cl symporter rate in units used in the simulation:
-                p.PKCl = p.base_pmem*p.base_KCl*p.pump_unit_modifier
+                # p.PKCl = p.base_pmem*p.base_KCl*p.pump_unit_modifier
 
             else:
-                p.base_KCl = 0.0 # otherwise set the rate to zero
                 p.use_KCl = False
+                p.base_KCl = 0.0 # otherwise set the rate to zero
 
         # Define another expander block for pump and transporter settings:
         metabolic_block = st.expander("Metabolic Settings", expanded=default_expanded_state)
@@ -510,7 +529,7 @@ def main() -> None:
     with tab2:
         st.write("### Simulation")
 
-        st.write("*Alter sidebar Model Variables to explore the possibilities...*")
+        st.write("*Alter Model Variables in sidebar to explore outcomes...*")
 
         # Define a final expander block for simulator settings:
         sim_settings_block = st.expander("Simulation Settings",
@@ -745,25 +764,68 @@ def main() -> None:
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write(f'The ubiquitous {l.NaK_pump} generates {l.Vmem} '
-                     f'hyperpolarization by moving 3 {l.Na} out of the cell '
-                     f'while bringing only 2 {l.K} in. The resulting electrochemical gradient '
-                     f'for {l.Na} strongly favours movement of {l.Na} into the cell to neutralize both '
-                     f'a transmembrane concentration and charge gradient. Therefore, {l.Na} has a '
-                     f'strongly negative electrochemical driving force ({l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV). '
-                     f'When {l.Na} enters cells through open {l.Na} channels, {l.Vmem} depolarizes due '
-                     f'to the entry of positive charge to the cell.'
-                     )
 
-            st.write(f'The electrochemical gradient '
-                     f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
-                     f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
-                     f'Therefore, {l.K} has a moderately '
-                     f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
-                     f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
-                     f'due to the exit of positive charge.')
+            if not NaKATP_on and not NaKCl_on and not KCl_on:
+                st.write(f'Without active transport, all ions move by electrodiffusion '
+                         f'to neutralize electrochemical gradients. Therefore, at steady state all '
+                         f'electrochemical driving potentials are zero for all ions and {l.Vmem} '
+                         f'depolarizes to near zero. '
+                         f'At steady-state, changing membrane permeability to ions has no effect on {l.Vmem}.'
+                         )
 
-            if not NaKCl_on and not KCl_on:
+            elif not NaKATP_on and NaKCl_on and not KCl_on:
+                st.write(f'Without primary active transport by the {l.NaK_pump}, '
+                         f'there is no electrochemical driving potential on '
+                         f'{l.Na}, meaning no energy to operate the {l.NaKCl_cotrans}. '
+                         f'Therefore, at steady state, the '
+                         f'electrochemical driving potentials for all ions remains zero, '
+                         f'and {l.Vmem} remains depolarized near zero. '
+                         f'At steady-state, changing membrane permeability to '
+                         f'ions has no effect on {l.Vmem}.'
+                         )
+
+            elif not NaKATP_on and not NaKCl_on and KCl_on:
+                st.write(f'Without primary active transport by the {l.NaK_pump}, '
+                         f'there is no electrochemical driving potential on '
+                         f'{l.K}, meaning no energy to operate the {l.KCl_symp}. '
+                         f'Therefore at steady state, the '
+                         f'electrochemical driving potentials for all ions remains zero, '
+                         f'and {l.Vmem} remains depolarized near zero. '
+                         f'At steady-state, changing membrane permeability to '
+                         f'ions has no effect on {l.Vmem}.'
+                         )
+
+            elif not NaKATP_on and NaKCl_on and KCl_on:
+                st.write(f'Without primary active transport by the {l.NaK_pump}, '
+                         f'there is no electrochemical driving potential on '
+                         f'{l.Na} or {l.K}, meaning no energy to operate '
+                         f'the {l.NaKCl_cotrans} or the {l.KCl_symp}. '
+                         f'Therefore at steady state, the '
+                         f'electrochemical driving potentials for all ions remains zero, '
+                         f'and {l.Vmem} remains depolarized near zero. '
+                         f'At steady-state, changing membrane permeability to '
+                         f'ions has no effect on {l.Vmem}.'
+                         )
+
+            elif NaKATP_on and not NaKCl_on and not KCl_on:
+                st.write(f'The ubiquitous {l.NaK_pump} generates {l.Vmem} '
+                         f'hyperpolarization by moving 3 {l.Na} out of the cell '
+                         f'while bringing only 2 {l.K} in. The resulting electrochemical gradient '
+                         f'for {l.Na} strongly favours movement of {l.Na} into the cell to neutralize both '
+                         f'a transmembrane concentration and charge gradient. Therefore, {l.Na} has a '
+                         f'strongly negative electrochemical driving force ({l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV). '
+                         f'When {l.Na} enters cells through open {l.Na} channels, {l.Vmem} depolarizes due '
+                         f'to the entry of positive charge to the cell.'
+                         )
+
+                st.write(f'The electrochemical gradient '
+                         f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
+                         f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
+                         f'Therefore, {l.K} has a moderately '
+                         f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
+                         f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
+                         f'due to the exit of positive charge.')
+
                 st.write(f'When {l.Cl} is not subject to active transport, then when in steady-state, the '
                          f'electrochemical driving force on {l.Cl} will be zero '
                          f'({l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV) with {l.Cl} being in equilibrium with '
@@ -775,7 +837,25 @@ def main() -> None:
                          f'{l.K} permeability in the sidebar Model Variables should show '
                          f'{l.Vmem} depolarization and hyperpolarization, respectively.')
 
-            if NaKCl_on and not KCl_on:
+            elif NaKATP_on and NaKCl_on and not KCl_on:
+                st.write(f'The ubiquitous {l.NaK_pump} generates {l.Vmem} '
+                         f'hyperpolarization by moving 3 {l.Na} out of the cell '
+                         f'while bringing only 2 {l.K} in. The resulting electrochemical gradient '
+                         f'for {l.Na} strongly favours movement of {l.Na} into the cell to neutralize both '
+                         f'a transmembrane concentration and charge gradient. Therefore, {l.Na} has a '
+                         f'strongly negative electrochemical driving force ({l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV). '
+                         f'When {l.Na} enters cells through open {l.Na} channels, {l.Vmem} depolarizes due '
+                         f'to the entry of positive charge to the cell.'
+                         )
+
+                st.write(f'The electrochemical gradient '
+                         f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
+                         f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
+                         f'Therefore, {l.K} has a moderately '
+                         f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
+                         f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
+                         f'due to the exit of positive charge.')
+
                 st.write(f'The {l.NaKCl_cotrans} uses the impetus for {l.Na} to enter the cell to bring '
                          f'{l.K} and {l.Cl} with it in secondary active transport. '
                          f'When {l.Cl} is subject to active transport by the {l.NaKCl_cotrans}, '
@@ -783,17 +863,35 @@ def main() -> None:
                          f'electrochemical driving force on {l.Cl} will be negative '
                          f'({l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV) with an impetus for {l.Cl} to leave the cell '
                          f'in favour with transmembrane electrical and concentration gradients. '
-                         f'When {l.Cl} channels are opened,'
+                         f'When {l.Cl} channels are opened, '
                          f'this outward flux of {l.Cl} leads to {l.Vmem} depolarization.')
 
                 st.write(f'Membrane ion permeabilities are taken to relate to leak channel '
                          f'expression levels. Therefore, increasing membrane {l.Na} and '
                          f'{l.K} permeability in the sidebar Model Variables should show '
                          f'{l.Vmem} depolarization and hyperpolarization, respectively. '
-                         f'With the {l.NaKCl_cotrans}, increasing {l.Cl} permeability should show'
+                         f'With the {l.NaKCl_cotrans}, increasing {l.Cl} permeability should show '
                          f'{l.Vmem} depolarization.')
 
-            if not NaKCl_on and KCl_on:
+            elif NaKATP_on and not NaKCl_on and KCl_on:
+                st.write(f'The ubiquitous {l.NaK_pump} generates {l.Vmem} '
+                         f'hyperpolarization by moving 3 {l.Na} out of the cell '
+                         f'while bringing only 2 {l.K} in. The resulting electrochemical gradient '
+                         f'for {l.Na} strongly favours movement of {l.Na} into the cell to neutralize both '
+                         f'a transmembrane concentration and charge gradient. Therefore, {l.Na} has a '
+                         f'strongly negative electrochemical driving force ({l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV). '
+                         f'When {l.Na} enters cells through open {l.Na} channels, {l.Vmem} depolarizes due '
+                         f'to the entry of positive charge to the cell.'
+                         )
+
+                st.write(f'The electrochemical gradient '
+                         f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
+                         f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
+                         f'Therefore, {l.K} has a moderately '
+                         f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
+                         f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
+                         f'due to the exit of positive charge.')
+
                 st.write(f'The {l.KCl_symp} uses the impetus for {l.K} to exit the cell to bring '
                          f'{l.Cl} with it in secondary active transport. '
                          f'When {l.Cl} is subject to active transport by the {l.KCl_symp}, '
@@ -808,10 +906,28 @@ def main() -> None:
                          f'expression levels. Therefore, increasing membrane {l.Na} and '
                          f'{l.K} permeability in the sidebar Model Variables should show '
                          f'{l.Vmem} depolarization and hyperpolarization, respectively. '
-                         f'With the {l.KCl_symp}, increasing {l.Cl} permeability should show'
+                         f'With the {l.KCl_symp}, increasing {l.Cl} permeability should show '
                          f'{l.Vmem} hyperpolarization.')
 
-            if NaKCl_on and KCl_on:
+            elif NaKATP_on and NaKCl_on and KCl_on:
+                st.write(f'The ubiquitous {l.NaK_pump} generates {l.Vmem} '
+                         f'hyperpolarization by moving 3 {l.Na} out of the cell '
+                         f'while bringing only 2 {l.K} in. The resulting electrochemical gradient '
+                         f'for {l.Na} strongly favours movement of {l.Na} into the cell to neutralize both '
+                         f'a transmembrane concentration and charge gradient. Therefore, {l.Na} has a '
+                         f'strongly negative electrochemical driving force ({l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV). '
+                         f'When {l.Na} enters cells through open {l.Na} channels, {l.Vmem} depolarizes due '
+                         f'to the entry of positive charge to the cell.'
+                         )
+
+                st.write(f'The electrochemical gradient '
+                         f'for {l.K} favours movement of {l.K} out of the cell, against the electrical gradient, '
+                         f'to neutralize the strong transmembrane {l.K} concentration gradient created by the {l.NaK_pump}. '
+                         f'Therefore, {l.K} has a moderately '
+                         f'positive electrochemical driving force ({l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV). '
+                         f'When {l.K} enters cells through open {l.K} channels, {l.Vmem} hyperpolarizes '
+                         f'due to the exit of positive charge.')
+
                 st.write(f'The {l.NaKCl_cotrans} uses the impetus for {l.Na} to enter the cell to bring '
                          f'{l.K} and {l.Cl} with it in secondary active transport. '
                          f'The {l.KCl_symp} uses the impetus for {l.K} to exit the cell to bring '
@@ -832,7 +948,63 @@ def main() -> None:
 
 
         with col2:
-            if NaKCl_on and KCl_on:
+            if not NaKATP_on and not NaKCl_on and not KCl_on:
+                cell_net_image_fn = str(get_data_png_cell_network_schematic_4_file())
+                cell_net_image = Image.open(cell_net_image_fn)
+                st.image(cell_net_image,
+                         caption=f'Cellular Bioelectric Network for this Simulation. '
+                                 f'There is no active transport, and no electrochemical '
+                                 f'driving forces on any ions. '
+                                 f'{l.Vmem} = {elec_vals_ss.iloc[0, 0]} mV, '
+                                 f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
+                                 f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
+                                 f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
+                         use_column_width='always',
+                         output_format="PNG")
+
+            elif not NaKATP_on and NaKCl_on and not KCl_on:
+                cell_net_image_fn = str(get_data_png_cell_network_schematic_5_file())
+                cell_net_image = Image.open(cell_net_image_fn)
+                st.image(cell_net_image,
+                         caption=f'Cellular Bioelectric Network for this Simulation. '
+                                 f'There is no primary active transport, and no electrochemical '
+                                 f'driving forces on any ions. '
+                                 f'{l.Vmem} = {elec_vals_ss.iloc[0, 0]} mV, '
+                                 f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
+                                 f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
+                                 f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
+                         use_column_width='always',
+                         output_format="PNG")
+
+            elif not NaKATP_on and not NaKCl_on and KCl_on:
+                cell_net_image_fn = str(get_data_png_cell_network_schematic_6_file())
+                cell_net_image = Image.open(cell_net_image_fn)
+                st.image(cell_net_image,
+                         caption=f'Cellular Bioelectric Network for this Simulation. '
+                                 f'There is no primary active transport, and no electrochemical '
+                                 f'driving forces on any ions. '
+                                 f'{l.Vmem} = {elec_vals_ss.iloc[0, 0]} mV, '
+                                 f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
+                                 f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
+                                 f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
+                         use_column_width='always',
+                         output_format="PNG")
+
+            elif not NaKATP_on and NaKCl_on and KCl_on:
+                cell_net_image_fn = str(get_data_png_cell_network_schematic_7_file())
+                cell_net_image = Image.open(cell_net_image_fn)
+                st.image(cell_net_image,
+                         caption=f'Cellular Bioelectric Network for this Simulation. '
+                                 f'There is no primary active transport, and no electrochemical '
+                                 f'driving forces on any ions. '
+                                 f'{l.Vmem} = {elec_vals_ss.iloc[0, 0]} mV, '
+                                 f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
+                                 f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
+                                 f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
+                         use_column_width='always',
+                         output_format="PNG")
+
+            elif NaKATP_on and NaKCl_on and KCl_on:
                 cell_net_image_fn = str(get_data_png_cell_network_schematic_3_file())
                 cell_net_image = Image.open(cell_net_image_fn)
                 st.image(cell_net_image,
@@ -846,7 +1018,7 @@ def main() -> None:
                          use_column_width='always',
                          output_format="PNG")
 
-            elif not NaKCl_on and not KCl_on:
+            elif NaKATP_on and not NaKCl_on and not KCl_on:
 
                 cell_net_image_fn = str(get_data_png_cell_network_schematic_0_file())
                 cell_net_image = Image.open(cell_net_image_fn)
@@ -860,7 +1032,7 @@ def main() -> None:
                          use_column_width='always',
                          output_format="PNG")
 
-            elif NaKCl_on and not KCl_on:
+            elif NaKATP_on and NaKCl_on and not KCl_on:
                 cell_net_image_fn = str(get_data_png_cell_network_schematic_1_file())
                 cell_net_image = Image.open(cell_net_image_fn)
                 st.image(cell_net_image,
@@ -874,7 +1046,7 @@ def main() -> None:
                          use_column_width='always',
                          output_format="PNG")
 
-            elif not NaKCl_on and KCl_on:
+            elif NaKATP_on and not NaKCl_on and KCl_on:
                 cell_net_image_fn = str(get_data_png_cell_network_schematic_2_file())
                 cell_net_image = Image.open(cell_net_image_fn)
                 st.image(cell_net_image,

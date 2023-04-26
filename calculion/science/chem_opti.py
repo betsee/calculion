@@ -20,6 +20,8 @@ from calculion.science.chem_base import ReactionABC
 from calculion.science.reaction_system import ReactionSystem
 from calculion.science.model_params import ModelParams
 
+
+@beartype
 class SteadyStateOpti(object):
     '''
     Use the Gauss-Newton method to find the steady-state values of a bioelectric
@@ -71,7 +73,6 @@ class SteadyStateOpti(object):
 
     '''
 
-    @beartype
     def __init__(self,
                  bes: ReactionSystem,
                  ss_params_list: list[Symbol],
@@ -150,7 +151,6 @@ class SteadyStateOpti(object):
         # And the numerical hessian:
         self.hess_opti_f = sp.lambdify((ss_params_list, self.args_list), self.hess_opti_s)
 
-    @beartype
     def _ss_gnopti_funk(self,
                         ss_params: Union[list, ndarray],
                         const_params: Union[list, ndarray]):
@@ -183,7 +183,6 @@ class SteadyStateOpti(object):
         return resids, jac_inv
 
 
-    @beartype
     def gauss_newton(self, opti_N: int=1000, tol: float=1.0e-15):
         '''
         Perform a Gauss Newton nonlinear least squares solution for
@@ -266,7 +265,6 @@ class SteadyStateOpti(object):
 
         return self.sol1.x, self.sol1.fun
 
-    @beartype
     def print_results(self, ss_params: Union[list, ndarray]):
         '''
         Prints the results of the optimization.
@@ -376,7 +374,6 @@ class IterSim(object):
             self.chem_sim_name.append(chm.name)
 
 
-    # @beartype
     def run_iter_sim(self,
                      dt: float,
                      N_iter: int,
@@ -537,6 +534,7 @@ class IterSim(object):
 
         return self.time, self.vm_time, self.chem_time
 
+@beartype
 class FluxSim(object):
     '''
     Iterative simulation of the flux and concentration changes for a single reaction, with a look at
@@ -614,7 +612,6 @@ class FluxSim(object):
 
     '''
 
-    @beartype
     def __init__(self, reaction: ReactionABC):
         '''
         reaction : ReactionABC
@@ -662,7 +659,6 @@ class FluxSim(object):
             self.prod_f_indices.append(iprof)
             self.prod_r_indices.append(ipror)
 
-    @beartype
     def generate_params(self, p: ModelParams):
         '''
         Generate initial numerical values for the simulation params.
@@ -698,7 +694,6 @@ class FluxSim(object):
             else:
                 raise Exception(f'Parameter {pn.name} not found in p!')
 
-    @beartype
     def sim(self, Niter: int, dt: float):
         '''
         Performs the iterative simulation.

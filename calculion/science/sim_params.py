@@ -30,9 +30,9 @@ class SimParams(object):
         self.use_iterative_solver: bool = False
 
         # Iterative solver default properties:
-        self.delta_t: float = 5.0e-4  # Iterative solver time step
+        self.delta_t: float = 1.0e-3  # Iterative solver time step
         # self.dt: float = 5.0e-5 # Time-step for iterative simulations
-        self.start_time: float = 0.0  # Start time for plotting; always starts at 0.0
+        self.start_time: float = 5.0  # Start time for plotting; always starts at 0.0
         self.end_time: float = 45.0
 
         # Membrane perturbations:
