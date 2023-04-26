@@ -205,6 +205,14 @@ def get_data_png_cell_network_schematic_7_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_3.png')
 
+@callable_cached
+@beartype
+def get_bioe_network_file() -> Path:
+
+    return FileRelative(get_data_svg_dir(), 'BioENet.svg')
+
+
+
 
 #FIXME: Docstring us up, please.
 @callable_cached

@@ -112,7 +112,8 @@ def main() -> None:
         get_data_png_cell_network_schematic_6_file,
         get_data_png_cell_network_schematic_7_file,
         get_data_png_membrane_schematic_file,
-        get_data_png_banner_file
+        get_data_png_banner_file,
+        get_data_svg_dir,
     )
     # from pandas import DataFrame
     # from calculion.scratch_science.compute import get_steady_state
@@ -138,6 +139,7 @@ def main() -> None:
     p = ModelParams()  # Create a default parameters instance for model properties
     sim_p = SimParams() # Create default params for simulation properties
     l = StringNames() # string labels
+    savedir = str(get_data_svg_dir()) # pathname for save directory
 
     # ..................{ SIDEBAR                            }..................
     # The sidebar will contain all widgets to collect user-data for the
@@ -500,7 +502,7 @@ def main() -> None:
     # * The "Bioelectrical Network" tab will show a graphical depiction of the
     #   bioelectrical network.
     tab1, tab2, tab3 = st.tabs([
-        'Introduction', 'Simulation', 'Bioelectrical Network'])
+        'Introduction', 'Simulation', 'System Insights'])
 
     with tab1:
         st.write(" ") # add a space after the main title
@@ -562,21 +564,25 @@ def main() -> None:
                  f"system properties from both a steady-state and dynamic perspectives."
                  )
 
-        st.write(f"The **Bioelectric Network** tab shows a schematic directed graph of "
-                 f"the bioelectric system that is being modeled, with deeper "
+        st.write(f"The **System Insights** tab supplies "
                  f"explanations for the observed simulation results.")
 
-        st.write(f"The details of our model emphasizing the *slow* changes "
+        st.write(f"A paper supplying the details of our model emphasizing the slow changes "
                  f"that shape the electrochemical ion gradients fundamental "
-                 f"to bioelectricity can be downloaded *here*.")
+                 f"to bioelectricity will be available for download soon.")
 
     with tab2:
-        st.write("## Simulation")
+        st.write("## Simulation Settings")
 
-        st.write("*Alter Model Variables in sidebar to explore outcomes...*")
+        st.write(" ") # add a space
+
+        st.write("Alter Model Variables in the **Sidebar** to change simulated model "
+                 "parameters.")
+
+        st.write(" ") # add a space
 
         # Define a final expander block for simulator settings:
-        sim_settings_block = st.expander("Simulation Settings",
+        sim_settings_block = st.expander("Additional Simulation Settings",
                                          expanded=True)
 
         with sim_settings_block:
@@ -791,6 +797,49 @@ def main() -> None:
                 else:
                     sim_p.perturb_PCl = False
 
+        # First plot a schematic directed graph of the bioelectrical network being simulated:
+        st.write('#### Bioelectrical Network')
+        st.write(" ") # Add a space
+
+        # GG = bes.create_network(p)  # Create the graph
+        # GG.write_png('BioeNetwork.png', prog='dot')  # Write to Png
+        # # Display the png
+        # cell_graph_image = Image.open('BioeNetwork.png')
+
+        # Choose the correct image for the system:
+        if not NaKATP_on and not NaKCl_on and not KCl_on:
+            cell_graph_image_fn = str(get_data_png_cell_network_schematic_4_file())
+        elif not NaKATP_on and NaKCl_on and not KCl_on:
+            cell_graph_image_fn = str(get_data_png_cell_network_schematic_5_file())
+        elif not NaKATP_on and not NaKCl_on and KCl_on:
+            cell_graph_image_fn = str(get_data_png_cell_network_schematic_6_file())
+        elif not NaKATP_on and NaKCl_on and KCl_on:
+            cell_graph_image_fn = str(get_data_png_cell_network_schematic_7_file())
+        elif NaKATP_on and not NaKCl_on and not KCl_on:
+            cell_graph_image_fn = str(get_data_png_cell_network_schematic_0_file())
+        elif NaKATP_on and NaKCl_on and not KCl_on:
+            cell_graph_image_fn = str(get_data_png_cell_network_schematic_1_file())
+        elif NaKATP_on and not NaKCl_on and KCl_on:
+            cell_graph_image_fn = str(get_data_png_cell_network_schematic_2_file())
+        elif NaKATP_on and NaKCl_on and KCl_on:
+            cell_graph_image_fn = str(get_data_png_cell_network_schematic_3_file())
+        else:
+            raise Exception("Scenario not covered")
+
+        # Create two columns to control the network image size
+        ncol1, ncol2 = st.columns(2)
+
+        with ncol1:
+
+            cell_graph_image = Image.open(cell_graph_image_fn)
+
+            st.image(cell_graph_image,
+                     caption=f'Cellular Bioelectric Network Modeled in this Simulation.',
+                     use_column_width='always',
+                     output_format="PNG")
+
+        st.write(" ") # Add a space
+
         # SECTION TO DISPLAY RESULTS----------------------------------------------------------
 
         st.write("## Results")
@@ -825,6 +874,8 @@ def main() -> None:
 
         ion_vals_combo  = pd.concat([ion_vals_init , ion_vals_ss], axis=1, join="inner")
 
+
+
         st.write('#### Steady-State Properties')
         st.write(" ") # Add a space
 
@@ -838,11 +889,30 @@ def main() -> None:
                        f"ion reversal potentials ({l.Vrev_Na}, {l.Vrev_K}, and {l.Vrev_Cl}) and "
                        f"ion electrochemical driving potentials ({l.Ved_Na}, {l.Ved_K}, and {l.Ved_Cl}).")
 
+            elec_csv = elec_vals_combo.to_csv().encode('utf-8')
+
+            st.download_button(
+                label="Download Potentials Data",
+                data=elec_csv,
+                file_name='Calculion_BioelectricPotentials.csv',
+                mime='text/csv',
+            )
+
 
         with col2:
             st.write('##### Ion Concentrations')
             st.dataframe(ion_vals_combo.style.format("{:.1f}"))
             st.caption("Initial and steady-state ion concentrations inside and out of the cell.")
+
+            # Add a button to download the raw data:
+            ion_csv = ion_vals_combo.to_csv().encode('utf-8')
+
+            st.download_button(
+                label="Download Concentrations Data",
+                data=ion_csv,
+                file_name='Calculion_IonConcentrations.csv',
+                mime='text/csv',
+            )
 
         st.write(" ") # Put a space in
         st.write(" ") # Put a space in
@@ -863,6 +933,15 @@ def main() -> None:
             st.write('##### Changes to Ion Membrane Permeabilities with Time')
             st.line_chart(pmem_dataframe, x='Time (s)', y=['P_Na', 'P_K', 'P_Cl'])
 
+            # Add a button to download the pmem time data:
+            pmemdat_csv = pmem_dataframe.to_csv().encode('utf-8') # Convert to csv
+            st.download_button(
+                label="Download Membrane Permeability with Time Data",
+                data=pmemdat_csv,
+                file_name='Calculion_Pmem_Time.csv',
+                mime='text/csv',
+            )
+
             vmem_dataframe = pd.DataFrame(np.column_stack((time[sim_p.starttime_plot_ind:],
                                                            1e3*vm_time[sim_p.starttime_plot_ind:])),
                                           columns=['Time (s)', l.Vmem])
@@ -871,98 +950,16 @@ def main() -> None:
             st.write('##### Changes to Vm with Time')
 
             st.line_chart(vmem_dataframe, x='Time (s)', y=l.Vmem)
-            # st.dataframe(vmem_dataframe.style.format("{:.1f}"))
 
-        # # Iterative solver results:
-        # if itersol_checkbox:
-        #
-        #     time_props, volt_timedat, chem_timedat = calculate_iter_results(p)
-        #
-        #     st.write("#### Iterative Simulation Results")
-        #
-        #     # time = time_props['time_vect']
-        #
-        #     st.write('###### Bioelectrical Potentials')
-        #
-        #     all_V_series = [l.Vmem_o]
-        #     all_chem_series = [l.Na_in_o, l.K_in_o, l.Cl_in_o]
-        #
-        #     shown_V_series = []
-        #     shown_chem_series = []
-        #
-        #     show_Vmem = st.checkbox(l.Vmem, value=True,
-        #                                 help=f'Show membrane potential, {l.Vmem}, on the graph?')
-        #
-        #     # Columns to arrange voltage series checkboxes horizontally:
-        #     vc0, vc1, vc2, vc3, vc4, vc5 = st.columns(6)
-        #
-        #     with vc0:
-        #         show_Ved_Na = st.checkbox(l.Ved_Na,
-        #                                   value=False,
-        #                                   help=f'Show Na+ electrochemical driving potential,'
-        #                                        f' {l.Ved_Na}, on the graph?')
-        #     with vc1:
-        #         show_Ved_K = st.checkbox(l.Ved_K, value=False,
-        #                                  help=f'Show K+ electrochemical driving potential, '
-        #                                       f'{l.Ved_K}, on the graph?')
-        #
-        #     with vc2:
-        #         show_Ved_Cl = st.checkbox(l.Ved_Cl, value=False,
-        #                                   help=f'Show Cl- electrochemical driving potential, '
-        #                                        f'{l.Ved_Cl}, on the graph?')
-        #
-        #     with vc3:
-        #         show_Vrev_Na = st.checkbox(l.Vrev_Na, value=False,
-        #                                    help=f'Show Na+ reversal potential, '
-        #                                         f'{l.Vrev_Na}, on the graph?')
-        #     with vc4:
-        #         show_Vrev_K = st.checkbox(l.Vrev_K, value=False,
-        #                                   help=f'Show K+ reversal potential, {l.Vrev_K}, on the graph?')
-        #
-        #     with vc5:
-        #         show_Vrev_Cl = st.checkbox(l.Vrev_Cl, value=False,
-        #                                    help=f'Show Cl- reversal potential, {l.Vrev_Cl}, on the graph?')
-        #
-        #     V_series_bools = [show_Vmem, show_Ved_Na, show_Ved_K, show_Ved_Cl, show_Vrev_Na, show_Vrev_K, show_Vrev_Cl]
-        #
-        #     for vbool, vname in zip(V_series_bools, all_V_series):
-        #         if vbool:
-        #             shown_V_series.append(vname)
-        #
-        #     # st.write(f'l.time: {l.time}')
-        #     # st.write(f'volt_timedat: {volt_timedat}')
-        #     st.line_chart(volt_timedat,
-        #                   x=l.time,
-        #                   y=shown_V_series,
-        #                   use_container_width=True)
-        #
-        #     st.write('###### Intracellular Ion Concentrations')
-        #
-        #     # Columns to arrange concentration series checkboxes horizontally:
-        #     cc0, cc1, cc2 = st.columns(3)
-        #
-        #     with cc0:
-        #         show_Na_in = st.checkbox(l.Na_in, value=True,
-        #                                  help=f'Show Na+ concentration in the cytoplasm, {l.Na_in}, on the graph?')
-        #
-        #     with cc1:
-        #         show_K_in = st.checkbox(l.K_in, value=True, help=f'Show K+ concentration in the cytoplasm, '
-        #                                                          f'{l.K_in}, on the graph?')
-        #
-        #     with cc2:
-        #         show_Cl_in = st.checkbox(l.Cl_in, value=True, help=f'Show Cl- concentration in the cytoplasm,'
-        #                                                            f' {l.Cl_in}, on the graph?')
-        #
-        #     chem_series_bools = [show_Na_in, show_K_in, show_Cl_in]
-        #
-        #     for cbool, cname in zip(chem_series_bools, all_chem_series):
-        #         if cbool:
-        #             shown_chem_series.append(cname)
-        #
-        #     st.line_chart(chem_timedat,
-        #                   x=l.time,
-        #                   y=shown_chem_series,
-        #                   use_container_width=True)
+            # Add a button to download the vmem time data:
+            vmemdat_csv = vmem_dataframe.to_csv().encode('utf-8') # Convert to csv
+            st.download_button(
+                label="Download Vm with Time Data",
+                data=vmemdat_csv,
+                file_name='Calculion_Vm_Time.csv',
+                mime='text/csv',
+            )
+
 
     with tab3:
         col1, col2 = st.columns(2)
