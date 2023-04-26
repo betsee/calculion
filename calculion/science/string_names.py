@@ -37,8 +37,11 @@ class StringNames(object):
     Na: str = 'Na⁺'
     K: str = 'K⁺'
     Cl: str = 'Cl⁻'
+    PNa: str = 'P_Na'
+    PK: str = 'P_K'
+    PCl: str = 'P_Cl'
 
-    time: str = 'Time (hours)'
+    time: str = 'Time (seconds)'
 
     # Plain labels:
     Vmem_o: str = 'Vmem'

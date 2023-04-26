@@ -290,7 +290,7 @@ def main() -> None:
         with pumps_block:
 
             # # Let the user specify whether they want the additional NaKCl cotransporter for secondary transport:
-            NaKATP_on = st.checkbox(l.NaK_pump, value=True, help=f'Cell expresses {l.NaK_pump} ?')
+            NaKATP_on = st.checkbox(l.NaK_pump_o, value=True, help=f'Cell expresses {l.NaK_pump} ?')
 
             if NaKATP_on:
 
@@ -504,19 +504,28 @@ def main() -> None:
         'Introduction', 'Simulation', 'Bioelectrical Network'])
 
     with tab1:
+        st.write(" ") # add a space after the main title
+
         st.write('### Calculating the *slow* changes of bioelectricity.')
         # # This is how to serve up some html:
         # test_html_fn = get_data_html_test_file()
         # with open(test_html_fn,'r') as f:
         #     html_data = f.read()
 
+        st.write(" ") # add a space after the subtitle
+
         # st.components.v1.html(html_data, scrolling=True)
         mem_image_fn = str(get_data_png_membrane_schematic_file())
         mem_image = Image.open(mem_image_fn)
         st.image(mem_image,
-                 # caption='Behold the Cellular Bioelectric Network!',
+                 caption=f'Transmembrane proteins called ion channels, ion pumps such as the {l.NaK_pump}, and '
+                         f'ion transporters create and shape {l.Vmem} '
+                         f'through the creation, maintenance, and modification of transmembrane ion concentration '
+                         f'gradients.',
                  use_column_width='always',
                  output_format="PNG")
+
+        st.write(" ") # add a space after the figure
 
         st.write(f"Transmembrane electric potential, {l.Vmem}, plays a central "
                  f"role in numerous biological processes with a well-demonstrated "
@@ -578,7 +587,7 @@ def main() -> None:
                                            value=sim_p.use_iterative_solver,
                                            key='checkbox_itersol',
                                            help='Use the iterative solver that integrates the '
-                                                'system step-by-step in time?')
+                                                'system step-by-step to see changes in time?')
 
             if itersol_checkbox:
                 sim_p.use_iterative_solver = True # Set the iterative solver parameter to True
@@ -617,30 +626,171 @@ def main() -> None:
                                           help='Set the simulation time at '
                                                'which the iterative solver stops.')
 
+                ch_col1, ch_col2, ch_col3 = st.columns(3)
 
+                with ch_col1:
+
+                    # Checkboxes allowing user to include desired channels in iterative sim:
+                    chan_na_on = st.checkbox(l.PNa,
+                                           value=True,
+                                           help=f'Include change to membrane {l.Na} '
+                                                f'permeability in iterative simulation?')
+
+                    if chan_na_on:
+                        sim_p.perturb_PNa_start = param_widget(f'Start time for {l.PNa} change [s]',
+                                                      min_value=sim_p.start_time,
+                                                      max_value=sim_p.end_time,
+                                                      value=sim_p.perturb_PNa_start,
+                                                      step=sim_p.delta_t,
+                                                      format='%f',
+                                                      key='slider_chanNa_tstart',
+                                                      label_visibility='visible',
+                                                      help=f'Set the simulation time at '
+                                                           f'which {l.PNa} value changes.')
+
+                        sim_p.perturb_PNa_end = param_widget(f'End time for {l.PNa} change [s]',
+                                                      min_value=sim_p.perturb_PNa_start,
+                                                      max_value=sim_p.end_time,
+                                                      value=sim_p.perturb_PNa_end,
+                                                      step=sim_p.delta_t,
+                                                      format='%f',
+                                                      key='slider_chanNa_tend',
+                                                      label_visibility='visible',
+                                                      help=f'Set the simulation time at '
+                                                           f'which {l.PNa} value returns to baseline.')
+
+                        sim_p.perturb_PNa_multi = param_widget(f'Factor amount to change {l.PNa}',
+                                                      min_value=0.0,
+                                                      max_value=100.0,
+                                                      value=sim_p.perturb_PNa_multi,
+                                                      step=0.1,
+                                                      format='%f',
+                                                      key='slider_chanNa_multi',
+                                                      label_visibility='visible',
+                                                      help=f'Set the value by which the {l.PNa} baseline '
+                                                           f'value is multiplied during the change period.')
+
+                with ch_col2:
+
+                    chan_k_on = st.checkbox(l.PK,
+                                           value=True,
+                                           help=f'Include change to membrane {l.K} '
+                                                f'permeability in iterative simulation?')
+
+                    if chan_k_on:
+
+                        sim_p.perturb_PK_start = param_widget(f'Start time for {l.PK} change [s]',
+                                                               min_value=sim_p.start_time,
+                                                               max_value=sim_p.end_time,
+                                                               value=sim_p.perturb_PK_start,
+                                                               step=sim_p.delta_t,
+                                                               format='%f',
+                                                               key='slider_chanK_tstart',
+                                                               label_visibility='visible',
+                                                               help=f'Set the simulation time at '
+                                                                    f'which {l.PK} value changes.')
+
+                        sim_p.perturb_PK_end = param_widget(f'End time for {l.PK} change [s]',
+                                                             min_value=sim_p.perturb_PK_start,
+                                                             max_value=sim_p.end_time,
+                                                             value=sim_p.perturb_PK_end,
+                                                             step=sim_p.delta_t,
+                                                             format='%f',
+                                                             key='slider_chanK_tend',
+                                                             label_visibility='visible',
+                                                             help=f'Set the simulation time at '
+                                                                  f'which {l.PK} value returns to baseline.')
+
+                        sim_p.perturb_PK_multi = param_widget(f'Factor amount to change {l.PK}',
+                                                               min_value=0.0,
+                                                               max_value=100.0,
+                                                               value=sim_p.perturb_PK_multi,
+                                                               step=0.1,
+                                                               format='%f',
+                                                               key='slider_chanK_multi',
+                                                               label_visibility='visible',
+                                                               help=f'Set the value by which the {l.PK} baseline '
+                                                                    f'value is multiplied during the change period.')
+
+                with ch_col3:
+
+                    chan_cl_on = st.checkbox(l.PCl,
+                                           value=True,
+                                           help=f'Include change to membrane {l.Cl} '
+                                                f'permeability in iterative simulation?')
+
+                    if chan_cl_on:
+
+                        sim_p.perturb_PCl_start = param_widget(f'Start time for {l.PCl} change [s]',
+                                                               min_value=sim_p.start_time,
+                                                               max_value=sim_p.end_time,
+                                                               value=sim_p.perturb_PCl_start,
+                                                               step=sim_p.delta_t,
+                                                               format='%f',
+                                                               key='slider_chanCl_tstart',
+                                                               label_visibility='visible',
+                                                               help=f'Set the simulation time at '
+                                                                    f'which {l.PCl} value changes.')
+
+                        sim_p.perturb_PCl_end = param_widget(f'End time for {l.PCl} change [s]',
+                                                             min_value=sim_p.perturb_PCl_start,
+                                                             max_value=sim_p.end_time,
+                                                             value=sim_p.perturb_PCl_end,
+                                                             step=sim_p.delta_t,
+                                                             format='%f',
+                                                             key='slider_chanCl_tend',
+                                                             label_visibility='visible',
+                                                             help=f'Set the simulation time at '
+                                                                  f'which {l.PCl} value returns to baseline.')
+
+                        sim_p.perturb_PCl_multi = param_widget(f'Factor amount to change {l.PCl}',
+                                                               min_value=0.0,
+                                                               max_value=100.0,
+                                                               value=sim_p.perturb_PCl_multi,
+                                                               step=0.1,
+                                                               format='%f',
+                                                               key='slider_chanCl_multi',
+                                                               label_visibility='visible',
+                                                               help=f'Set the value by which the {l.PCl} baseline '
+                                                                    f'value is multiplied during the change period.')
                 # membrane permeability perturbations for sim:
-                # FIXME: we need panels to harvest user pref on channel sim here:
                 chan_list = []
-                if sim_p.perturb_PNa:
+
+                if chan_na_on:
+                    sim_p.perturb_PNa = True
+
                     stepchan_Na = PulseFunctionChannel(['P_Na'],
                                                        sim_p.perturb_PNa_multi*p.base_pmem,
                                                        sim_p.perturb_PNa_start,
                                                        sim_p.perturb_PNa_end)
                     chan_list.append(stepchan_Na)
 
-                if sim_p.perturb_PK:
+                else:
+                    sim_p.perturb_PNa = False
+
+                if chan_k_on:
+                    sim_p.perturb_PK = True
+
                     stepchan_K = PulseFunctionChannel(['P_K'],
                                                       sim_p.perturb_PK_multi*p.base_pmem,
                                                       sim_p.perturb_PK_start,
                                                       sim_p.perturb_PK_end)
                     chan_list.append(stepchan_K)
 
-                if sim_p.perturb_PCl:
+                else:
+                    sim_p.perturb_PK = False
+
+                if chan_cl_on:
+                    sim_p.perturb_PCl = True
+
                     stepchan_Cl = PulseFunctionChannel(['P_Cl'],
                                                        sim_p.perturb_PCl_multi*p.base_pmem,
                                                        sim_p.perturb_PCl_start,
                                                        sim_p.perturb_PCl_end)
                     chan_list.append(stepchan_Cl)
+
+                else:
+                    sim_p.perturb_PCl = False
 
 
                 # Update all the calculated parameters with the new settings:
