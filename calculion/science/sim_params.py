@@ -32,23 +32,23 @@ class SimParams(object):
         # Iterative solver default properties:
         self.delta_t: float = 1.0e-3  # Iterative solver time step
         # self.dt: float = 5.0e-5 # Time-step for iterative simulations
-        self.start_time: float = 5.0  # Start time for plotting; always starts at 0.0
-        self.end_time: float = 45.0
+        self.start_time: float = 0.5  # Start time for plotting; always starts at 0.0
+        self.end_time: float = 4.5
 
         # Membrane perturbations:
         self.perturb_PNa: bool = True
-        self.perturb_PNa_start: float = 12.0
-        self.perturb_PNa_end: float = 15.0
+        self.perturb_PNa_start: float = 1.20
+        self.perturb_PNa_end: float = 1.50
         self.perturb_PNa_multi: float = 10.0
 
         self.perturb_PK: bool = True
-        self.perturb_PK_start: float = 22.0
-        self.perturb_PK_end: float = 25.0
+        self.perturb_PK_start: float = 2.20
+        self.perturb_PK_end: float = 2.50
         self.perturb_PK_multi: float = 10.0
 
         self.perturb_PCl: bool = True
-        self.perturb_PCl_start: float = 32.0
-        self.perturb_PCl_end: float = 35.0
+        self.perturb_PCl_start: float = 3.20
+        self.perturb_PCl_end: float = 3.50
         self.perturb_PCl_multi: float = 10.0
 
         # Generate a comparison simulation with HH math?
