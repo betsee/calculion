@@ -22,13 +22,21 @@ thus expected by external automation.
 # importing package-specific modules where feasible.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ MONKEY-PATCH                       }....................
+#FIXME: [DEBUG] Temporarily monkey-patch the @beartype decorator away.
+#Specifically, reduce @beartype to the identity decorator during local app
+#development. Why? Because Streamlit's "hot module reload" leveraged during
+#development fundamentally conflicts with runtime type-checkers like @beartype.
+#since this is a Streamlit rather than @beartype issue, @beartype itself is in
+#*NO* position to resolve this. Thanks, Streamlit. Thanks. *sigh*
+# import beartype
+#
+# def identity_decorator(func_or_cls, *args, **kwargs):
+#     return func_or_cls
+#
+# beartype.beartype = identity_decorator
+
 # ....................{ IMPORTS                            }....................
-import beartype
-def identity_decorator(func_or_cls, *args, **kwargs):
-    return func_or_cls
-
-beartype.beartype = identity_decorator
-
 from calculion.meta import VERSION, VERSION_PARTS
 
 # ....................{ GLOBALS                            }....................
