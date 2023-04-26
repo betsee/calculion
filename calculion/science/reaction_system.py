@@ -19,8 +19,8 @@ import pandas as pd
 from calculion.science.model_params import ModelParams
 from calculion.science.chem_base import (Chemical, TransportReaction, ReactionABC)
 from calculion.science.string_names import StringNames
-import pydot
-from pydot import Dot
+# import pydot
+# from pydot import Dot
 
 @beartype
 class ReactionSystem(object):
@@ -676,99 +676,99 @@ class ReactionSystem(object):
 
         return jc
 
-    def create_network(self, p: ModelParams) -> Dot:
-        '''
-        Create a plot of the mass transfer network for this reaction system. Returns a
-        pydot graphviz object.
-
-        Parameters
-        ----------
-        p : ModelParams
-            An instance of the bioelectric parameters object.
-
-        '''
-
-        # FIXME: to display the pydot graph in Streamlit, we do:
-        #  st.graphviz_chart(GG.to_string())
-
-        # create a graph object
-        GG = pydot.Dot(
-            graph_type='digraph',
-            concentrate=False,
-            nodesep=0.1,
-            ranksep=0.2,
-            splines=True,
-            strict=True,
-            rankdir=p.net_layout,
-        )
-
-        # Add nodes to the graph
-        for chm in self.chem_vect:
-            if chm.z < 0:
-                chm_col = p.anion_node_color
-
-            elif chm.z > 0:
-                chm_col = p.cation_node_color
-
-            else:
-                chm_col = p.neutral_node_color
-
-            ndec = pydot.Node(
-                chm.name,
-                style='filled',
-                color=chm_col,
-                shape=p.conc_node_shape,
-                fontcolor=p.conc_node_font_color,
-                fontname=p.net_font_name,
-                fontsize=p.node_font_size,
-            )
-            GG.add_node(ndec)
-
-        for react in self.react_vect:
-            nder = pydot.Node(
-                react.reaction_name,
-                style='filled',
-                color=p.react_node_color,
-                shape=p.react_node_shape,
-                fontcolor=p.react_node_font_color,
-                fontname=p.net_font_name,
-                fontsize=p.node_font_size,
-            )
-            GG.add_node(nder)
-
-        # Add directed edges to the graph:
-        for react in self.react_vect:
-
-            for rchm in react._react_list:
-                GG.add_edge(
-                    pydot.Edge(rchm.name,
-                               react.reaction_name,
-                               arrowhead='normal',
-                               coeff=1.0,
-                               penwidth=p.edge_width))
-
-            for pchm in react._prod_list:
-                GG.add_edge(
-                    pydot.Edge(react.reaction_name,
-                               pchm.name, arrowhead='normal',
-                               coeff=1.0,
-                               penwidth=p.edge_width))
-
-            if react._coupled_reaction is not None:
-                # add edges in for the coupled reagents and products:
-
-                for creact in react._react_list_coup:
-                    GG.add_edge(pydot.Edge(creact.name,
-                                           react.reaction_name,
-                                           arrowhead='normal', coeff=1.0,
-                                           penwidth=p.edge_width))
-
-                for cprod in react._prod_list_coup:
-                    GG.add_edge(pydot.Edge(react.reaction_name,
-                                           cprod.name, arrowhead='normal', coeff=1.0,
-                                           penwidth=p.edge_width))
-
-        return GG
+    # def create_network(self, p: ModelParams) -> Dot:
+    #     '''
+    #     Create a plot of the mass transfer network for this reaction system. Returns a
+    #     pydot graphviz object.
+    #
+    #     Parameters
+    #     ----------
+    #     p : ModelParams
+    #         An instance of the bioelectric parameters object.
+    #
+    #     '''
+    #
+    #     # FIXME: to display the pydot graph in Streamlit, we do:
+    #     #  st.graphviz_chart(GG.to_string())
+    #
+    #     # create a graph object
+    #     GG = pydot.Dot(
+    #         graph_type='digraph',
+    #         concentrate=False,
+    #         nodesep=0.1,
+    #         ranksep=0.2,
+    #         splines=True,
+    #         strict=True,
+    #         rankdir=p.net_layout,
+    #     )
+    #
+    #     # Add nodes to the graph
+    #     for chm in self.chem_vect:
+    #         if chm.z < 0:
+    #             chm_col = p.anion_node_color
+    #
+    #         elif chm.z > 0:
+    #             chm_col = p.cation_node_color
+    #
+    #         else:
+    #             chm_col = p.neutral_node_color
+    #
+    #         ndec = pydot.Node(
+    #             chm.name,
+    #             style='filled',
+    #             color=chm_col,
+    #             shape=p.conc_node_shape,
+    #             fontcolor=p.conc_node_font_color,
+    #             fontname=p.net_font_name,
+    #             fontsize=p.node_font_size,
+    #         )
+    #         GG.add_node(ndec)
+    #
+    #     for react in self.react_vect:
+    #         nder = pydot.Node(
+    #             react.reaction_name,
+    #             style='filled',
+    #             color=p.react_node_color,
+    #             shape=p.react_node_shape,
+    #             fontcolor=p.react_node_font_color,
+    #             fontname=p.net_font_name,
+    #             fontsize=p.node_font_size,
+    #         )
+    #         GG.add_node(nder)
+    #
+    #     # Add directed edges to the graph:
+    #     for react in self.react_vect:
+    #
+    #         for rchm in react._react_list:
+    #             GG.add_edge(
+    #                 pydot.Edge(rchm.name,
+    #                            react.reaction_name,
+    #                            arrowhead='normal',
+    #                            coeff=1.0,
+    #                            penwidth=p.edge_width))
+    #
+    #         for pchm in react._prod_list:
+    #             GG.add_edge(
+    #                 pydot.Edge(react.reaction_name,
+    #                            pchm.name, arrowhead='normal',
+    #                            coeff=1.0,
+    #                            penwidth=p.edge_width))
+    #
+    #         if react._coupled_reaction is not None:
+    #             # add edges in for the coupled reagents and products:
+    #
+    #             for creact in react._react_list_coup:
+    #                 GG.add_edge(pydot.Edge(creact.name,
+    #                                        react.reaction_name,
+    #                                        arrowhead='normal', coeff=1.0,
+    #                                        penwidth=p.edge_width))
+    #
+    #             for cprod in react._prod_list_coup:
+    #                 GG.add_edge(pydot.Edge(react.reaction_name,
+    #                                        cprod.name, arrowhead='normal', coeff=1.0,
+    #                                        penwidth=p.edge_width))
+    #
+    #     return GG
 
     def return_elec_props_dict(self):
         '''

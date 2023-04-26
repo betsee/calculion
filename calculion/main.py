@@ -113,7 +113,7 @@ def main() -> None:
         get_data_png_cell_network_schematic_7_file,
         get_data_png_membrane_schematic_file,
         get_data_png_banner_file,
-        get_data_svg_dir,
+
     )
     # from pandas import DataFrame
     # from calculion.scratch_science.compute import get_steady_state
