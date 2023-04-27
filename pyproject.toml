@@ -299,7 +299,7 @@ generate-setup-file = false
 python = ">=3.10,<4.0"
 
 # Graph stack.
-streamlit-agraph = ">=0.0.45"
+# streamlit-agraph = ">=0.0.45"
 
 # QA stack. Dismantled, this is:
 # * beartype >= 0.11.0, the first release to support class decoration.
@@ -312,7 +312,7 @@ scipy = ">=1.7.0"
 sympy = ">=1.9.0"
 
 # Web stack.
-streamlit = ">=1.12.0"
+streamlit = ">=1.19.0"
 
 #FIXME: Uncomment if we ever require "tox".
 # [tool.poetry.group.dev.dependencies]

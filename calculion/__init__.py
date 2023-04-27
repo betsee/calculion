@@ -29,12 +29,12 @@ thus expected by external automation.
 #development fundamentally conflicts with runtime type-checkers like @beartype.
 #since this is a Streamlit rather than @beartype issue, @beartype itself is in
 #*NO* position to resolve this. Thanks, Streamlit. Thanks. *sigh*
-# import beartype
-#
-# def identity_decorator(func_or_cls, *args, **kwargs):
-#     return func_or_cls
-#
-# beartype.beartype = identity_decorator
+import beartype
+
+def identity_decorator(func_or_cls, *args, **kwargs):
+    return func_or_cls
+
+beartype.beartype = identity_decorator
 
 # ....................{ IMPORTS                            }....................
 from calculion.meta import VERSION, VERSION_PARTS

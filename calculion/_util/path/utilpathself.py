@@ -225,7 +225,7 @@ def get_data_png_membrane_schematic_file() -> Path:
 @beartype
 def get_data_png_banner_file() -> Path:
 
-    return FileRelative(get_data_png_dir(), 'calculion_logo_banner_i.png')
+    return FileRelative(get_data_png_dir(), 'calculion_logo_lion_banner_i.png')
 
 
 # @callable_cached
