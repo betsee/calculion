@@ -74,7 +74,7 @@ class ModelParams(object):
         self.base_PK: float = 5.0
         self.base_PCl: float = 1.0
 
-        self.base_NaKpump: float = 4.0e5
+        self.base_NaKpump: float = 2.5e5
         self.base_NaKCl: float = 2.0e4
         self.base_KCl: float = 1.0e4
 

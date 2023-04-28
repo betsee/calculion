@@ -573,7 +573,7 @@ def main() -> None:
         )
         st.write(
             "* The [open-source GitHub repository hosting the "
-            "permissively MIT-licensed Python source of our"
+            "permissively MIT-licensed Python source of our "
             "model](https://github.com/betsee/calculion). "
             "Please submit [any issues or feature requests you might have to "
             "our GitHib issue tracker](https://github.com/betsee/calculion/issues)."
