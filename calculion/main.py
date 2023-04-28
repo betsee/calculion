@@ -323,7 +323,7 @@ def main() -> None:
 
                 p.base_NaKCl = param_widget('Na-K-2Cl Cotransporter Rate [nm/s]',
                                  min_value=0.0,
-                                 max_value=1.0e6,
+                                 max_value=1.0e7,
                                  value=p.base_NaKCl,
                                  step=1.0e2,
                                  format='%e',
