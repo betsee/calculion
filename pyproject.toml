@@ -167,8 +167,9 @@ requires-python = ">=3.10"
 # List of all mandatory runtime dependencies.
 dependencies = [
     # QA stack. Dismantled, this is:
-    # * beartype >= 0.11.0, the first release to support class decoration.
-    "beartype >=0.11.0",
+    # * beartype 0.15.0 first introduced the pivotal "beartype.claw" import hook
+    #   API enabling hybrid runtime-static type-checking.
+    "beartype >=0.15.0",
 
     # Science stack.
     "numpy >=1.22.0",
