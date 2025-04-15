@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -9,8 +9,6 @@ This module creates different ion channel classes to use in Calculion.
 '''
 
 from abc import ABCMeta, abstractmethod
-from beartype import beartype
-from beartype.typing import Union, Optional
 import numpy as np
 from numpy import ndarray
 
@@ -22,11 +20,10 @@ class DynamicChannelABC(object, metaclass=ABCMeta):
     ----------
     '''
 
-    @beartype
     def __init__(self,
                  ion_permeability_list: list[str],
-                 Pmax_chan: Union[float, ndarray],
-                 vm: Union[float, ndarray]
+                 Pmax_chan: float | ndarray,
+                 vm: float | ndarray
                  ):
         '''
 
@@ -51,8 +48,7 @@ class DynamicChannelABC(object, metaclass=ABCMeta):
 
 
 
-    @beartype
-    def init_channel(self, vm: Union[float, ndarray]):
+    def init_channel(self, vm: float | ndarray):
         '''
         Runs the initialization sequence for a voltage gated ion channel to set
         the channel to steady-state at the requested vm.
@@ -65,8 +61,8 @@ class DynamicChannelABC(object, metaclass=ABCMeta):
 
         self.P_chan = self.Pmax_chan*(self.m**self.n_m)*(self.h**self.n_h)
 
-    @beartype
-    def run_channel(self, vm: Union[float, ndarray], dt: float, t: float):
+
+    def run_channel(self, vm: float | ndarray, dt: float, t: float):
         '''
         Runs the voltage gated ion channel.
         '''
@@ -83,9 +79,9 @@ class DynamicChannelABC(object, metaclass=ABCMeta):
 
         return self.P_chan
 
+
     @abstractmethod
-    @beartype
-    def update_mh_gates(self, vm: Union[float, ndarray]):
+    def update_mh_gates(self, vm: float | ndarray):
         """
         Updates the 'm' and 'h' gating functions of the channel model for
         standard Hodgkin-Huxley formalism channel models.
@@ -116,12 +112,12 @@ class StepFunctionChannel(DynamicChannelABC):
     def init_channel(self, vm):
         pass
 
-    def update_mh_gates(self, vm: Union[float, ndarray]):
+    def update_mh_gates(self, vm: float | ndarray):
         pass
 
-    @beartype
+
     def run_channel(self,
-                    vm: Union[float, ndarray],
+                    vm: float | ndarray,
                     dt: float,
                     t: float):
         '''
@@ -162,12 +158,12 @@ class PulseFunctionChannel(DynamicChannelABC):
     def init_channel(self, vm):
         pass
 
-    def update_mh_gates(self, vm: Union[float, ndarray]):
+    def update_mh_gates(self, vm: float | ndarray):
         pass
 
-    @beartype
+
     def run_channel(self,
-                    vm: Union[float, ndarray],
+                    vm: float | ndarray,
                     dt: float,
                     t: float):
         '''

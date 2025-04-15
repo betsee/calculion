@@ -1,5 +1,5 @@
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                           )--------------------
@@ -55,6 +55,11 @@
 #consider submitting a feature request to the Streamlit issue tracker politely
 #begging them to generalize their Streamlit Cloud deployment strategy to
 #generically support *ANY* PEP 517-compliant build backend -- including Hatch.
+#FIXME: *lol.* Streamlit still locks "pyproject.toml" to poetry as of 2025 Q2.
+#The only alternative appears to be defining a "uv.lock" file with "uv", which
+#takes precedence over "pyproject.toml". Non-ideal, but definitely something we
+#should investigate as we migrate from "pyenv" to "uv". See also:
+#    https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies#other-python-package-managers
 
 # ....................{ PEP 621                            }....................
 # PEP 621-compliant section generically defining project metadata in a build
@@ -70,8 +75,16 @@
 # Fully-qualified name of this project's top-level Python package.
 name = "calculion"
 
+#FIXME: Ideally, Poetry should instead dynamically parse this string from the
+#"calculion.__init__" submodule. Does Poetry support that yet? *sigh*
+#FIXME: *LOLBRO.* There's literally nothing. The closest is:
+#     https://github.com/mtkennerly/poetry-dynamic-versioning
+#...which does the reverse of what we want. There's an older Poetry plugin
+#called "poetry-version-plugin" that does exactly what we want... except it's no
+#longer maintained and the author just advises everyone to use "uv" instead!
+
 # Human-readable package version as a "."-delimited string.
-version = "0.0.1"
+version = "0.1.0"
 
 # Human-readable single-line synopsis of this project.
 #
@@ -162,7 +175,20 @@ maintainers = [
 #   "vtk" and thus "pyvista" and thus this package currently *CANNOT* be
 #   installed under Python 3.10 using "pip". See also this unresolved VTK issue:
 #       https://gitlab.kitware.com/vtk/vtk/-/issues/18335
+# * Poetry requires that an upper bound be declared. Why? Because poetry is
+#   overly zealous when deployed to Streamlit Cloud. Specifically, poetry
+#   nonsensically insists that this declaration is incompatible with numerous
+#   upstream dependencies we literally could care less about: e.g.,
+#       The current project's Python requirement (>=3.10) is not compatible with
+#       some of the required packages Python requirement:
+#       - cachetools requires Python ~=3.7, so it will not be satisfied for
+#         Python >=4.0
+#       Check your dependencies Python requirement: The Python requirement can
+#       be specified via the `python` or `markers` properties
+#       For cachetools, a possible solution would be to set the `python`
+#       property to ">=3.10,<4.0"
 requires-python = ">=3.10"
+# requires-python = ">=3.10,<4.0"
 
 # List of all mandatory runtime dependencies.
 dependencies = [
@@ -189,6 +215,28 @@ dependencies = [
     # "pydot >=1.4.1",
 ]
 
+# ....................{ PEP 621 ~ paths                    }....................
+# PEP 621-compliant dictionary mapping from the unqualified basenames of all
+# terminal-oriented scripts to be installed in the antiquated format for Python
+# entry points of "{module_name}:{function_name}".
+#
+# Note that:
+# * Streamlit Cloud effectively *REQUIRES* this configuration setting to be set.
+# * This antiquated format ignores the implicit "__main__" standard supported by
+#   all Python interpreters. Instead, an explicit function name is required --
+#   even when that function resides in the "__main__" submodule of a package.
+# * PEP 621 merely standardizes the name of the "[project.scripts]"
+#   configuration group. The contents of this group conform to the antiquated
+#   entry points format standardized literally decades ago by "setuptools".
+#
+# See also:
+# * PEP 621 standardization of entry points:
+#      https://peps.python.org/pep-0621/#entry-points
+# * Entry points specification:
+#       https://packaging.python.org/en/latest/specifications/entry-points/
+[project.scripts]
+betse = "calculion.main:run_calculion"
+
 # ....................{ PEP 621 ~ urls                     }....................
 # Table (i.e., dictionary) mapping from the PyPI-recognized name of each
 # relevant project URL to that URL.
@@ -209,137 +257,143 @@ documentation = "https://github.com/betsee/calculion/blob/main/README.rst"
 
 # List of all third-party Python packages required to build (i.e., install) this
 # project from both codebase tarballs and binary wheels.
-requires = ["poetry-core >=1.0.0"]
+#
+# A relatively recent version of Poetry is required due to:
+# * PEP 621 compliance (i.e., most of this file), which Poetry only supports as
+#   of Poetry >= 2.0.0.
+requires = ["poetry-core >=2.0.0"]
 
 # Fully-qualified name of the Python submodule of a third-party Python package
 # listed above to be imported at runtime by third-party Python package managers
 # (e.g., "pip") to build this project.
 build-backend = "poetry.core.masonry.api"
 
-# ....................{ POETRY                             }....................
-# PEP 621-noncompliant sections defining poetry-specific project metadata.
+#FIXME: Preserved until we verify that Poetry >= 2.0.0 actually does support the
+#full entirety of PEP 621.
+# # ....................{ POETRY                             }....................
+# # PEP 621-noncompliant sections defining poetry-specific project metadata.
+# #
+# # Note that these sections generally omit commentary and discussion except where
+# # required for readability. Why? Because the PEP 621-compliant "[project]"
+# # section defined above obsoletes these PEP 621-noncompliant sections defined
+# # below. When poetry supports the former, most of the latter will be removed.
+# [tool.poetry]
+# name = "calculion"
+# version = "0.0.1"
+# description = """\
+# Calculion is an open-source cross-platform web-based simulator for single-cell \
+# computational problems in the field of bioelectricity.\
+# """
+# license = "MIT"
+# readme = "README.rst"
+# homepage = "https://calculion.streamlit.app"
+# repository = "https://github.com/betsee/calculion"
+# documentation = "https://github.com/betsee/calculion/blob/main/README.rst"
 #
-# Note that these sections generally omit commentary and discussion except where
-# required for readability. Why? Because the PEP 621-compliant "[project]"
-# section defined above obsoletes these PEP 621-noncompliant sections defined
-# below. When poetry supports the former, most of the latter will be removed.
-[tool.poetry]
-name = "calculion"
-version = "0.0.1"
-description = """\
-Calculion is an open-source cross-platform web-based simulator for single-cell \
-computational problems in the field of bioelectricity.\
-"""
-license = "MIT"
-readme = "README.rst"
-homepage = "https://calculion.streamlit.app"
-repository = "https://github.com/betsee/calculion"
-documentation = "https://github.com/betsee/calculion/blob/main/README.rst"
-
-keywords = [
-    "biology",
-    "multiphysics",
-    "science",
-    "simulator",
-]
-classifiers = [
-    # PyPI-specific version type. The number specified here is a magic constant
-    # with no relation to this package's version numbering scheme. *sigh*
-    "Development Status :: 5 - Production/Stable",
-
-    # Miscellaneous metadata.
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3 :: Only",
-    "Topic :: Scientific/Engineering :: Bio-Informatics",
-]
-authors = [
-    "Alexis Pietak <alexis.pietak@gmail.com>",
-]
-maintainers = [
-    "Cecil Curry <leycec@gmail.com>",
-]
-
-# Poetry-specific metadata differing from "[project]" above.
+# keywords = [
+#     "biology",
+#     "multiphysics",
+#     "science",
+#     "simulator",
+# ]
+# classifiers = [
+#     # PyPI-specific version type. The number specified here is a magic constant
+#     # with no relation to this package's version numbering scheme. *sigh*
+#     "Development Status :: 5 - Production/Stable",
 #
-# Note that build metadata like this is out-of-scope for PEP 621 and thus likely
-# requires another section entirely to "[project]" when generalizing this
-# configuration away from poetry.
-packages = [
-    { include = "calculion" }
-]
-include = [
-    { path = "calculion_tests", format = "sdist" }
-]
-
-# Prevent "poetry" from overwriting our existing "setup.py" file. Gah!
-[tool.poetry.build]
-generate-setup-file = false
-
-[tool.poetry.dependencies]
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize this section with dependencies listed above.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# Range of Python interpreter versions required by this project.
+#     # Miscellaneous metadata.
+#     "Intended Audience :: Science/Research",
+#     "License :: OSI Approved :: MIT License",
+#     "Natural Language :: English",
+#     "Operating System :: OS Independent",
+#     "Programming Language :: Python :: 3 :: Only",
+#     "Topic :: Scientific/Engineering :: Bio-Informatics",
+# ]
+# authors = [
+#     "Alexis Pietak <alexis.pietak@gmail.com>",
+# ]
+# maintainers = [
+#     "Cecil Curry <leycec@gmail.com>",
+# ]
 #
-# Note that poetry requires that an upper bound be declared. Why? Because poetry
-# is overly zealous when deployed to Streamlit Cloud. Specifically, poetry
-# nonsensically insists that this declaration is incompatible with numerous
-# upstream dependencies we literally could care less about: e.g.,
-#     The current project's Python requirement (>=3.10) is not compatible with
-#     some of the required packages Python requirement:
-#     - cachetools requires Python ~=3.7, so it will not be satisfied for Python
-#       >=4.0
-#     Check your dependencies Python requirement: The Python requirement can be
-#     specified via the `python` or `markers` properties
-#     For cachetools, a possible solution would be to set the `python` property
-#     to ">=3.10,<4.0"
-python = ">=3.10,<4.0"
-
-# Graph stack.
-# streamlit-agraph = ">=0.0.45"
-
-# QA stack. Dismantled, this is:
-# * beartype >= 0.11.0, the first release to support class decoration.
-beartype = ">=0.11.0"
-
-# Science stack.
-numpy = ">=1.22.0"
-pandas = ">=1.5.0"
-scipy = ">=1.7.0"
-sympy = ">=1.9.0"
-
-# Web stack.
-streamlit = ">=1.19.0"
-
-#FIXME: Uncomment if we ever require "tox".
-# [tool.poetry.group.dev.dependencies]
-# tox = "^3.18"
-
-#FIXME: Note that poetry silently ignores test-time dependencies when included
-#under this supposedly proper grouping. This is a well-known issue with no
-#well-known solution -- at least, when using "pip" as the installer. Ergo, we
-#currently elect to simply list test-time dependencies as standard optional
-#poetry dependencies. See also this open issue:
-#    https://github.com/python-poetry/poetry/issues/3348
-
-# [tool.poetry.group.test]
-# optional = true
+# # Poetry-specific metadata differing from "[project]" above.
+# #
+# # Note that build metadata like this is out-of-scope for PEP 621 and thus likely
+# # requires another section entirely to "[project]" when generalizing this
+# # configuration away from poetry.
+# packages = [
+#     { include = "calculion" }
+# ]
+# include = [
+#     { path = "calculion_tests", format = "sdist" }
+# ]
 #
-# [tool.poetry.group.test.dependencies]
-
-# pytest should ideally remain the only hard dependency for testing on local
-# machines. While our testing regime optionally leverages third-party frameworks
-# and pytest plugins (e.g., "tox", "pytest-xdist"), these dependencies are *NOT*
-# required for simple testing.
+# # Prevent "poetry" from overwriting our existing "setup.py" file. Gah!
+# [tool.poetry.build]
+# generate-setup-file = false
 #
-# A relatively modern version of pytest is required.
-pytest = { version = ">=4.0.0", optional = true }
-
-[tool.poetry.extras]
-# List of all optional runtime dependencies to be installed when this project is
-# installed with the optional "test" extra (e.g., "pip install .[test]").
-test = ["pytest"]
+# [tool.poetry.dependencies]
+# #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# # CAUTION: Synchronize this section with dependencies listed above.
+# #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+# # Range of Python interpreter versions required by this project.
+# #
+# # Note that poetry requires that an upper bound be declared. Why? Because poetry
+# # is overly zealous when deployed to Streamlit Cloud. Specifically, poetry
+# # nonsensically insists that this declaration is incompatible with numerous
+# # upstream dependencies we literally could care less about: e.g.,
+# #     The current project's Python requirement (>=3.10) is not compatible with
+# #     some of the required packages Python requirement:
+# #     - cachetools requires Python ~=3.7, so it will not be satisfied for Python
+# #       >=4.0
+# #     Check your dependencies Python requirement: The Python requirement can be
+# #     specified via the `python` or `markers` properties
+# #     For cachetools, a possible solution would be to set the `python` property
+# #     to ">=3.10,<4.0"
+# python = ">=3.10,<4.0"
+#
+# # Graph stack.
+# # streamlit-agraph = ">=0.0.45"
+#
+# # QA stack. Dismantled, this is:
+# # * beartype >= 0.11.0, the first release to support class decoration.
+# beartype = ">=0.11.0"
+#
+# # Science stack.
+# numpy = ">=1.22.0"
+# pandas = ">=1.5.0"
+# scipy = ">=1.7.0"
+# sympy = ">=1.9.0"
+#
+# # Web stack.
+# streamlit = ">=1.19.0"
+#
+# #FIXME: Uncomment if we ever require "tox".
+# # [tool.poetry.group.dev.dependencies]
+# # tox = "^3.18"
+#
+# #FIXME: Note that poetry silently ignores test-time dependencies when included
+# #under this supposedly proper grouping. This is a well-known issue with no
+# #well-known solution -- at least, when using "pip" as the installer. Ergo, we
+# #currently elect to simply list test-time dependencies as standard optional
+# #poetry dependencies. See also this open issue:
+# #    https://github.com/python-poetry/poetry/issues/3348
+#
+# # [tool.poetry.group.test]
+# # optional = true
+# #
+# # [tool.poetry.group.test.dependencies]
+#
+# # pytest should ideally remain the only hard dependency for testing on local
+# # machines. While our testing regime optionally leverages third-party frameworks
+# # and pytest plugins (e.g., "tox", "pytest-xdist"), these dependencies are *NOT*
+# # required for simple testing.
+# #
+# # A relatively modern version of pytest is required.
+# pytest = { version = ">=4.0.0", optional = true }
+#
+# [tool.poetry.extras]
+# # List of all optional runtime dependencies to be installed when this project is
+# # installed with the optional "test" extra (e.g., "pip install .[test]").
+# test = ["pytest"]

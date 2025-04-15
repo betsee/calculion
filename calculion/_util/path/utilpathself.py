@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -10,7 +10,6 @@ project).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype import beartype
 from calculion.meta import PACKAGE_TEST_NAME
 from calculion._util.cache.utilcachecall import callable_cached
 from calculion._util.path.utilpathmake import (
@@ -21,7 +20,6 @@ from pathlib import Path
 
 # ....................{ GETTERS ~ package                  }....................
 @callable_cached
-@beartype
 def get_package_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **top-level package**
@@ -54,7 +52,6 @@ def get_package_dir() -> Path:
 
 # ....................{ GETTERS ~ main                     }....................
 @callable_cached
-@beartype
 def get_main_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **root project
@@ -83,7 +80,6 @@ def get_main_dir() -> Path:
 
 
 @callable_cached
-@beartype
 def get_main_readme_file() -> Path:
     '''
     :mod:`Path` encapsulating the absolute filename of the **project readme
@@ -99,7 +95,6 @@ def get_main_readme_file() -> Path:
 
 # ....................{ GETTERS ~ data : dir               }....................
 @callable_cached
-@beartype
 def get_data_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **project-wide data
@@ -113,7 +108,6 @@ def get_data_dir() -> Path:
 
 
 @callable_cached
-@beartype
 def get_data_png_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **project-wide
@@ -125,7 +119,6 @@ def get_data_png_dir() -> Path:
 
 
 @callable_cached
-@beartype
 def get_data_svg_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **project-wide
@@ -138,7 +131,6 @@ def get_data_svg_dir() -> Path:
     return DirRelative(get_data_dir(), 'svg')
 
 @callable_cached
-@beartype
 def get_data_html_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **project-wide
@@ -151,7 +143,6 @@ def get_data_html_dir() -> Path:
 # ....................{ GETTERS ~ data : file : png        }....................
 #FIXME: Docstring us up, please.
 @callable_cached
-@beartype
 def get_data_png_cell_network_schematic_0_file() -> Path:
 
     return FileRelative(
@@ -160,7 +151,6 @@ def get_data_png_cell_network_schematic_0_file() -> Path:
 
 #FIXME: Docstring us up, please.
 @callable_cached
-@beartype
 def get_data_png_cell_network_schematic_1_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_1.png')
@@ -168,7 +158,6 @@ def get_data_png_cell_network_schematic_1_file() -> Path:
 
 #FIXME: Docstring us up, please.
 @callable_cached
-@beartype
 def get_data_png_cell_network_schematic_2_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_2.png')
@@ -176,37 +165,31 @@ def get_data_png_cell_network_schematic_2_file() -> Path:
 
 #FIXME: Docstring us up, please.
 @callable_cached
-@beartype
 def get_data_png_cell_network_schematic_3_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3C_3.png')
 
 @callable_cached
-@beartype
 def get_data_png_cell_network_schematic_4_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_BaseLayer.png')
 
 @callable_cached
-@beartype
 def get_data_png_cell_network_schematic_5_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_1.png')
 
 @callable_cached
-@beartype
 def get_data_png_cell_network_schematic_6_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_2.png')
 
 @callable_cached
-@beartype
 def get_data_png_cell_network_schematic_7_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'CellNetworkSchematic_3D_3.png')
 
 @callable_cached
-@beartype
 def get_bioe_network_file() -> Path:
 
     return FileRelative(get_data_svg_dir(), 'BioENet.svg')
@@ -216,27 +199,23 @@ def get_bioe_network_file() -> Path:
 
 #FIXME: Docstring us up, please.
 @callable_cached
-@beartype
 def get_data_png_membrane_schematic_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'MembraneSchematic_2.png')
 
 @callable_cached
-@beartype
 def get_data_png_banner_file() -> Path:
 
     return FileRelative(get_data_png_dir(), 'calculion_logo_lion_banner_i.png')
 
 
 # @callable_cached
-# @beartype
 # def get_data_html_test_file() -> Path:
 #
 #     return FileRelative(get_data_html_dir(), 'test_1.html')
 
 # ....................{ GETTERS ~ data : file : svg        }....................
 # @callable_cached
-# @beartype
 # def get_data_svg_cell_network_schematic_file() -> Path:
 #     '''
 #     :mod:`Path` encapsulating the absolute filename of the **project-wide**
@@ -249,7 +228,6 @@ def get_data_png_banner_file() -> Path:
 #
 #
 # @callable_cached
-# @beartype
 # def get_data_svg_cell_network_schematic_b_file() -> Path:
 #     '''
 #     :mod:`Path` encapsulating the absolute filename of the **project-wide**
@@ -262,7 +240,6 @@ def get_data_png_banner_file() -> Path:
 #
 #
 # @callable_cached
-# @beartype
 # def get_data_svg_membrane_schematic_file() -> Path:
 #     '''
 #     :mod:`Path` encapsulating the absolute filename of the **project-wide**

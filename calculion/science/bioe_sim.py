@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -8,13 +8,11 @@ This module creates system for computing steady-state and iterative bioelectric 
 
 '''
 
-from beartype import beartype
 import numpy as np
 from scipy.optimize import minimize
 from calculion.science.chem_opti import SteadyStateOpti
 from calculion.science.reaction_system import ReactionSystem
 
-@beartype
 def solve_sys_steady_state(bes: ReactionSystem,
                             set_results: bool=False,
                             method: str = 'trust-constr'):

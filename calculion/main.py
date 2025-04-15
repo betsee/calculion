@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -44,7 +44,13 @@ def _register_dir() -> None:
     from sys import path as sys_path
 
     # Log this detection attempt.
-    info('[APP] Detecting whether app package directory requires registration on "sys.path": %s', sys_path)
+    info(
+        (
+            '[APP] Detecting whether app package directory '
+            'requires registration on "sys.path": %s'
+        ),
+        sys_path,
+    )
     # print('Registering app package directory for importation: %s')
 
     # Path object encapsulating the absolute filename of the file defining the
@@ -65,7 +71,10 @@ def _register_dir() -> None:
     # If the current PYTHONPATH does *NOT* already contain this directory...
     if package_dirname not in sys_path:
         # Log this registration attempt.
-        info('[APP] Registering app package directory for importation: %s', package_dirname)
+        info(
+            '[APP] Registering app package directory for importation: %s',
+            package_dirname,
+        )
         # print('Registering app package directory for importation: %s')
 
         # Append this directory to the current PYTHONPATH.
@@ -79,7 +88,7 @@ _register_dir()
 # CAUTION: Avoid importing anything at module scope *EXCEPT* from official
 # Python modules in the standard library guaranteed to exist. Subsequent logic
 # in the _main() function called below validates third-party runtime
-# dependencies of this package to be safely importable, Before performing that
+# dependencies of this package to be safely importable. Before performing that
 # validation, *NO* other modules are safely importable from.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -129,7 +138,7 @@ def main() -> None:
     banner_image_fn = str(get_data_png_banner_file())
     banner_image = Image.open(banner_image_fn)
     st.image(banner_image,
-             use_column_width='always',
+             use_container_width='always',
              output_format="PNG")
 
     # App subtitle, if we want it:
@@ -521,7 +530,7 @@ def main() -> None:
                          f'ion transporters create and shape {l.Vmem} '
                          f'through the creation, maintenance, and modification of transmembrane ion concentration '
                          f'gradients.',
-                 use_column_width='always',
+                 use_container_width='always',
                  output_format="PNG")
 
         st.write(" ") # add a space after the figure
@@ -843,7 +852,7 @@ def main() -> None:
 
             st.image(cell_graph_image,
                      caption=f'Cellular Bioelectric Network Modeled in this Simulation.',
-                     use_column_width='always',
+                     use_container_width='always',
                      output_format="PNG")
 
         st.write(" ") # Add a space
@@ -1172,7 +1181,7 @@ def main() -> None:
                                  f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
                                  f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
                                  f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
-                         use_column_width='always',
+                         use_container_width='always',
                          output_format="PNG")
 
             elif not NaKATP_on and NaKCl_on and not KCl_on:
@@ -1186,7 +1195,7 @@ def main() -> None:
                                  f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
                                  f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
                                  f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
-                         use_column_width='always',
+                         use_container_width='always',
                          output_format="PNG")
 
             elif not NaKATP_on and not NaKCl_on and KCl_on:
@@ -1200,7 +1209,7 @@ def main() -> None:
                                  f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
                                  f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
                                  f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
-                         use_column_width='always',
+                         use_container_width='always',
                          output_format="PNG")
 
             elif not NaKATP_on and NaKCl_on and KCl_on:
@@ -1214,7 +1223,7 @@ def main() -> None:
                                  f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
                                  f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
                                  f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
-                         use_column_width='always',
+                         use_container_width='always',
                          output_format="PNG")
 
             elif NaKATP_on and NaKCl_on and KCl_on:
@@ -1228,7 +1237,7 @@ def main() -> None:
                                  f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
                                  f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
                                  f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
-                         use_column_width='always',
+                         use_container_width='always',
                          output_format="PNG")
 
             elif NaKATP_on and not NaKCl_on and not KCl_on:
@@ -1242,7 +1251,7 @@ def main() -> None:
                                  f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
                                  f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
                                  f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
-                         use_column_width='always',
+                         use_container_width='always',
                          output_format="PNG")
 
             elif NaKATP_on and NaKCl_on and not KCl_on:
@@ -1256,7 +1265,7 @@ def main() -> None:
                                  f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
                                  f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
                                  f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
-                         use_column_width='always',
+                         use_container_width='always',
                          output_format="PNG")
 
             elif NaKATP_on and not NaKCl_on and KCl_on:
@@ -1270,11 +1279,22 @@ def main() -> None:
                                  f'{l.Ved_Na} = {elec_vals_ss.iloc[4, 0]} mV, '
                                  f'{l.Ved_K} = {elec_vals_ss.iloc[5, 0]} mV, '
                                  f'{l.Ved_Cl} = {elec_vals_ss.iloc[6, 0]} mV.',
-                         use_column_width='always',
+                         use_container_width='always',
                          output_format="PNG")
 
             else:
                 raise Exception("Did not account for this scenario!")
+
+# ....................{ MAIN ~ run                         }....................
+#FIXME: To still be done:
+#* Implement this function according to:
+#      https://blog.yericchen.com/python/installable-streamlit-app.html
+#* Finish removing @beartype decorations from the codebase.
+#* Ensure that "calculion.__init__" is actually being imported. Probably, it's
+#  not -- or not imported at the right time, anyway. We'll probably need to at
+#  least shift the beartype_this_package() call to the top of this submodule.
+def run_calculion() -> None:
+    pass
 
 # ....................{ MAIN ~ run                         }....................
 # Run our Streamlit-based web app.

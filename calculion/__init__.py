@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -11,32 +11,21 @@ constants provided by the :mod:`calculion.meta` submodule commonly inspected and
 thus expected by external automation.
 '''
 
-# ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# WARNING: To avoid race conditions during setuptools-based installation, this
-# module may import *ONLY* from modules guaranteed to exist at the start of
-# installation. This includes all standard Python modules and package-specific
-# modules but *NOT* third-party dependencies, which if currently uninstalled
-# will only be installed at some later time in the installation. Likewise, to
-# avoid circular import dependencies, the top-level of this module should avoid
-# importing package-specific modules where feasible.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# ....................{ MONKEY-PATCH                       }....................
-#FIXME: [DEBUG] Temporarily monkey-patch the @beartype decorator away.
-#Specifically, reduce @beartype to the identity decorator during local app
-#development. Why? Because Streamlit's "hot module reload" leveraged during
-#development fundamentally conflicts with runtime type-checkers like @beartype.
-#since this is a Streamlit rather than @beartype issue, @beartype itself is in
-#*NO* position to resolve this. Thanks, Streamlit. Thanks. *sigh*
-import beartype
-
-def identity_decorator(func_or_cls, *args, **kwargs):
-    return func_or_cls
-
-beartype.beartype = identity_decorator
+# ....................{ TODO                               }....................
+#FIXME: [SESSION] As time permits, implement most or all of the excellent advice
+#at this blog article. Although the author focuses on session auto-save and
+#auto-load to improve resiliency in the face of browser timeouts and refreshes
+#(which is essential functionality, really), pretty much *ALL* of the advice
+#here is awesome:
+#    https://towardsdatascience.com/10-features-your-streamlit-ml-app-cant-do-without-implemented-f6b4f0d66d36
 
 # ....................{ IMPORTS                            }....................
+# Subject all subsequent imports to @beartype-based hybrid runtime-static
+# type-checking *BEFORE* importing anything further.
+# from beartype import BeartypeConf
+from beartype.claw import beartype_this_package
+beartype_this_package()
+
 from calculion.meta import VERSION, VERSION_PARTS
 
 # ....................{ GLOBALS                            }....................
@@ -59,24 +48,3 @@ For :pep:`8` compliance, this specifier has the canonical name
 ``__version_info__`` rather than that of a typical global (e.g.,
 ``VERSION_PARTS``).
 '''
-
-# ....................{ TODO                               }....................
-#FIXME: [CONFIG] Define a new ".streamlit/config.toml" file resembling:
-#
-#    #FIXME: Also shift logging settings here from our "main" script, please.
-#
-#    [theme]
-#    # Set Streamlit's built-in Dark Mode as the default theme for this web app.
-#    # By default, Streamlit dynamically detects on app startup whether the
-#    # current browser prefers a light or dark theme and conditionally sets that
-#    # as the default theme for this web app. Since that yields a
-#    # non-deterministic user experience (UX) across browsers, we force
-#    # determinism through our preferred default theme: naturally, Dark.
-#    base = "dark"
-
-#FIXME: [SESSION] As time permits, implement most or all of the excellent advice
-#at this blog article. Although the author focuses on session auto-save and
-#auto-load to improve resiliency in the face of browser timeouts and refreshes
-#(which is essential functionality, really), pretty much *ALL* of the advice
-#here is awesome:
-#    https://towardsdatascience.com/10-features-your-streamlit-ml-app-cant-do-without-implemented-f6b4f0d66d36

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -13,7 +13,6 @@ instances encapsulating arbitrary paths).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype import beartype
 from calculion.error import (
     CalculionDirException,
     CalculionFileException,
@@ -24,7 +23,6 @@ from pathlib import Path
 # These functions are explicitly camelcased to enable their future refactoring
 # into actual classes.
 
-@beartype
 def DirRelative(parent_dir: Path, relative_dirname: str) -> Path:
     '''
     Concrete platform-agnostic :class:`Path` object encapsulating the absolute
@@ -78,7 +76,6 @@ def DirRelative(parent_dir: Path, relative_dirname: str) -> Path:
     return subdir
 
 
-@beartype
 def FileRelative(parent_dir: Path, relative_filename: str) -> Path:
     '''
     Concrete platform-agnostic :class:`Path` object encapsulating the absolute

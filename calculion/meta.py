@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -111,13 +111,6 @@ justification of this constant's current value.
 '''
 
 
-PYTHON_VERSION_MINOR_MAX = 12
-'''
-Maximum minor stable version of this major version of Python currently released
-(e.g., ``5`` if Python 3.5 is the most recent stable version of Python 3.x).
-'''
-
-
 def _convert_version_str_to_tuple(version_str: str) -> tuple:
     '''
     Convert the passed human-readable ``.``-delimited version string into a
@@ -185,12 +178,6 @@ if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
         f'We feel unbearable sadness for you.'
     )
 
-# ....................{ METADATA ~ license                 }....................
-LICENSE = 'MIT'
-'''
-Human-readable name of the license this package is licensed under.
-'''
-
 # ....................{ METADATA ~ package                 }....................
 PACKAGE_MAIN_NAME = 'calculion'
 '''
@@ -231,7 +218,7 @@ Fully-qualified name of the top-level Python package exercising this project.
 # CAUTION: Synchronize changes to this value against the "version" setting in
 # the root "buildozer.spec" file.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 '''
 Human-readable package version as a ``.``-delimited string.
 '''
@@ -240,227 +227,4 @@ Human-readable package version as a ``.``-delimited string.
 VERSION_PARTS = _convert_version_str_to_tuple(VERSION)
 '''
 Machine-readable package version as a tuple of integers.
-'''
-
-# ....................{ METADATA ~ synopsis                }....................
-SYNOPSIS = (
-    'Calculion is an open-source cross-platform web-based simulator for '
-    'single-cell computational problems in the field of bioelectricity.'
-)
-'''
-Human-readable single-line synopsis of this package.
-
-By PyPI design, this string must *not* span multiple lines or paragraphs.
-'''
-
-# ....................{ METADATA ~ authors                 }....................
-AUTHOR_EMAIL = 'alexis.pietak@gmail.com'
-'''
-Email address of the principal corresponding author (i.e., the principal author
-responding to public correspondence).
-'''
-
-
-AUTHORS = 'Alexis Pietak, Cecil Curry, et al.'
-'''
-Human-readable list of all principal authors of this package as a
-comma-delimited string.
-
-For brevity, this string *only* lists authors explicitly assigned copyrights.
-For the list of all contributors regardless of copyright assignment or
-attribution, please see the GitHub UI.
-'''
-
-
-COPYRIGHT = '2022-2023 Alexis Pietak & Cecil Curry.'
-'''
-Legally binding copyright line excluding the license-specific prefix (e.g.,
-``"Copyright (c)"``).
-
-For brevity, this string *only* lists authors explicitly assigned copyrights.
-For the list of all contributors regardless of copyright assignment or
-attribution, see the top-level ``AUTHORS.md`` file.
-'''
-
-# ....................{ METADATA ~ urls                    }....................
-URL_HOMEPAGE = 'https://github.com/betsee/calculion'
-'''
-URL of this package's homepage.
-'''
-
-
-URL_DOWNLOAD = f'{URL_HOMEPAGE}/archive/{VERSION}.tar.gz'
-'''
-URL of the source tarball for the current version of this package.
-
-This URL assumes a tag whose name is ``v{VERSION}`` where ``{VERSION}`` is the
-human-readable current version of this package (e.g., ``v0.4.0``) to exist.
-Typically, no such tag exists for live versions of this package -- which
-have yet to be stabilized and hence tagged. Hence, this URL is typically valid
-*only* for previously released (rather than live) versions of this package.
-'''
-
-
-URL_ISSUES = f'{URL_HOMEPAGE}/issues'
-'''
-URL of this package's issue tracker.
-'''
-
-
-
-URL_RELEASES = f'{URL_HOMEPAGE}/releases'
-'''
-URL of this package's release list.
-'''
-
-# ....................{ METADATA ~ libs                    }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Changes to this section *MUST* be synchronized with:
-# * The "requirements" setting in the root "buildozer.spec" file.
-# * Conda-specific package dependencies listed in the developer-specific
-#   "conda/development/environment.yml" file.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: *AVOID ADDING GPL-LICENSED DEPENDENCIES.* Web backends are
-# explicitly omitted from GPL-licensing requirements (notably, "infection" with
-# viral open-sourcing), which is exactly why the Affero GPL (AGPL) exists.
-# Nonetheless, this specific web backend would prefer to retain the option of
-# transitively importing from one or more non-free closed-source Python
-# packages (e.g., "mkl") despite not currently doing so. Since GPL-licensed
-# dependencies are intrinsically incompatible with closed-source dependencies,
-# our usage of the latter effectively precludes our usage of the former.
-# There is *NO* reasonable way of circumventing this constraint, sadly.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# Relatively recent versions of the standard scientific stack, selected merely
-# because these versions are currently marked as stable on the source-based
-# Gentoo Linux distribution that *EVERYONE* loves! :p
-LIBS_RUNTIME_MANDATORY = (
-    # QA stack. Dismantled, this is:
-    # * beartype >= 0.11.0, the first release to support class decoration.
-    'beartype >=0.11.0',
-
-    # Science stack.
-    'numpy >=1.22.0',
-    'pandas >=1.5.0',
-    'scipy >=1.7.0',
-    'sympy >=1.9.0',
-
-    # Web stack.
-    'streamlit >=1.12.0',
-
-    #FIXME: Uncomment as needed, please.
-    # # 2D stack.
-    # 'svgpathtools >=1.4.1',
-    #
-    # # 3D stack.
-    # 'pyvista >=0.30.0',
-)
-'''
-Mandatory runtime package dependencies as a tuple of :mod:`setuptools`-specific
-requirements strings of the format ``{project_name}
-{comparison1}{version1},...,{comparisonN}{versionN}``, where:
-
-* ``{project_name}`` is a :mod:`setuptools`-specific project name (e.g.,
-  ``numpy``, ``scipy``).
-* ``{comparison1}`` and ``{comparisonN}`` are :mod:`setuptools`-specific
-  version comparison operators. As well as standard mathematical comparison
-  operators (e.g., ``==``, ``>=``, ``<``), :mod:`setuptools` also supports the
-  PEP 440-compliant "compatible release" operator ``~=`` more commonly denoted
-  by ``^`` in modern package managers (e.g., poetry, npm); this operator
-  enables forward compatibility with all future versions of this dependency
-  known *not* to break backward compatibility, but should only be applied to
-  dependencies strictly following the semantic versioning contract.
-* ``{version1}`` and ``{version1}`` are arbitrary version strings (e.g.,
-  ``2020.2.16``, ``0.75a2``).
-'''
-
-
-#FIXME: Intentionally disabled. Optional dependencies have *NO* relevancy to
-#mobile apps and only obfuscate already non-trivial portability complexities.
-# LIBS_RUNTIME_OPTIONAL = ()
-# '''
-# Optional runtime package dependencies as a tuple of :mod:`setuptools`-specific
-# requirements strings of the format ``{project_name}
-# {comparison1}{version1},...,{comparisonN}{versionN}``.
-# '''
-
-# ....................{ METADATA ~ libs                    }....................
-#FIXME: Uncomment as needed. We'll probably at least want this when reporting
-#GitHub Actions-hosted CI test coverage, for example.
-# LIBS_TESTTIME_MANDATORY_COVERAGE = (
-#     'coverage >=5.5',
-# )
-# '''
-# **Mandatory test-time coverage package dependencies** (i.e., dependencies
-# required to measure test coverage for this package) as a tuple of
-# :mod:`setuptools`-specific requirements strings of the format ``{project_name}
-# {comparison1}{version1},...,{comparisonN}{versionN}``.
-#
-# See Also
-# ----------
-# :data:`LIBS_RUNTIME_OPTIONAL`
-#     Further details.
-# '''
-
-
-LIBS_TESTTIME_MANDATORY = (
-    # pytest should ideally remain the only hard dependency for testing on
-    # local machines. While our testing regime optionally leverages third-party
-    # frameworks and pytest plugins (e.g., "tox", "pytest-xdist"), these
-    # dependencies are *NOT* required for simple testing.
-    #
-    # A relatively modern version of pytest is required.
-    'pytest >=4.0.0',
-)
-'''
-**Mandatory developer test-time package dependencies** (i.e., dependencies
-required to test this package with :mod:`tox` as a developer at the command
-line) as a tuple of :mod:`setuptools`-specific requirements strings of the
-format ``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
-
-See Also
-----------
-:data:`LIBS_RUNTIME_MANDATORY`
-    Further details.
-'''
-
-# ....................{ METADATA ~ libs : doc              }....................
-LIBS_DOCTIME_MANDATORY = (
-    'sphinx >=4.4.0',
-)
-'''
-**Mandatory developer documentation build-time package dependencies** (i.e.,
-dependencies required to manually build documentation for this package as a
-developer at the command line) as a tuple of :mod:`setuptools`-specific
-requirements strings of the format ``{project_name}
-{comparison1}{version1},...,{comparisonN}{versionN}``.
-
-For flexibility, these dependencies are loosely relaxed to enable developers to
-build with *any* versions satisfying at least the bare minimum. For the same
-reason, optional documentation build-time package dependencies are omitted.
-Since our documentation build system emits a non-fatal warning for each missing
-optional dependency, omitting these optional dependencies here imposes no undue
-hardships while improving usability.
-
-See Also
-----------
-:data:`LIBS_RUNTIME_MANDATORY`
-    Further details.
-'''
-
-# ....................{ METADATA ~ libs : dev              }....................
-LIBS_DEVELOPER_MANDATORY = LIBS_TESTTIME_MANDATORY + LIBS_DOCTIME_MANDATORY
-'''
-**Mandatory developer package dependencies** (i.e., dependencies required to
-develop and meaningfully contribute pull requests for this package) as a tuple
-of :mod:`setuptools`-specific requirements strings of the format
-``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
-
-This tuple includes all mandatory test- and documentation build-time package
-dependencies and is thus a convenient shorthand for those lower-level tuples.
-
-See Also
-----------
-:data:`LIBS_RUNTIME_MANDATORY`
-    Further details.
 '''

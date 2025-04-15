@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                           )--------------------
@@ -66,6 +66,16 @@
 #    appears to transparently support passing all options specified in this file
 #    as "--"-prefixed command-line options instead.
 #* Define *ONLY* hosting environment-agnostic settings in this file.
+
+# ....................{ BROWSER                            }....................
+[browser]
+
+# Prevent Streamlit from harvesting user telemetry data. Although doing is
+# *PROBABLY* the fine, the significant issue here is that this data is housed in
+# datacenters dispersed throughout the United States. That wasn't an issue in
+# 2024. In 2025, however, that's increasingly an issue. Therefore, we make this
+# a non-issue by simply disabling telemetry altogether. It is what it is.
+gatherUsageStats = false
 
 # ....................{ RUNNER                             }....................
 [runner]

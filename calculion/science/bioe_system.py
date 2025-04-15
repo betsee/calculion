@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2022-2023 Alexis Pietak & Cecil Curry.
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
 Create a bioelectric system for a single cell
 
 '''
-from beartype import beartype
-from beartype.typing import Optional
+
 from calculion.science.model_params import ModelParams
 from calculion.science.chem_base import (Chemical,
                                             TransportReaction,
@@ -16,7 +15,6 @@ from calculion.science.chem_base import (Chemical,
                                             CoupledReaction)
 from calculion.science.reaction_system import ReactionSystem
 
-@beartype
 class BioElectricSystem(object):
     '''
     Create a bioelectric system for modeling a single cell.
