@@ -7,10 +7,8 @@
 Creates a set of commonly-used string names for parameters and other values.
 '''
 
-from beartype import beartype
 from dataclasses import dataclass
 
-@beartype
 @dataclass(frozen=True)
 class StringNames(object):
     '''

@@ -8,220 +8,166 @@ This module creates systems for working with ions and ionic reactions in IonSpir
 
 '''
 
-from beartype import beartype
-from beartype.typing import Optional, Union
 import sympy as sp
-from sympy.core.symbol import Symbol
 import numpy as np
 from numpy import ndarray
 from scipy.optimize import minimize
 import pandas as pd
+from calculion.science.chem_base import (
+    Chemical, TransportReaction, ReactionABC)
 from calculion.science.model_params import ModelParams
-from calculion.science.chem_base import (Chemical, TransportReaction, ReactionABC)
 from calculion.science.string_names import StringNames
-# import pydot
-# from pydot import Dot
 
-@beartype
 class ReactionSystem(object):
     '''
     Create a bioelectric system characterized by a system of reactions and ions
-    that are traversing across a thin membrane between an inside 'i' and outside 'o'
-    compartment, with a transmembrane voltage, V_mem acting across the membrane.
+    that are traversing across a thin membrane between an inside 'i' and outside
+    'o' compartment, with a transmembrane voltage, V_mem acting across the
+    membrane.
 
-    Public Attributes
-    -------------------
+    Attributes
+    ----------
     F : int
         Planck's constant (F=96485 C/mol)
-
     F_s : Symbol
         Symbolic Planck's constant.
-
     Keqm_s : int
         Symbolic reaction equilibrium constant.
-
     R : float
         Ideal gas constant (R=8.314 J/(K mol))
-
     R_s : Symbol
         Symbolic ideal gas constant.
-
     T : int
         Reaction temperature (degrees K).
-
     T_s : Symbol
         Symbolic reaction temperature.
-
     V_s : Symbol
         Symbolic voltage.
-
     Vi_s : Symbol
         Symbolic voltage in interior compartment.
-
     Vm_s : Symbol
         Symbolic transmembrane voltage Vi_s - Vo_s.
-
     Vo_s : Symbol
         Symbolic voltage in exterior compartment.
-
     c_mem : float
         Membrane patch capacitance (F/m^2).
-
     c_norm : float
         Normalizing constant for the reaction, where concentrations are converted into mol/L
         from mol/m3 for thermodynamic purposes.
-
     c_norm_s : Symbol
         Symbolic concentration normalization constant for the system.
-
     chem_vals : list
         List of values of all chemicals.
-
     chem_vals_reduced : list
         List of values of all chemicals that have dynamic concentrations.
-
     chem_vect : list
         List of all chemicals in the reaction system.
-
     chem_vect_reduced : list
         List of all chemicals in the reaction system that have dynamic concentrations.
-
     cm_s : Symbol
         Symbolic representation of membrane capacitance.
-
     d_ecm : float
         Thickness of the extracellular space [m].
-
     d_mem : float
         Thickness of the membrane [m].
-
     div_i : float
         Divergence operator for the interior compartment.
-
     div_i_s : Symbol
         Symbolic divergence operator for the interior compartment.
-
     div_o : float
         Divergence operator for the exterior compartment.
-
     div_o_s : Symbol
         Symbolic divergence operator for the exterior compartment.
-
     divflux_f : function
         Numeric function computing the divergence of the flux for all reactions as a
         vector of fluxes.
-
     divflux_params : list
         Numerical parameter values of the divflux_f function.
-
     divflux_params_list : list
         String attibute names for the numerical parameter values of the divflux_f function.
-
     divflux_s : MutableDenseMatrix
         Symbolic expression representing the divergence of the flux for all reactions as a
         vector of fluxes. Used to create divflux_f.
-
     ghk_f : NoneType or function
         Function to compute Vmem using the GHK Voltage equation.
-
     ghk_params : NoneType or list
         Parameter values for the GHK Voltage function ghk_f.
-
     ghk_params_list : NoneType or list
         String names of parameter attributes for the GHK Voltage function ghk_f.
-
     ghk_s : NoneType or Add
         Symbolic expression to compute Vmem using the GHK Voltage equation.
-
     ion_currents_dict : dict
         Dictionary of ion currents from all reactions summed
         indexed to each transmembrane permeable ion.
-
     jc_arg_vals : list
         List of numerical constants values (static variables) used in jc_f.
-
     jc_args_list : list
         List of string names of constant attibutes (static variables) used in jc_f.
-
     jc_f : function
         Numerical function for computing the total current across the membrane [A].
-
     jc_params_list : list
         List of parameters (dynamic variables) used in jc_f.
-
     r_cell : float
         Radius of the cell (inner compartment) [m].
-
     r_o : float
         Radius of the outer compartment [m].
-
     react_vect : list
         List of all reactions of the system as ReactionABC objects.
-
     total_current_s : Add
         Analytic expression representing the total current across the membrane.
-
 
     Private Attributes
     ---------------------
     _ignore_chem_tag : list
         List of chemicals that will have concentration updates ignored (remain fixed concentration).
-
     _ignore_region_tag : str
         List of regions where all chemicals in the region will have fixed concentration.
-
     _quasi_static_approx : bool
         Use the quasi-static approximation for Vmem?
-
     _transmem_chem_names : list
         Names of chemicals that traverse the membrane.
-
     '''
 
-    def __init__(self,
-                 p: ModelParams,
-                 chem_vect: list[Chemical],
-                 transmem_chem_names: list[str],
-                 reaction_sys_vect: list[ReactionABC],
-                 rate_base_names: list[tuple[str, Union[float, ndarray]]],
-                 quasi_static_approx: bool=False,
-                 ignore_region_updates: Optional[str] = None,
-                 ignore_chem_updates: Optional[list[Chemical]] = None,
-                 ediff_reactions_vector: Optional[list[TransportReaction]] = None
-                 ):
+    def __init__(
+        self,
+        p: ModelParams,
+        chem_vect: list[Chemical],
+        transmem_chem_names: list[str],
+        reaction_sys_vect: list[ReactionABC],
+        rate_base_names: list[tuple[str, float | ndarray]],
+        quasi_static_approx: bool=False,
+        ignore_region_updates: str | None = None,
+        ignore_chem_updates: list[Chemical] | None = None,
+        ediff_reactions_vector: list[TransportReaction] | None = None,
+    ):
         '''
         Initialize the bioelectric system.
 
         Parameters
         -----------
-
-         p : ModelParams
-            Instance of bioelectricity parameters (BioeParams) object.
-
-         chem_vect : list[Chemical]
-            List of all chemical entities involved in all reactions constituting the reaction system.
-
-         transmem_chem_names : list[str]
-            List of all chemicals that traverse the membrane.
-
-         reaction_sys_vect : list[ReactionABC]
-            List of all reaction objects constituting the reaction system.
-
-         rate_base_names : list[tuple[str, Union[float, ndarray]]]
-            String names of all reaction rate constants. In the same order as reaction_sys_vect.
-
-         quasi_static_approx : bool
-            Use the quasi-static approximation for Vmem?
-
-         ignore_region_updates : Optional[str]
-            Ignore updates to concentrations of all chemicals in a region
-            indicated by 'i' for 'in' and 'o' for 'out'.
-
-         ignore_chem_updates : Optional[list[Chemical]]
-            Ignore updates to concentrations of any chemicals present in this list.
-
-         ediff_reactions_vector : Optional[list[TransportReaction]]
-            List of reactions that are strictly electrodiffusion Transport reactions.
+        p : ModelParams
+           Instance of bioelectricity parameters (BioeParams) object.
+        chem_vect : list[Chemical]
+           List of all chemical entities involved in all reactions constituting
+           the reaction system.
+        transmem_chem_names : list[str]
+           List of all chemicals that traverse the membrane.
+        reaction_sys_vect : list[ReactionABC]
+           List of all reaction objects constituting the reaction system.
+        rate_base_names : list[tuple[str, Union[float, ndarray]]]
+           String names of all reaction rate constants. In the same order as
+           reaction_sys_vect.
+        quasi_static_approx : bool
+           Use the quasi-static approximation for Vmem?
+        ignore_region_updates : Optional[str]
+           Ignore updates to concentrations of all chemicals in a region
+           indicated by 'i' for 'in' and 'o' for 'out'.
+        ignore_chem_updates : Optional[list[Chemical]]
+           Ignore updates to concentrations of any chemicals present in this
+           list.
+        ediff_reactions_vector : Optional[list[TransportReaction]]
+           List of reactions that are strictly electrodiffusion Transport
+           reactions.
         '''
 
         # Define constants and parameters
@@ -469,10 +415,10 @@ class ReactionSystem(object):
         for react in self.react_vect:
             self.P_mem_dict[react.P_s.name] = react.P_s
 
+        print('[APP] Completed initialization of bioelectrical system.')
 
-        print("Completed initialization of bioelectrical system.")
 
-    def _get_param_vals(self, param_names_list: Union[list, ndarray]):
+    def _get_param_vals(self, param_names_list: list | ndarray):
         '''
         Given a list of param names, this method harvests the parameter
         values and returns a list of the values.
@@ -489,10 +435,13 @@ class ReactionSystem(object):
 
         return param_vals_list
 
-    def _set_param_vals(self,
-                        param_names_list,
-                        param_names_vals,
-                        keep_positive: Optional[list[bool]]=None):
+
+    def _set_param_vals(
+        self,
+        param_names_list,
+        param_names_vals,
+        keep_positive: list[bool] | None = None,
+    ):
         '''
         Given a list of param names, this method set the parameter
         values to the appropriate variable.
@@ -513,7 +462,8 @@ class ReactionSystem(object):
             for pi, vi in zip(param_names_list, param_names_vals):
                 setattr(self, pi.name, vi)
 
-    def _get_chem_vals(self, param_chem_list: Union[list, ndarray]):
+
+    def _get_chem_vals(self, param_chem_list: list | ndarray):
         '''
         Given a list of param names, this method harvests the parameter
         values and returns a list of the values.
@@ -606,6 +556,7 @@ class ReactionSystem(object):
 
         return self.v_rev_dict, self.v_ed_dict
 
+
     def print_results(self):
         '''
         Print the value of chemicals and Vmem for the system state.
@@ -613,6 +564,7 @@ class ReactionSystem(object):
         for i, (chm, pval) in enumerate(zip(self.chem_vect, self.chem_vals)):
             print(chm.name, pval)
         print(self.V_mem_s.name, self.V_mem*1e3)
+
 
     def get_pmem_vals(self, ion_perm_list: list[str], resting_pmem_dict: dict) -> dict:
         '''
@@ -625,15 +577,19 @@ class ReactionSystem(object):
 
             if pv is not None:
                 resting_pmem_dict[ion_name] = pv
-
             else:
-                raise Exception('Ion membrane permeability not found in bioelectric system!')
+                raise Exception(
+                    'Ion membrane permeability not found in bioelectric system!'
+                )
 
         return resting_pmem_dict
 
-    def set_pmem_vals(self,
-                      ion_perm_list: list[str],
-                      perm_vals: Union[list, ndarray]):
+
+    def set_pmem_vals(
+        self,
+        ion_perm_list: list[str],
+        perm_vals: list | ndarray,
+    ):
         '''
         Set the list of permittivity values in self._perm_vals to the bes system.
 

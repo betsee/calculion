@@ -15,7 +15,7 @@ submodule is passed as the value of the ``--m`` option to this interpreter on
 the command line (e.g., ``python3 -m ionyouapp``).
 
 Caveats
-----------
+-------
 Streamlit does *not* support running high-level submodules contained in Python
 packages as Streamlit-based web apps. Currently, Streamlit *only* supports
 running low-level Python scripts agnostic of Python packaging. The latter
@@ -33,6 +33,7 @@ approach as well. This submodule is architected ala this StackOverflow answer:
 #FIXME: Unsurprisingly, we ended up *NOT* using this file. Streamlit is
 #incredibly particular about startup execution. We finally relented and now
 #simply launch this app in the standard (albeit non-ideal) Streamlit way.
+#Consequently, this submodule is vestigial and only preserved for posterity.
 
 #FIXME: Consider submitting an answer to this StackOverflow thread:
 #    https://stackoverflow.com/a/62775219/2809027

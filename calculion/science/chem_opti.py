@@ -8,20 +8,14 @@ This module creates systems for working with ions and ionic reactions in IonSpir
 
 '''
 import copy
-from beartype import beartype
-from beartype.typing import Optional, Union
 import sympy as sp
 from sympy.core.symbol import Symbol
 import numpy as np
 from numpy import ndarray
-from scipy.optimize import minimize, basinhopping
 from calculion.science.channel_base import DynamicChannelABC
-from calculion.science.chem_base import ReactionABC
 from calculion.science.reaction_system import ReactionSystem
-from calculion.science.model_params import ModelParams
 
 
-@beartype
 class SteadyStateOpti(object):
     '''
     Use the Gauss-Newton method to find the steady-state values of a bioelectric
@@ -73,12 +67,13 @@ class SteadyStateOpti(object):
 
     '''
 
-    def __init__(self,
-                 bes: ReactionSystem,
-                 ss_params_list: list[Symbol],
-                 keep_positive: Optional[list[bool]]=None,
-                 norm_params: float=1.0
-                 ):
+    def __init__(
+        self,
+        bes: ReactionSystem,
+        ss_params_list: list[Symbol],
+        keep_positive: list[bool] | None = None,
+        norm_params: float=1.0
+    ):
         '''
         Initialize the SteadyStateOpti object.
 
@@ -151,7 +146,8 @@ class SteadyStateOpti(object):
         # And the numerical hessian:
         self.hess_opti_f = sp.lambdify((ss_params_list, self.args_list), self.hess_opti_s)
 
-    def print_results(self, ss_params: Union[list, ndarray]):
+
+    def print_results(self, ss_params: list | ndarray):
         '''
         Prints the results of the optimization.
 
@@ -159,8 +155,8 @@ class SteadyStateOpti(object):
         ----------
         ss_params: Union[list, ndarray]
             Values of the optimized parameters, ordered according to self.ss_params_list.
-
         '''
+
         for i, (pnme, pval) in enumerate(zip(self.ss_params_list, ss_params)):
             if i == len(ss_params) - 1:
                 print(pnme, pval * 1e3)
@@ -230,11 +226,10 @@ class IterSim(object):
 
     '''
 
-    # @beartype
     def __init__(self,
-                 bes: ReactionSystem,
-                 channels_list: Optional[list[DynamicChannelABC]]=None,
-                 ):
+        bes: ReactionSystem,
+        channels_list: list[DynamicChannelABC] | None = None,
+    ):
         '''
         bes : ReactionSystem
             An instance of ReactionSystem defining all reactions of the system to be
@@ -260,13 +255,15 @@ class IterSim(object):
             self.chem_sim_name.append(chm.name)
 
 
-    def run_iter_sim(self,
-                     dt: float,
-                     N_iter: int,
-                     use_quasi_static_approx: bool=False,
-                     use_hodgkin_huxley: bool = False,
-                     clamp_vmem_at: Optional[float]=None,
-                     sweep_vmem_vals: Optional[tuple[float, float]]=None):
+    def run_iter_sim(
+        self,
+        dt: float,
+        N_iter: int,
+        use_quasi_static_approx: bool=False,
+        use_hodgkin_huxley: bool = False,
+        clamp_vmem_at: float | None = None,
+        sweep_vmem_vals: tuple[float, float] | None = None
+    ):
         '''
         Run an iterative simulation using the system-calculated
         equations to update chemical concentrations and Vmem.

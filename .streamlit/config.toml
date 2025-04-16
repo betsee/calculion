@@ -77,6 +77,24 @@
 # a non-issue by simply disabling telemetry altogether. It is what it is.
 gatherUsageStats = false
 
+# ....................{ LOGGER                             }....................
+#FIXME: Streamlit logging just... does *NOT* appear to work. Like, at all.
+#Unsure what's going on here or where exactly this logfile exists. For now,
+#though, it's clear that most Streamlit devs just print() instead. *lolbro*
+# [logger]
+#
+# # Level of logging for Streamlit's internal logger: "error", "warning",
+# # "info", or "debug".
+# # Default: "info"
+# level = "info"
+#
+# # String format for logging messages. If logger.datetimeFormat is set,
+# # logger messages will default to `%(asctime)s.%(msecs)03d %(message)s`.
+# # See Python's documentation for available attributes:
+# # https://docs.python.org/3/library/logging.html#formatter-objects
+# # Default: "%(asctime)s %(message)s"
+# messageFormat = "%(asctime)s %(message)s"
+
 # ....................{ RUNNER                             }....................
 [runner]
 

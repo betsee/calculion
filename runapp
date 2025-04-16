@@ -71,6 +71,10 @@ PYTHON_ARGS=(
     calculion/main.py
 
     #FIXME: Uncomment to increase the debugging level.
+    #FIXME: This does *NOT* appear to work. Like, at all. Streamlit chews up
+    #logging statements without actually printing them or writing them to disk.
+    #For presumably this exact reason, online Streamlit forums suggest that most
+    #devs just print() rather than logging. *lolbro*
     # Log *ONLY* informational messages, warnings, errors, and exceptions.
     --logger.level=info
 

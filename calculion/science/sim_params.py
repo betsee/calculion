@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
-# Copyright (c) 2021-2023 Alexis Pietak & Cecil Curry.
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2022-2025 Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
 Input parameter definition and storage class for simulation settings of
 bioelectric system models.
-
 '''
 
-from beartype import beartype
-from beartype.typing import Optional
 from dataclasses import dataclass
 
-@beartype
 @dataclass
 class SimParams(object):
     '''
     Default parameter initialization and storage class for use in
     bioelectrical system modeling.
-
     '''
 
     def __init__(self):
@@ -55,6 +50,7 @@ class SimParams(object):
         self.use_hh_math: bool = False
 
         self.update_parameters()
+
 
     def update_parameters(self):
 

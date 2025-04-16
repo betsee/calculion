@@ -131,6 +131,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
@@ -141,7 +142,7 @@ classifiers = [
 # These authors should be thought of as the corresponding authors of a paper.
 # Academic correspondence should be redirected to these authors.
 authors = [
-    { name="Alexis Pietak", email="<alexis.pietak@gmail.com>" },
+    { name="Alexis Pietak", email="alexis.pietak@gmail.com" },
 ]
 
 # List of all secondary authors of this package as a list of tables (i.e.,
@@ -151,7 +152,7 @@ authors = [
 # but lack the scientific expertise to respond to external inquiries. Therefore,
 # academic correspondence should *NOT* be redirected to these authors.
 maintainers = [
-    { name="Cecil Curry", email="<leycec@gmail.com>" },
+    { name="Cecil Curry", email="leycec@gmail.com" },
 ]
 
 # ....................{ PEP 621 ~ dependencies             }....................
@@ -234,21 +235,26 @@ dependencies = [
 #      https://peps.python.org/pep-0621/#entry-points
 # * Entry points specification:
 #       https://packaging.python.org/en/latest/specifications/entry-points/
-[project.scripts]
-betse = "calculion.main:run_calculion"
+
+#FIXME: Tragically, this doesn't actually work. We tried literally everything,
+#but Streamlit just refuses by raising the dreaded:
+#    StreamlitSetPageConfigMustBeFirstCommandError: `set_page_config()` can only
+#    be called once per app page, and must be called as the first Streamlit
+#    command in your script.
+# [project.scripts]
+# calculion = "calculion.main:run_streamlit"
 
 # ....................{ PEP 621 ~ urls                     }....................
 # Table (i.e., dictionary) mapping from the PyPI-recognized name of each
 # relevant project URL to that URL.
 [project.urls]
-
-#FIXME: Additionally define an issue tracker URL, please.
-
-homepage = "https://calculion.streamlit.app"
-repository = "https://github.com/betsee/calculion"
+Home     = "https://calculion.streamlit.app"
 
 #FIXME: Replace with a link to more suitable documentation, please.
-documentation = "https://github.com/betsee/calculion/blob/main/README.rst"
+Docs     = "https://github.com/betsee/calculion/blob/main/README.rst"
+GitHub   = "https://github.com/betsee/calculion"
+Issues   = "https://github.com/betsee/calculion/issues"
+Releases = "https://github.com/betsee/calculion/releases"
 
 # ....................{ PEP 517                            }....................
 # PEP 517-compliant section declaring the third-party build tools required to
@@ -257,19 +263,130 @@ documentation = "https://github.com/betsee/calculion/blob/main/README.rst"
 
 # List of all third-party Python packages required to build (i.e., install) this
 # project from both codebase tarballs and binary wheels.
-#
-# A relatively recent version of Poetry is required due to:
-# * PEP 621 compliance (i.e., most of this file), which Poetry only supports as
-#   of Poetry >= 2.0.0.
-requires = ["poetry-core >=2.0.0"]
+requires = ["hatchling >=1.14.0"]
 
 # Fully-qualified name of the Python submodule of a third-party Python package
 # listed above to be imported at runtime by third-party Python package managers
 # (e.g., "pip") to build this project.
-build-backend = "poetry.core.masonry.api"
+build-backend = "hatchling.build"
+
+# ....................{ NON-PEP ~ hatch                    }....................
+# PEP-noncompliant section declaring Hatch-specific version settings. See also:
+# * Official documentation for this section.
+#   https://hatch.pypa.io/latest/version
+[tool.hatch.version]
+
+# Relative filename of the Python submodule defining either a PEP 8-compliant
+# "__version__" dunder global *OR* a PEP-noncompliant "VERSION" global, which
+# Hatch then statically parses to obtain the current version of this project.
+path = "calculion/meta.py"
+
+# ....................{ NON-PEP ~ hatch : path             }....................
+# PEP-noncompliant section declaring Hatch-specific build settings. Note that:
+# * Hatch silently ignores *ALL* pathnames matched by ".gitignore" files
+#   distributed throughout this codebase.
+[tool.hatch.build]
+
+# PEP-noncompliant section declaring Hatch-specific build settings when
+# building binary distributions (e.g., wheels).
+[tool.hatch.build.targets.wheel]
+
+# Whitelist of one or more Bash-style glob expressions matching the relative
+# pathnames of all paths to be included in binary distributions (e.g., wheels)
+# but *NOT* source distributions (e.g., tarballs) created by Hatch.
+include = [
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with glob expressions for source distributions below.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Glob expression recursively matching *ALL* Python submodules in this
+    # project's package directory.
+    "/calculion/**/*.py",
+
+    # Relative dirname of this project's data subdirectory (i.e., unimportable
+    # subdirectory bundled with this project containing *ONLY* Python-agnostic
+    # media files).
+    "/calculion/data/",
+
+    # Relative filenames of all requisite package-level installation-time files.
+    "/calculion/py.typed",
+]
+
+# PEP-noncompliant section declaring Hatch-specific build settings when
+# building source distributions (e.g., tarballs).
+[tool.hatch.build.targets.sdist]
+
+# Whitelist of one or more Bash-style glob expressions matching the relative
+# pathnames of all paths to be included in source distributions (e.g., tarballs)
+# but *NOT* binary distributions (e.g., wheels) created by Hatch.
+#
+# Note that:
+# * This setting is the Hatch-specific equivalent of the setuptools-specific
+#   "MANIFEST.in" file, which serves a similar (albeit non-standard, poorly
+#   documented, and obfuscatory) purpose in the setuptools community.
+# * Hatch *ALWAYS* implicitly includes at least these files in source
+#   distributions:
+#   * ".gitignore".
+#   * "AUTHORS".
+#   * "LICENSE".
+#   * "README*".
+#   * "pyproject.toml".
+#
+# Nonetheless, explicit is better than implicit. Trusting all future versions of
+# Hatch to preserve this contract is a bridge too far for us. Ergo, we
+# explicitly match *ALL* paths to be included in source distributions here.
+include = [
+    # Relative basenames of all requisite files residing in *ANY* directory.
+    ".gitignore",
+
+    # Relative basenames of all requisite top-level installation-time files.
+    "/LICENSE",
+    "/README.rst",
+    "/pyproject.toml",
+    "/pytest",
+    "/pytest.ini",
+    "/.coveragerc",
+
+    # Glob expression recursively matching *ALL* Python submodules in this
+    # project's test suite.
+    "/calculion_test/**/*.py",
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with glob expressions for binary distributions above.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Glob expression recursively matching *ALL* Python submodules in this
+    # project's package directory.
+    "/calculion/**/*.py",
+
+    # Relative dirname of this project's data subdirectory (i.e., unimportable
+    # subdirectory bundled with this project containing *ONLY* Python-agnostic
+    # media files).
+    "/calculion/data/",
+
+    # Relative filenames of all requisite package-level installation-time files.
+    "/calculion/py.typed",
+]
 
 #FIXME: Preserved until we verify that Poetry >= 2.0.0 actually does support the
 #full entirety of PEP 621.
+# # PEP 517-compliant section declaring the third-party build tools required to
+# # install this "pyproject.toml"-based project.
+# [build-system]
+#
+# # List of all third-party Python packages required to build (i.e., install) this
+# # project from both codebase tarballs and binary wheels.
+# #
+# # A relatively recent version of Poetry is required due to:
+# # * PEP 621 compliance (i.e., most of this file), which Poetry only supports as
+# #   of Poetry >= 2.0.0.
+# requires = ["poetry-core >=2.0.0"]
+#
+# # Fully-qualified name of the Python submodule of a third-party Python package
+# # listed above to be imported at runtime by third-party Python package managers
+# # (e.g., "pip") to build this project.
+# build-backend = "poetry.core.masonry.api"
+#
 # # ....................{ POETRY                             }....................
 # # PEP 621-noncompliant sections defining poetry-specific project metadata.
 # #

@@ -16,72 +16,76 @@ Specifically, this submodule is imported by:
 * Integration tests programmatically exercising app functionality.
 '''
 
-
-# ....................{ KLUDGES ~ path                     }....................
+# ....................{ PYTHONPATH                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Kludge PYTHONPATH *BEFORE* importing from this package below.
+# CAUTION: Kludge "${PYTHONPATH}" *BEFORE* importing from this package below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Explicitly register all files and subdirectories of the parent directory
 # containing this module to be importable modules and packages (respectively)
 # for the remainder of this Python process if this directory has yet to be
 # registered.
 #
-# Technically, this should *NOT* be required. Streamlit should implicitly
+# Technically, this should *not* be required. Streamlit should implicitly
 # guarantee this to be the case. Indeed, when Streamlit is run as a module
-# (e.g., as "python3 -m streamlit run {app_name}/main.py"), Streamlit does just
-# that. Unfortunately, when Streamlit is run as an external command (e.g., as
-# "streamlit run {app_name}/main.py"), Streamlit does *NOT* guarantee this to be
-# the case. Since Streamlit Cloud runs Streamlit as an external command rather
-# than as a module, Streamlit Cloud effectively does *NOT* guarantee this to be
-# the case as well.
-
+# (e.g., as ``python3 -m streamlit run {app_name}/main.py``), Streamlit does
+# just that. Unfortunately, when Streamlit is run as an external command
+# (e.g., as ``streamlit run {app_name}/main.py``), Streamlit does *not*
+# guarantee this to be the case. Since Streamlit Cloud runs Streamlit as an
+# external command rather than as a module, Streamlit Cloud effectively does
+# *not* guarantee this to be the case as well.
+#
 # Isolate this kludge to a private function for safety.
-def _register_dir() -> None:
 
-    # Defer kludge-specific imports. Avert thy eyes, purist Pythonistas!
-    from logging import info
-    from pathlib import Path
-    from sys import path as sys_path
+# Kludge-specific imports. Avert thy eyes, purist Pythonistas!
+from pathlib import Path
+from sys import path as sys_path
 
-    # Log this detection attempt.
-    info(
-        (
-            '[APP] Detecting whether app package directory '
-            'requires registration on "sys.path": %s'
-        ),
-        sys_path,
+# Log this detection attempt.
+print(
+    f'[APP] Detecting whether app package directory '
+    f'requires registration on "sys.path": {sys_path}'
+)
+
+# ....................{ PYTHONPATH ~ globals               }....................
+_MAIN_FILE = Path(__file__).resolve(strict=True)
+'''
+Path object encapsulating the absolute filename of the file defining the current
+module.
+
+Note that doing so may raise either:
+
+* If this file inexplicably does *not* exist, :exc:`FileNotFoundError`.
+* If this file inexplicably resides under a directory subject to an infinite
+  symbolic link loop, :exc:`RuntimeError`.
+
+Note that neither of these edge cases should ever happen. Nonetheless,
+they might. This is why we ``strict=True``.
+'''
+
+
+_PACKAGE_DIRNAME = str(_MAIN_FILE.parents[1])
+'''
+Absolute dirname of the parent directory containing this app's top-level
+package, which is guaranteed to be either:
+
+* If this app is currently installed editably (e.g., ``pip install -e .``),
+  the repository directory containing the ``.git/`` directory for this app.
+* If this app is currently installed non-editably (e.g., ``pip install .``),
+  the equivalent of the ``site-packages/`` directory for the active Python.
+'''
+
+# ....................{ PYTHONPATH ~ kludge                }....................
+# If the current PYTHONPATH does *NOT* already contain this directory...
+if _PACKAGE_DIRNAME not in sys_path:
+    # Log this registration attempt.
+    print(
+        f'[APP] Registering app package directory for importation: '
+        f'{_PACKAGE_DIRNAME}'
     )
     # print('Registering app package directory for importation: %s')
 
-    # Path object encapsulating the absolute filename of the file defining the
-    # current module. Note that doing so may raise either:
-    # * If this file inexplicably does *NOT* exist, "FileNotFoundError".
-    # * If this file inexplicably resides under a directory subject to an
-    #   infinite symbolic link loop, "RuntimeError".
-    main_file = Path(__file__).resolve(strict=True)
-
-    # Absolute dirname of the parent directory containing this app's top-level
-    # package, which is guaranteed to be either:
-    # * If this app is currently installed editably (e.g., "pip install -e ."),
-    #   the repository directory containing the ".git/" directory for this app.
-    # * If this app is currently installed non-editably (e.g., "pip install ."),
-    #   the equivalent of the "site-packages/" directory for the active Python.
-    package_dirname = str(main_file.parents[1])
-
-    # If the current PYTHONPATH does *NOT* already contain this directory...
-    if package_dirname not in sys_path:
-        # Log this registration attempt.
-        info(
-            '[APP] Registering app package directory for importation: %s',
-            package_dirname,
-        )
-        # print('Registering app package directory for importation: %s')
-
-        # Append this directory to the current PYTHONPATH.
-        sys_path.append(package_dirname)
-
-# Kludge us up the bomb.
-_register_dir()
+    # Append this directory to the current PYTHONPATH.
+    sys_path.append(_PACKAGE_DIRNAME)
 
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -92,18 +96,22 @@ _register_dir()
 # validation, *NO* other modules are safely importable from.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ MAIN                               }....................
-def main() -> None:
+# ....................{ RUNNERS                            }....................
+def run_streamlit_app() -> None:
     '''
-    Core function running this Streamlit-based web app: **Calculion.**
+    Perform *all* business logic implementing this Streamlit-based web app.
+
+    This is the main function underlying this app.
     '''
+    print('[APP] Constructing and displaying UI...')
 
     # ..................{ IMPORTS                            }..................
+    # Defer runner-specific imports.
     import streamlit as st
-    from PIL import Image
     import numpy as np
     import copy
     import pandas as pd
+    from PIL import Image
     from calculion.science.model_params import ModelParams
     from calculion.science.sim_params import SimParams
     from calculion.science.bioe_system import BioElectricSystem
@@ -122,16 +130,21 @@ def main() -> None:
         get_data_png_cell_network_schematic_7_file,
         get_data_png_membrane_schematic_file,
         get_data_png_banner_file,
-
     )
     # from pandas import DataFrame
     # from calculion.scratch_science.compute import get_steady_state
-    from streamlit import (
-        set_page_config
-    )
 
     # ..................{ HEADERS                            }..................
-    set_page_config(layout="wide") # set a wide page configuration?
+    from streamlit import set_page_config
+
+    # Set a wide page configuration.
+    #
+    # Note that this *MUST* be the first call to a Streamlit function in this
+    # app. When this is *NOT* the case, Streamlit raises the dreaded:
+    #    StreamlitSetPageConfigMustBeFirstCommandError: `set_page_config()` can
+    #    only be called once per app page, and must be called as the first
+    #    Streamlit command in your script.
+    set_page_config(layout='wide')
 
     # Human-readable title of this web app.
     # title('CalculIon')
@@ -454,16 +467,21 @@ def main() -> None:
 
 
     # ..................{ RESULTS                            }..................
+    #FIXME: Pretty awkward. Ideally, these functions should:
+    #* Be fully type-checked with type hints.
+    #* Reside outside this script in some other lower-level submodule in the
+    #  existing "calculion.science" subpackage.
+
     # After collecting parameter values from the user, compute the steady-state
     # values for the bioelectrical system.
     # @st.cache_data
-    def make_bioe_system(p):
+    def make_bioe_system(p) -> BioElectricSystem:
         sim = BioElectricSystem(p)  # Create the full bioelectrical study object
         besi = sim.bes  # alias to the ReactionSystem object
         return besi
 
     # @st.cache_resource # Cache the results of this slower function
-    def calculate_ss_results(_besi):
+    def calculate_ss_results(_besi: BioElectricSystem):
 
         # sim = BioElectricSystem(p)  # Create the full bioelectrical study object
         # bes = sim.bes  # alias to the ReactionSystem object
@@ -497,9 +515,6 @@ def main() -> None:
 
 
         return time, vm_time, chem_time, isim
-
-
-
 
     # ..................{ TABS                               }..................
     # Split the main area into these three tabs:
@@ -1285,17 +1300,73 @@ def main() -> None:
             else:
                 raise Exception("Did not account for this scenario!")
 
-# ....................{ MAIN ~ run                         }....................
-#FIXME: To still be done:
-#* Implement this function according to:
-#      https://blog.yericchen.com/python/installable-streamlit-app.html
-#* Finish removing @beartype decorations from the codebase.
-#* Ensure that "calculion.__init__" is actually being imported. Probably, it's
-#  not -- or not imported at the right time, anyway. We'll probably need to at
-#  least shift the beartype_this_package() call to the top of this submodule.
-def run_calculion() -> None:
-    pass
+# ....................{ RUNNERS ~ streamlit                }....................
+#FIXME: Tragically, this doesn't actually work. We tried literally everything,
+#but Streamlit just refuses by raising the dreaded:
+#    StreamlitSetPageConfigMustBeFirstCommandError: `set_page_config()` can only
+#    be called once per app page, and must be called as the first Streamlit
+#    command in your script.
+# def run_streamlit() -> None:
+#     '''
+#     Run this script as a Streamlit-based web app.
+#
+#     This is the main entry-point underlying the ``calculion`` script installed
+#     by the ``[project.scripts]`` subsection of our top-level ``pyproject.toml``
+#     configuration file.
+#
+#     See Also
+#     --------
+#     https://blog.yericchen.com/python/installable-streamlit-app.html
+#         External blog article strongly inspiring this implementation.
+#     '''
+#
+#     # Defer runner-specific imports.
+#     import sys
+#     from calculion.meta import PACKAGE_MAIN_NAME
+#     from runpy import run_module
+#     print(f'[APP] Running "{PACKAGE_MAIN_NAME}" script entry-point...')
+#
+#     # Enable these globals to be redefined.
+#     # global _is_run_streamlit_app
+#
+#     # Prevent the default logic below from calling the run_streamlit_app()
+#     # function defined above. Why? Because the run_module() function called
+#     # below already implicitly re-loads and re-runs this script and thus the
+#     # run_streamlit_app() function. Streamlit explicitly prohibits attempts to
+#     # re-run the same app twice, typically by raising an exception resembling:
+#     #     StreamlitSetPageConfigMustBeFirstCommandError: `set_page_config()` can
+#     #     only be called once per app page, and must be called as the first
+#     #     Streamlit command in your script.
+#     # _is_run_streamlit_app = False
+#
+#     # Replace the current command-line argument list used to run this script
+#     # (presumably, simply the absolute filename of this script) with a new
+#     # argument list running this script under Streamlit's "run" subcommand.
+#     # Although abstruse, Streamlit requires this as a mandatory integration.
+#     #
+#     # Note that:
+#     # * This intentionally preserves all arguments passed by the caller. Oddly,
+#     #   Streamlit's "run" subcommand accepts "--"-prefixed options *AFTER* the
+#     #   Streamlit script to be run. See our top-level "main" shell script for a
+#     #   real-world example.
+#     sys.argv = ['streamlit', 'run', str(_MAIN_FILE)] + sys.argv[1:]
+#
+#     # Dynamically import and run the third-party "streamlit.__main__" submodule
+#     # as a script, using the same public API as the CPython interpreter itself
+#     # uses to import and run "{package_name}.__main__" submodules via commands
+#     # resembling:
+#     #     python -m package_name
+#     #
+#     # When run in this manner, the "streamlit.__main__" submodule then
+#     # dynamically inspects the "sys.argv" global for the command-line argument
+#     # list specifying the Streamlit script to be run. This is madness. \o/
+#     run_module('streamlit', run_name='__main__')
+#     exit(0)
 
 # ....................{ MAIN ~ run                         }....................
-# Run our Streamlit-based web app.
-main()
+# If this file is loaded and run as a script, run our Streamlit-based web app.
+# if _is_run_streamlit_app:
+if __name__ == '__main__':
+    run_streamlit_app()
+# Else, this file is imported from another module. In this case, avoid running
+# our Streamlit-based web app. Presumably, the caller is capable of doing so.

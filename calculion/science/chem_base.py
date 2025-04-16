@@ -9,16 +9,13 @@ This module creates systems for working with ions and ionic reactions in IonSpir
 '''
 
 from abc import ABCMeta, abstractmethod
-from beartype import beartype
-from beartype.typing import Optional, Union
 import sympy as sp
-from sympy.core.symbol import Symbol
+# from sympy.core.symbol import Symbol
 import numpy as np
 from numpy import ndarray
 from calculion.science.chem_enum import ReactionClass, SystemDimension
 
 
-@beartype
 class Chemical(object):
     '''
     An object to store all the data associated with a typical ionic substance.
@@ -37,7 +34,7 @@ class Chemical(object):
 
     '''
 
-    def __init__(self, name: str, z: int, c: Union[float, ndarray]):
+    def __init__(self, name: str, z: int, c: float | ndarray):
         '''
         Initialize the ion object.
 
@@ -56,7 +53,8 @@ class Chemical(object):
         self.symbol = sp.symbols(name, real=True, positive=True) # create a Sympy symbol for the name
         self.z = z # Charge of the ion
         self.c = c # Initial concentration of the ion
-@beartype
+
+
 class CoupledReaction(object):
     '''
     Class to define a reaction that will be coupled to another reaction, for example, this
@@ -65,7 +63,7 @@ class CoupledReaction(object):
 
     Public Attributes
     -----------------
-    deltaGo : Union[int, float]
+    deltaGo : int | float
         The standard Gibbs Free Energy of the reaction in J/mol.
 
     deltaGo_s : Symbol
@@ -77,14 +75,14 @@ class CoupledReaction(object):
     _react_list : list[Chemical]
         A list of the Chemical objects that are the reactants in the reaction.
 
-    _react_stoic : list[Union[float, int]]
+    _react_stoic : list[int | float]
         A list of floats representing the stoichiometry of each reactant in the reaction.
         Must be in the same order as the react_list Chemicals.
 
     _prod_list : list[Chemical]
         A list of the Chemical objects that are the products in the reaction.
 
-    _prod_stoic : list[Union[float, int]]
+    _prod_stoic : list[int | float]
         A list of floats representing the stoichiometry of each product in the reaction.
         Must be in the same order as the prod_list Chemicals.
 
@@ -92,11 +90,11 @@ class CoupledReaction(object):
 
     def __init__(self,
                  react_list: list[Chemical],
-                 react_stoic: list[Union[float, int]],
+                 react_stoic: list[int | float],
                  prod_list: list[Chemical],
-                 prod_stoic: list[Union[float, int]],
-                 deltaGo: Union[int, float] = 0.0,
-                 deltaGo_base_name: Optional[str] = None):
+                 prod_stoic: list[int | float],
+                 deltaGo: int | float = 0.0,
+                 deltaGo_base_name: str | None = None):
         '''
         Initialize the reaction object.
 
@@ -105,21 +103,21 @@ class CoupledReaction(object):
         react_list : list[Chemical]
             A list of the Chemical objects that are the reactants in the reaction.
 
-        react_stoic : list[Union[float, int]]
+        react_stoic : list[int | float]
             A list of floats representing the stoichiometry of each reactant in the reaction.
             Must be in the same order as the react_list Chemicals.
 
         prod_list : list[Chemical]
             A list of the Chemical objects that are the products in the reaction.
 
-        prod_stoic : list[Union[float, int]]
+        prod_stoic : list[int | float]
             A list of floats representing the stoichiometry of each product in the reaction.
             Must be in the same order as the prod_list Chemicals.
 
-        deltaGo : Union[int, float]
+        deltaGo : int | float
             The standard Gibbs Free Energy of the reaction in J/mol.
 
-        deltaGo_base_name : Optional[str]
+        deltaGo_base_name : str | None
             A string name representing the standard Gibbs Free energy of the reaction, which is
             used in analytic sympy expressions.
 
@@ -137,23 +135,23 @@ class CoupledReaction(object):
         else:
             self.deltaGo_s = sp.symbols(deltaGo_base_name, real=True)
 
-@beartype
+
 class ReactionABC(object, metaclass=ABCMeta):
     '''
     Base class for Reactions.
 
     Public Attributes
     -----------------
-    deltaGo : Union[int, float]
+    deltaGo : int | float
         The standard Gibbs Free Energy of the reaction in J/mol.
 
-    rate_const : Union[int, float]
+    rate_const : int | float
         The rate constant for the reaction.
 
-    reaction_name : Optional[str]
+    reaction_name : str | None
         The name of the reaction. This is used in network graphs.
 
-    T : Union[int, float]
+    T : int | float
         The temperature for the reaction, in degrees K.
 
     R : float
@@ -189,7 +187,7 @@ class ReactionABC(object, metaclass=ABCMeta):
     Keqm_s : Symbol
         Sympy Symbol for reaction eqm constant. This is used as a symbol in analytic equations.
 
-    Keqm : Union[int, float]
+    Keqm : int | float
         The equilibrium constant of the reaction.
 
     deltaGo_s : Symbol
@@ -201,14 +199,14 @@ class ReactionABC(object, metaclass=ABCMeta):
     _react_list : list[Chemical]
         A list of the Chemical objects that are the reactants in the reaction.
 
-    _react_stoic : list[Union[float, int]]
+    _react_stoic : list[int | float]
         A list of floats representing the stoichiometry of each reactant in the reaction.
         Must be in the same order as the react_list Chemicals.
 
     _prod_list : list[Chemical]
         A list of the Chemical objects that are the products in the reaction.
 
-    _prod_stoic : list[Union[float, int]]
+    _prod_stoic : list[int | float]
         A list of floats representing the stoichiometry of each product in the reaction.
         Must be in the same order as the prod_list Chemicals.
 
@@ -221,28 +219,28 @@ class ReactionABC(object, metaclass=ABCMeta):
     _react_list_coup : list[Chemical]
         List of reactants in coupled reaction.
 
-    _react_stoic_coup : list[Union[float, int]]
+    _react_stoic_coup : list[int | float]
         Reaction stoichiometry of coupled reaction reactants.
 
     _prod_list_coup : list[Chemical]
         List of products in coupled reaction.
 
-    _prod_stoic_coup : list[Union[float, int]]
+    _prod_stoic_coup : list[int | float]
         Reaction stoichiometry of coupled reaction products.
 
     '''
 
     def __init__(self,
                  react_list: list[Chemical],
-                 react_stoic: list[Union[float, int]],
+                 react_stoic: list[int | float],
                  prod_list: list[Chemical],
-                 prod_stoic: list[Union[float, int]],
-                 deltaGo: Union[int, float] = 0.0,
-                 rate_const: Union[int, float] = 1.0,
-                 T: Union[int, float] = 310,
-                 rate_base_name: Optional[str] = None,
+                 prod_stoic: list[int | float],
+                 deltaGo: int | float = 0.0,
+                 rate_const: int | float = 1.0,
+                 T: int | float = 310,
+                 rate_base_name: str | None = None,
                  system_dimension: SystemDimension = SystemDimension.d2,
-                 reaction_name: Optional[str]=None):
+                 reaction_name: str | None=None):
         '''
         Initialize the Reaction object.
 
@@ -251,33 +249,33 @@ class ReactionABC(object, metaclass=ABCMeta):
         react_list : list[Chemical]
             A list of the Chemical objects that are the reactants in the reaction.
 
-        react_stoic : list[Union[float, int]]
+        react_stoic : list[int | float]
             A list of floats representing the stoichiometry of each reactant in the reaction.
             Must be in the same order as the react_list Chemicals.
 
         prod_list : list[Chemical]
             A list of the Chemical objects that are the products in the reaction.
 
-        prod_stoic : list[Union[float, int]]
+        prod_stoic : list[int | float]
             A list of floats representing the stoichiometry of each product in the reaction.
             Must be in the same order as the prod_list Chemicals.
 
-        deltaGo : Union[int, float]
+        deltaGo : int | float
             The standard Gibbs Free Energy of the reaction in J/mol.
 
-        rate_const : Union[int, float]
+        rate_const : int | float
             The rate constant for the reaction.
 
-        T : Union[int, float]
+        T : int | float
             The temperature for the reaction, in degrees K.
 
-        rate_base_name : Optional[str]
+        rate_base_name : str | None
             String name for the rate constant. This is used as a symbol in analytic equations.
 
         system_dimension : SystemDimension
             Dimension of the system.
 
-        reaction_name : Optional[str]
+        reaction_name : str | None
             The name of the reaction. This is used in network graphs.
 
         '''
@@ -361,7 +359,7 @@ class ReactionABC(object, metaclass=ABCMeta):
         '''
         pass
 
-    # @beartype
+
     def get_numerical(self, sympy_express):
         '''
         Convert an analytic sympy expression to a numerical numpy function with variable names list and
@@ -373,7 +371,7 @@ class ReactionABC(object, metaclass=ABCMeta):
 
         return numpy_express, express_params_list
 
-@beartype
+
 class TransportReaction(ReactionABC):
     '''
     Define a chemical reaction characterized by movement of ions across a membrane
@@ -546,21 +544,21 @@ class TransportReaction(ReactionABC):
     '''
     def __init__(self,
                  react_list: list[Chemical],
-                 react_stoic: list[Union[float, int]],
+                 react_stoic: list[int | float],
                  prod_list: list[Chemical],
-                 prod_stoic: list[Union[float, int]],
-                 react_pos: Optional[list[int]] = None,
-                 prod_pos: Optional[list[int]] = None,
-                 deltaGo: Union[int, float] = 0.0,
-                 rate_const: Union[int, float] = 1.0,
-                 T: Union[int, float]=310,
+                 prod_stoic: list[int | float],
+                 react_pos: list[int] | None = None,
+                 prod_pos: list[int] | None = None,
+                 deltaGo: int | float = 0.0,
+                 rate_const: int | float = 1.0,
+                 T: int | float=310,
                  write_as_vmem: bool=True,
-                 base_names: Optional[list[str]]= None,
-                 rate_base_name: Optional[str] = None,
-                 coupled_reaction: Optional[CoupledReaction] = None,
+                 base_names: list[str] | None = None,
+                 rate_base_name: str | None = None,
+                 coupled_reaction: CoupledReaction | None = None,
                  use_symmetric_flux: bool = True,
                  linearize_eq: bool = False,
-                 reaction_name: Optional[str] = None
+                 reaction_name: str | None = None
                  ):
         '''
         Initialize the TransportReaction object.
@@ -570,7 +568,7 @@ class TransportReaction(ReactionABC):
         react_list : list[Chemical]
             A list of the Chemical objects that are the reactants in the reaction.
 
-        react_stoic : list[Union[float, int]]
+        react_stoic : list[int | float]
             A list of floats representing the stoichiometry of each reactant in the reaction.
         Must be in the same order as the react_list Chemicals.
 
@@ -583,7 +581,7 @@ class TransportReaction(ReactionABC):
         prod_list : list[Chemical]
             A list of the Chemical objects that are the products in the reaction.
 
-        prod_stoic : list[Union[float, int]]
+        prod_stoic : list[int | float]
             A list of floats representing the stoichiometry of each product in the reaction.
         Must be in the same order as the prod_list Chemicals.
 
@@ -593,19 +591,19 @@ class TransportReaction(ReactionABC):
         the direction of the gradient and positive flux into the cell.
         Must be in the same order as the prod_list Chemicals.
 
-        deltaGo : Union[int, float]
+        deltaGo : int | float
             The standard Gibbs Free Energy of the reaction in J/mol.
 
-        rate_const : Union[int, float]
+        rate_const : int | float
             The rate constant for the reaction.
 
-        T : Union[int, float]
+        T : int | float
             The temperature for the reaction, in degrees K.
 
-        rate_base_name : Optional[str]
+        rate_base_name : str | None
             String name for the rate constant. This is used as a symbol in analytic equations.
 
-        reaction_name : Optional[str]
+        reaction_name : str | None
             The name of the reaction. This is used in network graphs.
 
         write_as_vmem: bool
@@ -881,6 +879,7 @@ class TransportReaction(ReactionABC):
         self._prod_list_coup = coupled_prod_list
         self._prod_stoic_coup = coupled_prod_stoic
 
+
     def _compute_current_eqn(self):
         '''
         Compute analytic equations describing the transmembrane conduction
@@ -906,7 +905,7 @@ class TransportReaction(ReactionABC):
             # Symmetric currents wrt the ion base name:
             self.jc_dict[bn] = jc
 
-@beartype
+
 class ClassicReaction(ReactionABC):
     '''
     Define a chemical reaction characterized by consumption and production of
@@ -1013,15 +1012,15 @@ class ClassicReaction(ReactionABC):
 
     def __init__(self,
                  react_list: list[Chemical],
-                 react_stoic: list[Union[float, int]],
+                 react_stoic: list[int | float],
                  prod_list: list[Chemical],
-                 prod_stoic: list[Union[float, int]],
-                 deltaGo: Union[int, float] = 0.0,
-                 rate_const: Union[int, float] = 1.0,
-                 T: Union[int, float]=310,
-                 rate_base_name: Optional[str] = None,
+                 prod_stoic: list[int | float],
+                 deltaGo: int | float = 0.0,
+                 rate_const: int | float = 1.0,
+                 T: int | float=310,
+                 rate_base_name: str | None = None,
                  use_symmetric_flux: bool = True,
-                 reaction_name: Optional[str] = None
+                 reaction_name: str | None = None
                 ):
 
         '''
@@ -1032,30 +1031,30 @@ class ClassicReaction(ReactionABC):
         react_list : list[Chemical]
             A list of the Chemical objects that are the reactants in the reaction.
 
-        react_stoic : list[Union[float, int]]
+        react_stoic : list[int | float]
             A list of floats representing the stoichiometry of each reactant in the reaction.
             Must be in the same order as the react_list Chemicals.
 
         prod_list : list[Chemical]
             A list of the Chemical objects that are the products in the reaction.
 
-        prod_stoic : list[Union[float, int]]
+        prod_stoic : list[int | float]
             A list of floats representing the stoichiometry of each product in the reaction.
             Must be in the same order as the prod_list Chemicals.
 
-        deltaGo : Union[int, float]
+        deltaGo : int | float
             The standard Gibbs Free Energy of the reaction in J/mol.
 
-        rate_const : Union[int, float]
+        rate_const : int | float
             The rate constant for the reaction.
 
-        T : Union[int, float]
+        T : int | float
             The temperature for the reaction, in degrees K.
 
-        rate_base_name : Optional[str]
+        rate_base_name : str | None
             String name for the rate constant. This is used as a symbol in analytic equations.
 
-        reaction_name : Optional[str]
+        reaction_name : str | None
             The name of the reaction. This is used in network graphs.
 
         use_symmetric_flux : bool

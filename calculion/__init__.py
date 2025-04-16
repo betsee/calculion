@@ -22,7 +22,14 @@ thus expected by external automation.
 # ....................{ IMPORTS                            }....................
 # Subject all subsequent imports to @beartype-based hybrid runtime-static
 # type-checking *BEFORE* importing anything further.
-# from beartype import BeartypeConf
+#
+# Note that this type-checking applies to *ALL* subsequent imports *EXCEPT* the
+# "{package_name}.main" submodule. Streamlit loads and runs that submodule as a
+# shallow script outside of this package hierarchy and thus does *NOT* import
+# that file as a package submodule and thus does *NOT* implicitly import this
+# "{package_name}.__init__" submodule before running that file. There currently
+# exists no known workaround for this Streamlit behaviour, sadly.
+print('[APP] Enabling runtime type-checking...')
 from beartype.claw import beartype_this_package
 beartype_this_package()
 
